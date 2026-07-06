@@ -1,8 +1,8 @@
+import { lazy, Suspense } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { SpendingHero } from '@/components/dashboard/SpendingHero'
 import { CategoryAllocation } from '@/components/charts/CategoryAllocation'
-import { MonthlyBar } from '@/components/charts/MonthlyBar'
 import { ExpenseList } from '@/components/expenses/ExpenseList'
 import { StatLabel } from '@/components/layout/Stat'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -13,6 +13,12 @@ import {
   useMonthlyHistory,
   useMonthlyStats,
 } from '@/hooks/useMonthlyStats'
+
+const MonthlyBar = lazy(() =>
+  import('@/components/charts/MonthlyBar').then((module) => ({
+    default: module.MonthlyBar,
+  })),
+)
 
 export function DashboardPage() {
   const { year, month } = useMonth()
@@ -50,7 +56,9 @@ export function DashboardPage() {
         {historyLoading ? (
           <Skeleton className="h-72 w-full rounded-xl" />
         ) : history && history.length > 0 ? (
-          <MonthlyBar data={history} />
+          <Suspense fallback={<Skeleton className="h-72 w-full rounded-xl" />}>
+            <MonthlyBar data={history} />
+          </Suspense>
         ) : null}
       </div>
 

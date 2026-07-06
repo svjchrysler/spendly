@@ -10,4 +10,30 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: 'react-vendor',
+              test: /node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)/,
+            },
+            {
+              name: 'recharts',
+              test: /node_modules\/(recharts|d3-|victory-vendor|internmap|delaunator)/,
+            },
+            {
+              name: 'motion',
+              test: /node_modules\/framer-motion/,
+            },
+            {
+              name: 'supabase',
+              test: /node_modules\/(@supabase|@supabase\/)/,
+            },
+          ],
+        },
+      },
+    },
+  },
 })
