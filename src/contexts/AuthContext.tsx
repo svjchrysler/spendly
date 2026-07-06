@@ -14,8 +14,6 @@ interface AuthContextValue {
   session: Session | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
-  signUp: (email: string, password: string) => Promise<{ error: string | null }>
-  signInWithMagicLink: (email: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<{ error: string | null }>
 }
@@ -25,10 +23,8 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 function mapAuthError(message: string) {
   const errors: Record<string, string> = {
     'Invalid login credentials': 'Correo o contraseña incorrectos',
-    'User already registered': 'Este correo ya está registrado',
-    'Password should be at least 6 characters':
-      'La contraseña debe tener al menos 6 caracteres',
     'Email not confirmed': 'Confirma tu correo antes de iniciar sesión',
+    'Signups not allowed for this instance': 'El registro está deshabilitado',
   }
   return errors[message] ?? message
 }
@@ -60,17 +56,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       async signIn(email, password) {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
-        return { error: error ? mapAuthError(error.message) : null }
-      },
-      async signUp(email, password) {
-        const { error } = await supabase.auth.signUp({ email, password })
-        return { error: error ? mapAuthError(error.message) : null }
-      },
-      async signInWithMagicLink(email) {
-        const { error } = await supabase.auth.signInWithOtp({
-          email,
-          options: { emailRedirectTo: window.location.origin },
-        })
         return { error: error ? mapAuthError(error.message) : null }
       },
       async signOut() {

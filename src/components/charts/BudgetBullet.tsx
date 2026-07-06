@@ -1,19 +1,21 @@
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
+import { StatLabel } from '@/components/layout/Stat'
 import { formatCurrency } from '@/lib/format'
 import { useUpsertBudget } from '@/hooks/useMonthlyStats'
 import { useMonth } from '@/contexts/MonthContext'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 interface BudgetBulletProps {
   spent: number
   budget: number | null
+  compact?: boolean
 }
 
-export function BudgetBullet({ spent, budget }: BudgetBulletProps) {
+export function BudgetBullet({ spent, budget, compact = false }: BudgetBulletProps) {
   const { year, month } = useMonth()
   const upsertBudget = useUpsertBudget()
   const [editing, setEditing] = useState(false)
@@ -40,14 +42,17 @@ export function BudgetBullet({ spent, budget }: BudgetBulletProps) {
   }
 
   return (
-    <Card className="border-border/60 bg-card/80">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">Presupuesto mensual</CardTitle>
+    <div className={cn(
+      'space-y-4',
+      compact && 'border-b border-border pb-6 md:border-r md:border-b-0 md:pr-6 md:pb-0',
+    )}>
+      <div className="flex items-center justify-between">
+        <StatLabel>Presupuesto</StatLabel>
         {!editing ? (
           <Button
             variant="ghost"
             size="sm"
-            className="cursor-pointer"
+            className="h-auto cursor-pointer px-0 text-xs text-muted-foreground hover:text-primary"
             onClick={() => {
               setValue(budget?.toString() ?? '')
               setEditing(true)
@@ -56,70 +61,63 @@ export function BudgetBullet({ spent, budget }: BudgetBulletProps) {
             {budget ? 'Editar' : 'Definir'}
           </Button>
         ) : null}
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {editing ? (
+      </div>
+
+      {editing ? (
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Input
+            type="number"
+            min="0"
+            step="0.01"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder="0.00"
+            aria-label="Presupuesto mensual"
+            className="border-border bg-secondary/50"
+          />
           <div className="flex gap-2">
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder="0.00"
-              aria-label="Presupuesto mensual"
-            />
-            <Button
-              className="cursor-pointer"
-              onClick={handleSave}
-              disabled={upsertBudget.isPending}
-            >
+            <Button className="cursor-pointer" onClick={handleSave} disabled={upsertBudget.isPending}>
               Guardar
             </Button>
-            <Button
-              variant="ghost"
-              className="cursor-pointer"
-              onClick={() => setEditing(false)}
-            >
+            <Button variant="ghost" className="cursor-pointer" onClick={() => setEditing(false)}>
               Cancelar
             </Button>
           </div>
-        ) : (
-          <>
-            <div className="flex items-end justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Gastado</p>
-                <p className="font-display text-3xl">{formatCurrency(spent)}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-muted-foreground">Meta</p>
-                <p className="text-lg font-semibold">
-                  {budget ? formatCurrency(budget) : 'Sin definir'}
-                </p>
-              </div>
-            </div>
-            {budget ? (
-              <>
-                <Progress
-                  value={percentage}
-                  className={overBudget ? '[&>div]:bg-destructive' : ''}
-                />
-                <p
-                  className={`text-sm ${overBudget ? 'text-destructive' : 'text-muted-foreground'}`}
-                >
-                  {overBudget
-                    ? `Excedido en ${formatCurrency(spent - target)}`
-                    : `${Math.round(percentage)}% del presupuesto usado`}
-                </p>
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Define un presupuesto para seguir tu progreso mensual.
+        </div>
+      ) : (
+        <>
+          <div className="space-y-1">
+            <p className="text-2xl font-semibold tabular-nums tracking-tight">
+              {budget ? formatCurrency(budget) : '—'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Gastado: {formatCurrency(spent)}
+            </p>
+          </div>
+          {budget ? (
+            <>
+              <Progress
+                value={percentage}
+                className={cn('h-1.5 bg-secondary', overBudget && '[&>div]:bg-destructive')}
+              />
+              <p
+                className={cn(
+                  'text-xs tabular-nums',
+                  overBudget ? 'text-destructive' : 'text-muted-foreground',
+                )}
+              >
+                {overBudget
+                  ? `Excedido ${formatCurrency(spent - target)}`
+                  : `${Math.round(percentage)}% utilizado`}
               </p>
-            )}
-          </>
-        )}
-      </CardContent>
-    </Card>
+            </>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Establece tu meta mensual de gasto.
+            </p>
+          )}
+        </>
+      )}
+    </div>
   )
 }

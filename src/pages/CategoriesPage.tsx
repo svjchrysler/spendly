@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { StatLabel } from '@/components/layout/Stat'
 import {
   useCategories,
   useCreateCategory,
@@ -90,7 +91,14 @@ function CategoryForm({
       </div>
       <div className="space-y-2">
         <Label htmlFor="cat-icon">Icono</Label>
-        <Select value={icon} onValueChange={(value) => value && setIcon(value)}>
+        <Select
+          value={icon}
+          onValueChange={(value) => value && setIcon(value)}
+          items={categoryIconOptions.map((option) => ({
+            value: option.value,
+            label: option.label,
+          }))}
+        >
           <SelectTrigger id="cat-icon" className="cursor-pointer">
             <SelectValue />
           </SelectTrigger>
@@ -151,14 +159,14 @@ export function CategoriesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-display text-3xl">Categorías</h1>
-          <p className="text-sm text-muted-foreground">Organiza tus gastos por tipo</p>
-        </div>
+    <div className="page-stack">
+      <div className="flex flex-col gap-3 border-b border-border pb-6 sm:flex-row sm:items-center sm:justify-between">
+        <StatLabel>Categorías</StatLabel>
         <Dialog open={openCreate} onOpenChange={setOpenCreate}>
-          <Button className="cursor-pointer gap-2" onClick={() => setOpenCreate(true)}>
+          <Button
+            className="w-full cursor-pointer gap-2 bg-primary text-primary-foreground hover:bg-primary/90 sm:w-auto"
+            onClick={() => setOpenCreate(true)}
+          >
             <Plus className="size-4" />
             Nueva categoría
           </Button>
@@ -184,19 +192,16 @@ export function CategoriesPage() {
             return (
               <Card
                 key={category.id}
-                className="border-border/60 bg-card/80 transition-colors duration-200 hover:bg-card"
+                className="border-border bg-transparent transition-colors duration-200 hover:bg-muted/20"
               >
-                <CardContent className="flex items-center justify-between p-4">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="flex size-11 items-center justify-center rounded-xl"
-                      style={{ backgroundColor: `${category.color}22` }}
-                    >
-                      <Icon className="size-5" style={{ color: category.color }} />
+                <CardContent className="flex items-center justify-between gap-2 p-4">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-secondary">
+                      <Icon className="size-4" style={{ color: category.color }} />
                     </div>
-                    <p className="font-medium">{category.name}</p>
+                    <p className="truncate font-medium">{category.name}</p>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex shrink-0 gap-1">
                     <Button
                       variant="ghost"
                       size="icon"

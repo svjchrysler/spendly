@@ -7,27 +7,27 @@ export function MonthPicker() {
   const { year, month, goToPreviousMonth, goToNextMonth } = useMonth()
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1">
       <Button
         variant="ghost"
         size="icon"
-        className="cursor-pointer transition-colors duration-200"
+        className="size-8 cursor-pointer text-muted-foreground hover:text-foreground"
         onClick={goToPreviousMonth}
         aria-label="Mes anterior"
       >
-        <ChevronLeft className="size-5" />
+        <ChevronLeft className="size-4" />
       </Button>
-      <span className="min-w-[140px] text-center text-sm font-semibold capitalize sm:text-base">
+      <span className="min-w-[7.5rem] text-center text-xs font-medium capitalize text-muted-foreground sm:min-w-[8.5rem] sm:text-sm">
         {capitalize(formatMonthYear(year, month))}
       </span>
       <Button
         variant="ghost"
         size="icon"
-        className="cursor-pointer transition-colors duration-200"
+        className="size-8 cursor-pointer text-muted-foreground hover:text-foreground"
         onClick={goToNextMonth}
         aria-label="Mes siguiente"
       >
-        <ChevronRight className="size-5" />
+        <ChevronRight className="size-4" />
       </Button>
     </div>
   )

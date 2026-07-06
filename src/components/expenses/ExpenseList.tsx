@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Plus } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,12 +15,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -30,10 +24,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import {
+  ExpenseActionSheet,
+  ExpenseRowActions,
+} from '@/components/expenses/ExpenseActionSheet'
 import { ExpenseForm } from '@/components/expenses/ExpenseForm'
-import { getCategoryIcon } from '@/lib/category-icons'
+import { ExpenseIcon } from '@/components/expenses/ExpenseIcon'
+import { getExpenseLabel } from '@/lib/expense-display'
 import { formatCurrency, formatDayLabel } from '@/lib/format'
 import { useDeleteExpense } from '@/hooks/useExpenses'
+import { useIsDesktop } from '@/hooks/useMediaQuery'
 import { useMonth } from '@/contexts/MonthContext'
 import type { ExpenseWithCategory } from '@/types/database'
 import { toast } from 'sonner'
@@ -49,15 +49,8 @@ export function ExpenseList({ expenses, showFab = false }: ExpenseListProps) {
   const [openAdd, setOpenAdd] = useState(false)
   const [editing, setEditing] = useState<ExpenseWithCategory | null>(null)
   const [deleting, setDeleting] = useState<ExpenseWithCategory | null>(null)
-  const [isDesktop, setIsDesktop] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth >= 768,
-  )
-
-  useEffect(() => {
-    const handler = () => setIsDesktop(window.innerWidth >= 768)
-    window.addEventListener('resize', handler)
-    return () => window.removeEventListener('resize', handler)
-  }, [])
+  const [actionExpense, setActionExpense] = useState<ExpenseWithCategory | null>(null)
+  const isDesktop = useIsDesktop()
 
   const grouped = useMemo(() => {
     const map = new Map<string, ExpenseWithCategory[]>()
@@ -67,7 +60,11 @@ export function ExpenseList({ expenses, showFab = false }: ExpenseListProps) {
       list.push(expense)
       map.set(key, list)
     }
-    return Array.from(map.entries())
+    return Array.from(map.entries()).map(([date, items]) => ({
+      date,
+      items,
+      subtotal: items.reduce((sum, item) => sum + Number(item.amount), 0),
+    }))
   }, [expenses])
 
   async function handleDelete() {
@@ -81,6 +78,16 @@ export function ExpenseList({ expenses, showFab = false }: ExpenseListProps) {
     }
   }
 
+  function openEdit(expense: ExpenseWithCategory) {
+    setActionExpense(null)
+    setEditing(expense)
+  }
+
+  function openDelete(expense: ExpenseWithCategory) {
+    setActionExpense(null)
+    setDeleting(expense)
+  }
+
   const addForm = (
     <ExpenseForm
       onSuccess={() => {
@@ -89,19 +96,26 @@ export function ExpenseList({ expenses, showFab = false }: ExpenseListProps) {
     />
   )
 
+  const editForm = editing ? (
+    <ExpenseForm
+      expense={editing}
+      onSuccess={() => setEditing(null)}
+    />
+  ) : null
+
   return (
     <>
       {showFab ? (
         isDesktop ? (
           <Dialog open={openAdd} onOpenChange={setOpenAdd}>
             <Button
-              className="fixed bottom-24 right-4 z-40 size-14 cursor-pointer rounded-full shadow-lg lg:bottom-8 lg:right-8"
+              className="fab"
               onClick={() => setOpenAdd(true)}
               aria-label="Agregar gasto"
             >
               <Plus className="size-6" />
             </Button>
-            <DialogContent>
+            <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>Nuevo gasto</DialogTitle>
               </DialogHeader>
@@ -111,25 +125,28 @@ export function ExpenseList({ expenses, showFab = false }: ExpenseListProps) {
         ) : (
           <Sheet open={openAdd} onOpenChange={setOpenAdd}>
             <Button
-              className="fixed bottom-24 right-4 z-40 size-14 cursor-pointer rounded-full shadow-lg"
+              className="fab"
               aria-label="Agregar gasto"
               onClick={() => setOpenAdd(true)}
             >
               <Plus className="size-6" />
             </Button>
-            <SheetContent side="bottom" className="max-h-[90dvh] overflow-y-auto">
-              <SheetHeader>
+            <SheetContent
+              side="bottom"
+              className="max-h-[88dvh] gap-0 overflow-y-auto rounded-t-2xl px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3"
+            >
+              <SheetHeader className="pb-3">
                 <SheetTitle>Nuevo gasto</SheetTitle>
               </SheetHeader>
-              <div className="mt-4">{addForm}</div>
+              {addForm}
             </SheetContent>
           </Sheet>
         )
       ) : null}
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         <AnimatePresence mode="popLayout">
-          {grouped.map(([date, items]) => (
+          {grouped.map(({ date, items, subtotal }) => (
             <motion.section
               key={date}
               layout
@@ -137,69 +154,65 @@ export function ExpenseList({ expenses, showFab = false }: ExpenseListProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
-              className="space-y-3"
+              className="data-panel overflow-hidden p-0"
             >
-              <h3 className="text-sm font-semibold capitalize text-muted-foreground">
-                {formatDayLabel(date)}
-              </h3>
-              <div className="space-y-2">
+              <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+                <h3 className="stat-label capitalize">{formatDayLabel(date)}</h3>
+                <span className="text-sm font-semibold tabular-nums text-muted-foreground">
+                  {formatCurrency(subtotal)}
+                </span>
+              </div>
+              <div className="divide-y divide-border/60">
                 {items.map((expense) => {
-                  const Icon = getCategoryIcon(expense.category?.icon ?? 'receipt')
                   return (
                     <motion.div
                       key={expense.id}
                       layout
-                      className="flex items-center justify-between rounded-xl border border-border/60 bg-card/60 p-4 transition-colors duration-200 hover:bg-card"
+                      role={isDesktop ? undefined : 'button'}
+                      tabIndex={isDesktop ? undefined : 0}
+                      onClick={
+                        isDesktop
+                          ? undefined
+                          : () => setActionExpense(expense)
+                      }
+                      onKeyDown={
+                        isDesktop
+                          ? undefined
+                          : (e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                setActionExpense(expense)
+                              }
+                            }
+                      }
+                      className="group flex min-w-0 items-center justify-between gap-2 px-4 py-3 transition-colors duration-200 hover:bg-muted/20 sm:gap-3"
                     >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="flex size-10 items-center justify-center rounded-lg"
-                          style={{
-                            backgroundColor: `${expense.category?.color ?? '#3B82F6'}22`,
-                          }}
-                        >
-                          <Icon
-                            className="size-4"
-                            style={{ color: expense.category?.color ?? '#3B82F6' }}
-                          />
-                        </div>
-                        <div>
-                          <p className="font-medium">
-                            {expense.description || expense.category?.name || 'Gasto'}
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
+                        <ExpenseIcon
+                          description={expense.description}
+                          categoryName={expense.category?.name}
+                          categoryIcon={expense.category?.icon}
+                          categoryColor={expense.category?.color}
+                        />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">
+                            {getExpenseLabel(expense.description, expense.category?.name)}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="truncate text-xs text-muted-foreground">
                             {expense.category?.name}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">
+                      <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+                        <span className="text-sm font-semibold whitespace-nowrap tabular-nums">
                           {formatCurrency(Number(expense.amount))}
                         </span>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                          className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg hover:bg-muted"
-                          aria-label="Opciones del gasto"
-                        >
-                          <MoreHorizontal className="size-4" />
-                        </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              className="cursor-pointer"
-                              onClick={() => setEditing(expense)}
-                            >
-                              <Pencil className="size-4" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="cursor-pointer text-destructive"
-                              onClick={() => setDeleting(expense)}
-                            >
-                              <Trash2 className="size-4" />
-                              Eliminar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        {isDesktop ? (
+                          <ExpenseRowActions
+                            onEdit={() => openEdit(expense)}
+                            onDelete={() => openDelete(expense)}
+                          />
+                        ) : null}
                       </div>
                     </motion.div>
                   )
@@ -210,26 +223,59 @@ export function ExpenseList({ expenses, showFab = false }: ExpenseListProps) {
         </AnimatePresence>
       </div>
 
-      <Dialog open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar gasto</DialogTitle>
-          </DialogHeader>
-          {editing ? (
-            <ExpenseForm
-              expense={editing}
-              onSuccess={() => setEditing(null)}
+      <Sheet
+        open={Boolean(actionExpense)}
+        onOpenChange={(open) => !open && setActionExpense(null)}
+      >
+        <SheetContent
+          side="bottom"
+          showCloseButton={false}
+          className="gap-0 rounded-t-2xl border-t border-border/80 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2"
+        >
+          <SheetHeader className="sr-only">
+            <SheetTitle>Acciones del gasto</SheetTitle>
+          </SheetHeader>
+          {actionExpense ? (
+            <ExpenseActionSheet
+              expense={actionExpense}
+              onEdit={() => openEdit(actionExpense)}
+              onDelete={() => openDelete(actionExpense)}
             />
           ) : null}
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
+
+      {isDesktop ? (
+        <Dialog open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
+          <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Editar gasto</DialogTitle>
+            </DialogHeader>
+            {editForm}
+          </DialogContent>
+        </Dialog>
+      ) : (
+        <Sheet open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
+          <SheetContent
+            side="bottom"
+            className="max-h-[88dvh] gap-0 overflow-y-auto rounded-t-2xl px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3"
+          >
+            <SheetHeader className="pb-3">
+              <SheetTitle>Editar gasto</SheetTitle>
+            </SheetHeader>
+            {editForm}
+          </SheetContent>
+        </Sheet>
+      )}
 
       <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar este gasto?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer.
+              {deleting
+                ? `Se eliminará "${getExpenseLabel(deleting.description, deleting.category?.name)}" por ${formatCurrency(Number(deleting.amount))}. Esta acción no se puede deshacer.`
+                : 'Esta acción no se puede deshacer.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

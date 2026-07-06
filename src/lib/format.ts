@@ -1,11 +1,21 @@
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { appCurrency, appLocale } from '@/lib/currency-config'
 
-export function formatCurrency(amount: number, currency = 'USD') {
-  return new Intl.NumberFormat('es-ES', {
+export function formatCurrency(amount: number, currency = appCurrency) {
+  return new Intl.NumberFormat(appLocale, {
     style: 'currency',
     currency,
     minimumFractionDigits: 2,
+  }).format(amount)
+}
+
+export function formatCurrencyCompact(amount: number, currency = appCurrency) {
+  return new Intl.NumberFormat(appLocale, {
+    style: 'currency',
+    currency,
+    notation: 'compact',
+    maximumFractionDigits: 1,
   }).format(amount)
 }
 
