@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react'
 import { MonthPicker } from '@/components/layout/MonthPicker'
-import { StatLabel } from '@/components/layout/Stat'
 import { ExpenseFilters } from '@/components/expenses/ExpenseFilters'
 import { ExpenseList } from '@/components/expenses/ExpenseList'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useMonth } from '@/contexts/MonthContext'
 import { useCategories } from '@/hooks/useCategories'
-import { useFilteredExpenses } from '@/hooks/useExpenses'
+import { useExpenses } from '@/hooks/useExpenses'
 import { formatCurrency } from '@/lib/format'
 
 export function ExpensesPage() {
@@ -14,12 +13,19 @@ export function ExpensesPage() {
   const [search, setSearch] = useState('')
   const [categoryId, setCategoryId] = useState<string>()
   const { data: categories = [], isLoading: categoriesLoading } = useCategories()
-  const { data: expenses = [], isLoading } = useFilteredExpenses(
-    year,
-    month,
-    categoryId,
-    search,
-  )
+  const { data: allExpenses = [], isLoading } = useExpenses(year, month)
+
+  const expenses = useMemo(() => {
+    const q = search.toLowerCase()
+    return allExpenses.filter((expense) => {
+      if (categoryId && expense.category_id !== categoryId) return false
+      if (!q) return true
+      return (
+        expense.description?.toLowerCase().includes(q) ||
+        expense.category?.name.toLowerCase().includes(q)
+      )
+    })
+  }, [allExpenses, categoryId, search])
 
   const total = useMemo(
     () => expenses.reduce((sum, item) => sum + Number(item.amount), 0),
@@ -31,7 +37,7 @@ export function ExpensesPage() {
   return (
     <div className="page-stack">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <StatLabel>Gastos del mes</StatLabel>
+        <p className="stat-label">Gastos del mes</p>
         <MonthPicker />
       </div>
 

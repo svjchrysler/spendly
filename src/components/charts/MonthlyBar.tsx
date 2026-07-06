@@ -8,7 +8,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { StatLabel } from '@/components/layout/Stat'
 import { formatCurrency, formatCurrencyCompact } from '@/lib/format'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
 
@@ -49,7 +48,7 @@ export function MonthlyBar({ data }: MonthlyBarProps) {
   return (
     <section className="data-panel space-y-5">
       <div className="flex items-end justify-between gap-3">
-        <StatLabel>Últimos 6 meses</StatLabel>
+        <p className="stat-label">Últimos 6 meses</p>
         <p className="text-xs text-muted-foreground">
           Máx. {formatCurrencyCompact(maxTotal)}
         </p>

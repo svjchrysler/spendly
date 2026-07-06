@@ -1,6 +1,5 @@
 import { getCategoryIcon } from '@/lib/category-icons'
 import { formatCurrency } from '@/lib/format'
-import { StatLabel } from '@/components/layout/Stat'
 import { cn } from '@/lib/utils'
 
 interface CategoryAllocationProps {
@@ -13,7 +12,7 @@ export function CategoryAllocation({ data, total, limit = 6 }: CategoryAllocatio
   if (data.length === 0) {
     return (
       <div className="data-panel space-y-3">
-        <StatLabel>Por categoría</StatLabel>
+        <p className="stat-label">Por categoría</p>
         <p className="text-sm text-muted-foreground">Sin gastos este mes</p>
       </div>
     )
@@ -26,7 +25,7 @@ export function CategoryAllocation({ data, total, limit = 6 }: CategoryAllocatio
 
   return (
     <section className="data-panel space-y-5">
-      <StatLabel>Por categoría</StatLabel>
+      <p className="stat-label">Por categoría</p>
 
       <div className="flex h-2.5 overflow-hidden rounded-full bg-secondary">
         {visible.map((item) => {

@@ -4,7 +4,6 @@ import { ArrowRight } from 'lucide-react'
 import { SpendingHero } from '@/components/dashboard/SpendingHero'
 import { CategoryAllocation } from '@/components/charts/CategoryAllocation'
 import { ExpenseList } from '@/components/expenses/ExpenseList'
-import { StatLabel } from '@/components/layout/Stat'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useMonth } from '@/contexts/MonthContext'
 import { useExpenses } from '@/hooks/useExpenses'
@@ -64,7 +63,7 @@ export function DashboardPage() {
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <StatLabel>Actividad reciente</StatLabel>
+          <p className="stat-label">Actividad reciente</p>
           <Link
             to="/gastos"
             className="inline-flex cursor-pointer items-center gap-1 text-sm text-muted-foreground transition-colors duration-200 hover:text-primary"

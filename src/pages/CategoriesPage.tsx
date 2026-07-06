@@ -29,7 +29,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { StatLabel } from '@/components/layout/Stat'
 import {
   useCategories,
   useCreateCategory,
@@ -161,7 +160,7 @@ export function CategoriesPage() {
   return (
     <div className="page-stack">
       <div className="flex flex-col gap-3 border-b border-border pb-6 sm:flex-row sm:items-center sm:justify-between">
-        <StatLabel>Categorías</StatLabel>
+        <p className="stat-label">Categorías</p>
         <Dialog open={openCreate} onOpenChange={setOpenCreate}>
           <Button
             className="w-full cursor-pointer gap-2 bg-primary text-primary-foreground hover:bg-primary/90 sm:w-auto"

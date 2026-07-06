@@ -24,10 +24,6 @@ export function formatMonthYear(year: number, month: number) {
   return format(date, 'MMMM yyyy', { locale: es })
 }
 
-export function formatShortDate(dateStr: string) {
-  return format(parseISO(dateStr), 'd MMM', { locale: es })
-}
-
 export function formatDayLabel(dateStr: string) {
   const date = parseISO(dateStr)
   const today = new Date()

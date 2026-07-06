@@ -5,10 +5,7 @@ import { getMonthRange } from '@/lib/format'
 import type { Expense, ExpenseWithCategory } from '@/types/database'
 
 export const expenseKeys = {
-  all: ['expenses'] as const,
   month: (year: number, month: number) => ['expenses', year, month] as const,
-  list: (year: number, month: number, categoryId?: string, search?: string) =>
-    ['expenses', 'list', year, month, categoryId, search] as const,
 }
 
 type ExpenseInput = {
@@ -38,26 +35,6 @@ export function useExpenses(year: number, month: number) {
       return data as ExpenseWithCategory[]
     },
   })
-}
-
-export function useFilteredExpenses(
-  year: number,
-  month: number,
-  categoryId?: string,
-  search?: string,
-) {
-  const { data, ...rest } = useExpenses(year, month)
-
-  const filtered = (data ?? []).filter((expense) => {
-    const matchesCategory = !categoryId || expense.category_id === categoryId
-    const matchesSearch =
-      !search ||
-      expense.description?.toLowerCase().includes(search.toLowerCase()) ||
-      expense.category?.name.toLowerCase().includes(search.toLowerCase())
-    return matchesCategory && matchesSearch
-  })
-
-  return { data: filtered, ...rest }
 }
 
 export function useCreateExpense(year: number, month: number) {

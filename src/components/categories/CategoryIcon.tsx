@@ -14,6 +14,7 @@ interface CategoryIconProps {
   icon: string
   color?: string | null
   name?: string | null
+  emoji?: string | null
   size?: keyof typeof sizeMap
   className?: string
 }
@@ -22,10 +23,11 @@ export function CategoryIcon({
   icon,
   color,
   name,
+  emoji: emojiProp,
   size = 'md',
   className,
 }: CategoryIconProps) {
-  const emoji = getCategoryEmoji(name)
+  const emoji = emojiProp ?? getCategoryEmoji(name)
   const sizes = sizeMap[size]
   const Icon = getCategoryIcon(icon)
 

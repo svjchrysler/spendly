@@ -8,7 +8,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
-import { StatLabel } from '@/components/layout/Stat'
 import { useAuth } from '@/contexts/AuthContext'
 import { isSupabaseConfigured } from '@/lib/supabase'
 
@@ -40,7 +39,7 @@ export function ProfileMenu() {
         className="w-[min(18rem,calc(100vw-2rem))] p-0"
       >
         <div className="space-y-4 p-4">
-          <StatLabel>Perfil</StatLabel>
+          <p className="stat-label">Perfil</p>
           <div className="flex items-center gap-3">
             <Avatar className="size-10 border border-border">
               <AvatarFallback className="bg-secondary text-sm font-medium">

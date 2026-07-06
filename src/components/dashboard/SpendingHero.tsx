@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { MonthPicker } from '@/components/layout/MonthPicker'
-import { StatLabel } from '@/components/layout/Stat'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
@@ -56,7 +55,7 @@ export function SpendingHero({
   return (
     <section className="data-panel space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <StatLabel>Resumen del mes</StatLabel>
+        <p className="stat-label">Resumen del mes</p>
         <MonthPicker />
       </div>
 
