@@ -1,8 +1,6 @@
-import { useState } from 'react'
-import { MonthPicker } from '@/components/layout/MonthPicker'
+import { useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Progress } from '@/components/ui/progress'
 import { useUpsertBudget } from '@/hooks/useMonthlyStats'
 import { useMonth } from '@/contexts/MonthContext'
 import { formatCurrency } from '@/lib/format'
@@ -21,7 +19,7 @@ export function SpendingHero({
   transactionCount,
   budget,
   topCategory,
-}: SpendingHeroProps) {
+}: Readonly<SpendingHeroProps>) {
   const { year, month } = useMonth()
   const upsertBudget = useUpsertBudget()
   const [editingBudget, setEditingBudget] = useState(false)
@@ -52,113 +50,103 @@ export function SpendingHero({
     }
   }
 
-  return (
-    <section className="data-panel space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="stat-label">Resumen del mes</p>
-        <MonthPicker />
-      </div>
+  let budgetHint: ReactNode = (
+    <button
+      type="button"
+      className="pressable cursor-pointer text-sm text-muted-foreground hover:text-primary"
+      onClick={() => setEditingBudget(true)}
+    >
+      Definir presupuesto
+    </button>
+  )
 
-      <div className="space-y-1">
-        <p className="text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">
-          {formatCurrency(spent)}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          {transactionCount} {transactionCount === 1 ? 'gasto' : 'gastos'} registrados
-        </p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <div className="metric-chip">
-          <p className="metric-chip-label">Promedio / día</p>
-          <p className="metric-chip-value">{formatCurrency(dailyAvg)}</p>
+  if (budget != null && !editingBudget) {
+    budgetHint = (
+      <p
+        className={cn(
+          'text-sm font-medium tabular-nums',
+          overBudget ? 'text-destructive' : 'text-primary',
+        )}
+      >
+        {overBudget
+          ? `${formatCurrency(Math.abs(remaining!))} sobre presupuesto · ${Math.round(percentage)}%`
+          : `${formatCurrency(remaining!)} disponibles · ${Math.round(percentage)}% usado`}
+        <button
+          type="button"
+          className="pressable ml-2 cursor-pointer text-muted-foreground hover:text-foreground"
+          onClick={() => {
+            setBudgetValue(budget.toString())
+            setEditingBudget(true)
+          }}
+        >
+          Editar
+        </button>
+      </p>
+    )
+  } else if (editingBudget) {
+    budgetHint = (
+      <div className="flex max-w-sm flex-col gap-2 sm:flex-row sm:items-center">
+        <Input
+          type="number"
+          min="0"
+          step="0.01"
+          value={budgetValue}
+          onChange={(e) => setBudgetValue(e.target.value)}
+          placeholder="Presupuesto"
+          className="h-9 border-0 border-b border-border bg-transparent px-0 shadow-none focus-visible:border-primary/50 focus-visible:ring-0"
+        />
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            className="cursor-pointer"
+            onClick={handleSaveBudget}
+            disabled={upsertBudget.isPending}
+          >
+            Guardar
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="cursor-pointer"
+            onClick={() => setEditingBudget(false)}
+          >
+            Cancelar
+          </Button>
         </div>
-        <div className="metric-chip">
-          <p className="metric-chip-label">Días del mes</p>
-          <p className="metric-chip-value">
+      </div>
+    )
+  }
+
+  return (
+    <section className="space-y-8">
+      <div className="space-y-2">
+        <p className="stat-value">{formatCurrency(spent)}</p>
+        {budgetHint}
+      </div>
+
+      <div className="grid grid-cols-3 gap-6">
+        <div className="metric-cell">
+          <p className="metric-cell-label">Promedio / día</p>
+          <p className="metric-cell-value">{formatCurrency(dailyAvg)}</p>
+        </div>
+        <div className="metric-cell">
+          <p className="metric-cell-label">Gastos</p>
+          <p className="metric-cell-value">{transactionCount}</p>
+        </div>
+        <div className="metric-cell">
+          <p className="metric-cell-label">Días</p>
+          <p className="metric-cell-value">
             {dayOfMonth}/{daysInMonth}
           </p>
         </div>
-        <div className="metric-chip col-span-2 sm:col-span-1">
-          <p className="metric-chip-label">Categoría principal</p>
-          <p className="metric-chip-value truncate">
-            {topCategory ? topCategory.name : '—'}
-          </p>
-        </div>
       </div>
 
-      {budget != null && !editingBudget ? (
-        <div className="space-y-2 border-t border-border/60 pt-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Presupuesto</span>
-            <div className="flex items-center gap-2">
-              <span className="font-medium tabular-nums">{formatCurrency(budget)}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto cursor-pointer px-0 text-xs text-muted-foreground hover:text-primary"
-                onClick={() => {
-                  setBudgetValue(budget.toString())
-                  setEditingBudget(true)
-                }}
-              >
-                Editar
-              </Button>
-            </div>
-          </div>
-          <Progress
-            value={percentage}
-            className={cn('h-2 bg-secondary', overBudget && '[&>div]:bg-destructive')}
-          />
-          <p
-            className={cn(
-              'text-xs font-medium tabular-nums',
-              overBudget ? 'text-destructive' : 'text-primary',
-            )}
-          >
-            {overBudget
-              ? `${formatCurrency(Math.abs(remaining!))} sobre el presupuesto`
-              : `${formatCurrency(remaining!)} disponibles · ${Math.round(percentage)}% usado`}
-          </p>
+      {topCategory ? (
+        <div className="metric-cell sm:hidden">
+          <p className="metric-cell-label">Categoría principal</p>
+          <p className="metric-cell-value truncate">{topCategory.name}</p>
         </div>
-      ) : editingBudget ? (
-        <div className="space-y-2 border-t border-border/60 pt-4">
-          <p className="text-xs text-muted-foreground">Presupuesto mensual</p>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              value={budgetValue}
-              onChange={(e) => setBudgetValue(e.target.value)}
-              placeholder="0.00"
-              className="border-border bg-secondary/50"
-            />
-            <div className="flex gap-2">
-              <Button className="cursor-pointer" onClick={handleSaveBudget} disabled={upsertBudget.isPending}>
-                Guardar
-              </Button>
-              <Button variant="ghost" className="cursor-pointer" onClick={() => setEditingBudget(false)}>
-                Cancelar
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center justify-between border-t border-border/60 pt-4">
-          <p className="text-xs text-muted-foreground">
-            Sin presupuesto definido para este mes.
-          </p>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-auto cursor-pointer px-0 text-xs text-primary hover:text-primary/80"
-            onClick={() => setEditingBudget(true)}
-          >
-            Definir
-          </Button>
-        </div>
-      )}
+      ) : null}
     </section>
   )
 }

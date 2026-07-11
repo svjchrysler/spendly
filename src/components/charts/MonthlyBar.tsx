@@ -19,11 +19,11 @@ function CustomTooltip({
   active,
   payload,
   label,
-}: {
+}: Readonly<{
   active?: boolean
   payload?: { value: number }[]
   label?: string
-}) {
+}>) {
   if (!active || !payload?.[0]) return null
   return (
     <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-md">
@@ -33,7 +33,7 @@ function CustomTooltip({
   )
 }
 
-export function MonthlyBar({ data }: MonthlyBarProps) {
+export function MonthlyBar({ data }: Readonly<MonthlyBarProps>) {
   const isDesktop = useIsDesktop()
   const maxTotal = Math.max(...data.map((item) => item.total), 1)
   const currentIndex = data.length - 1
@@ -46,7 +46,7 @@ export function MonthlyBar({ data }: MonthlyBarProps) {
   }
 
   return (
-    <section className="data-panel space-y-5">
+    <section className="space-y-4">
       <div className="flex items-end justify-between gap-3">
         <p className="stat-label">Últimos 6 meses</p>
         <p className="text-xs text-muted-foreground">

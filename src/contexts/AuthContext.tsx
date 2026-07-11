@@ -29,12 +29,17 @@ function mapAuthError(message: string) {
   return errors[message] ?? message
 }
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let alive = true
+
+    // ponytail: wait for getSession before clearing loading — onAuthStateChange
+    // can fire null first on refresh and bounce protected routes to /login
     supabase.auth.getSession().then(({ data }) => {
+      if (!alive) return
       setSession(data.session)
       setLoading(false)
     })
@@ -42,11 +47,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!alive) return
       setSession(nextSession)
-      setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      alive = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   const value = useMemo<AuthContextValue>(

@@ -30,53 +30,71 @@ function tokenize(text: string) {
 
 const MIN_SCORE = 6
 
-export function predictCategoryFromDescription(
-  description: string,
-  history: ExpenseHistoryItem[],
-  categories: Category[],
-): CategoryPrediction | null {
-  const normalized = normalizeText(description)
-  if (normalized.length < 2) return null
+type ScoreFn = (categoryId: string, points: number) => void
 
-  const categoryById = new Map(categories.map((category) => [category.id, category]))
-  const scores = new Map<string, number>()
-
-  function addScore(categoryId: string, points: number) {
-    if (!categoryById.has(categoryId)) return
-    scores.set(categoryId, (scores.get(categoryId) ?? 0) + points)
+function scoreExactOrPartialMatch(
+  normalized: string,
+  past: string,
+  categoryId: string,
+  addScore: ScoreFn,
+): boolean {
+  if (past === normalized) {
+    addScore(categoryId, 100)
+    return true
   }
 
+  if (!past.includes(normalized) && !normalized.includes(past)) return false
+
+  const shorter = Math.min(past.length, normalized.length)
+  const longer = Math.max(past.length, normalized.length)
+  addScore(categoryId, Math.round(24 * (shorter / longer)))
+  return true
+}
+
+function scoreTokenOverlap(
+  normalized: string,
+  past: string,
+  categoryId: string,
+  addScore: ScoreFn,
+) {
+  const inputTokens = tokenize(normalized)
+  const pastTokens = tokenize(past)
+  if (inputTokens.length === 0 || pastTokens.length === 0) return
+
+  const shared = inputTokens.filter((token) =>
+    pastTokens.some((pastToken) => pastToken.includes(token) || token.includes(pastToken)),
+  )
+  if (shared.length > 0) addScore(categoryId, shared.length * 8)
+}
+
+function scoreFromHistory(
+  normalized: string,
+  history: ExpenseHistoryItem[],
+  addScore: ScoreFn,
+) {
   for (const item of history) {
     if (!item.description?.trim()) continue
 
     const past = normalizeText(item.description)
     if (!past) continue
 
-    if (past === normalized) {
-      addScore(item.category_id, 100)
-      continue
-    }
-
-    if (past.includes(normalized) || normalized.includes(past)) {
-      const shorter = Math.min(past.length, normalized.length)
-      const longer = Math.max(past.length, normalized.length)
-      const ratio = shorter / longer
-      addScore(item.category_id, Math.round(24 * ratio))
-      continue
-    }
-
-    const inputTokens = tokenize(normalized)
-    const pastTokens = tokenize(past)
-    if (inputTokens.length === 0 || pastTokens.length === 0) continue
-
-    const shared = inputTokens.filter((token) =>
-      pastTokens.some((pastToken) => pastToken.includes(token) || token.includes(pastToken)),
+    const matched = scoreExactOrPartialMatch(
+      normalized,
+      past,
+      item.category_id,
+      addScore,
     )
-    if (shared.length > 0) {
-      addScore(item.category_id, shared.length * 8)
-    }
-  }
+    if (matched) continue
 
+    scoreTokenOverlap(normalized, past, item.category_id, addScore)
+  }
+}
+
+function scoreFromCategoryNames(
+  normalized: string,
+  categories: Category[],
+  addScore: ScoreFn,
+) {
   for (const category of categories) {
     const name = normalizeText(category.name)
     if (name.length >= 3 && normalized.includes(name)) {
@@ -89,28 +107,64 @@ export function predictCategoryFromDescription(
       }
     }
   }
+}
 
+function bestCategoryId(scores: Map<string, number>) {
   let bestId = ''
   let bestScore = 0
   for (const [categoryId, score] of scores) {
-    if (score > bestScore) {
-      bestScore = score
-      bestId = categoryId
-    }
+    if (score <= bestScore) continue
+    bestScore = score
+    bestId = categoryId
+  }
+  return { bestId, bestScore }
+}
+
+function confidenceFromScore(score: number): PredictionConfidence {
+  if (score >= 80) return 'high'
+  if (score >= 18) return 'medium'
+  return 'low'
+}
+
+export function predictCategoryFromDescription(
+  description: string,
+  history: ExpenseHistoryItem[],
+  categories: Category[],
+): CategoryPrediction | null {
+  const normalized = normalizeText(description)
+  if (normalized.length < 2) return null
+
+  const categoryById = new Map(categories.map((category) => [category.id, category]))
+  const scores = new Map<string, number>()
+
+  const addScore: ScoreFn = (categoryId, points) => {
+    if (!categoryById.has(categoryId)) return
+    scores.set(categoryId, (scores.get(categoryId) ?? 0) + points)
   }
 
+  scoreFromHistory(normalized, history, addScore)
+  scoreFromCategoryNames(normalized, categories, addScore)
+
+  const { bestId, bestScore } = bestCategoryId(scores)
   if (!bestId || bestScore < MIN_SCORE) return null
 
   const category = categoryById.get(bestId)
   if (!category) return null
 
-  let confidence: PredictionConfidence = 'low'
-  if (bestScore >= 80) confidence = 'high'
-  else if (bestScore >= 18) confidence = 'medium'
-
   return {
     categoryId: bestId,
     categoryName: category.name,
-    confidence,
+    confidence: confidenceFromScore(bestScore),
+  }
+}
+
+// ponytail: smoke-check scoring paths stay stable
+if (import.meta.env.DEV) {
+  const cats = [
+    { id: '1', name: 'Taxi', icon: '🚕', color: '#fff', user_id: '', created_at: '' },
+  ] as Category[]
+  const exact = predictCategoryFromDescription('Taxi', [{ description: 'Taxi', category_id: '1' }], cats)
+  if (exact?.categoryId !== '1' || exact.confidence !== 'high') {
+    console.error('predict-category: exact match failed', exact)
   }
 }

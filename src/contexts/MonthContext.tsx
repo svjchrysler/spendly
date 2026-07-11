@@ -10,7 +10,7 @@ interface MonthContextValue {
 
 const MonthContext = createContext<MonthContextValue | null>(null)
 
-export function MonthProvider({ children }: { children: ReactNode }) {
+export function MonthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonthState] = useState(now.getMonth() + 1)

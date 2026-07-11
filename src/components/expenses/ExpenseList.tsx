@@ -43,7 +43,7 @@ interface ExpenseListProps {
   showFab?: boolean
 }
 
-export function ExpenseList({ expenses, showFab = false }: ExpenseListProps) {
+export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListProps>) {
   const { year, month } = useMonth()
   const deleteExpense = useDeleteExpense(year, month)
   const [openAdd, setOpenAdd] = useState(false)
@@ -103,48 +103,55 @@ export function ExpenseList({ expenses, showFab = false }: ExpenseListProps) {
     />
   ) : null
 
+  let addExpenseUi = null
+  if (showFab) {
+    if (isDesktop) {
+      addExpenseUi = (
+        <Dialog open={openAdd} onOpenChange={setOpenAdd}>
+          <Button
+            className="fab"
+            onClick={() => setOpenAdd(true)}
+            aria-label="Agregar gasto"
+          >
+            <Plus className="size-6" />
+          </Button>
+          <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-md">
+            <DialogHeader className="pr-8">
+              <DialogTitle>Nuevo gasto</DialogTitle>
+            </DialogHeader>
+            {addForm}
+          </DialogContent>
+        </Dialog>
+      )
+    } else {
+      addExpenseUi = (
+        <Sheet open={openAdd} onOpenChange={setOpenAdd}>
+          <Button
+            className="fab"
+            aria-label="Agregar gasto"
+            onClick={() => setOpenAdd(true)}
+          >
+            <Plus className="size-6" />
+          </Button>
+          <SheetContent
+            side="bottom"
+            className="max-h-[88dvh] gap-0 overflow-y-auto rounded-t-2xl px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3"
+          >
+            <SheetHeader className="pb-3">
+              <SheetTitle>Nuevo gasto</SheetTitle>
+            </SheetHeader>
+            {addForm}
+          </SheetContent>
+        </Sheet>
+      )
+    }
+  }
+
   return (
     <>
-      {showFab ? (
-        isDesktop ? (
-          <Dialog open={openAdd} onOpenChange={setOpenAdd}>
-            <Button
-              className="fab"
-              onClick={() => setOpenAdd(true)}
-              aria-label="Agregar gasto"
-            >
-              <Plus className="size-6" />
-            </Button>
-            <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Nuevo gasto</DialogTitle>
-              </DialogHeader>
-              {addForm}
-            </DialogContent>
-          </Dialog>
-        ) : (
-          <Sheet open={openAdd} onOpenChange={setOpenAdd}>
-            <Button
-              className="fab"
-              aria-label="Agregar gasto"
-              onClick={() => setOpenAdd(true)}
-            >
-              <Plus className="size-6" />
-            </Button>
-            <SheetContent
-              side="bottom"
-              className="max-h-[88dvh] gap-0 overflow-y-auto rounded-t-2xl px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3"
-            >
-              <SheetHeader className="pb-3">
-                <SheetTitle>Nuevo gasto</SheetTitle>
-              </SheetHeader>
-              {addForm}
-            </SheetContent>
-          </Sheet>
-        )
-      ) : null}
+      {addExpenseUi}
 
-      <div className="space-y-4">
+      <div className="space-y-2.5">
         <AnimatePresence mode="popLayout">
           {grouped.map(({ date, items, subtotal }) => (
             <motion.section
@@ -152,17 +159,17 @@ export function ExpenseList({ expenses, showFab = false }: ExpenseListProps) {
               layout
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2 }}
-              className="data-panel overflow-hidden p-0"
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="overflow-hidden"
             >
-              <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+              <div className="flex items-center justify-between border-b border-border/40 pb-2">
                 <h3 className="stat-label capitalize">{formatDayLabel(date)}</h3>
-                <span className="text-sm font-semibold tabular-nums text-muted-foreground">
+                <span className="text-sm font-semibold tabular-nums text-foreground/90">
                   {formatCurrency(subtotal)}
                 </span>
               </div>
-              <div className="divide-y divide-border/60">
+              <div className="divide-y divide-border/30">
                 {items.map((expense) => {
                   return (
                     <motion.div
@@ -185,26 +192,27 @@ export function ExpenseList({ expenses, showFab = false }: ExpenseListProps) {
                               }
                             }
                       }
-                      className="group flex min-w-0 items-center justify-between gap-2 px-4 py-3 transition-colors duration-200 hover:bg-muted/20 sm:gap-3"
+                      className="group flex min-w-0 cursor-pointer items-center justify-between gap-2 py-2.5 transition-colors duration-150 hover:bg-muted/15 active:bg-muted/25 sm:gap-3 sm:cursor-default"
                     >
-                      <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <div className="flex min-w-0 flex-1 items-center gap-2.5">
                         <ExpenseIcon
                           description={expense.description}
                           categoryName={expense.category?.name}
                           categoryIcon={expense.category?.icon}
                           categoryColor={expense.category?.color}
+                          size="sm"
                         />
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium">
+                          <p className="truncate text-[15px] font-medium leading-tight">
                             {getExpenseLabel(expense.description, expense.category?.name)}
                           </p>
-                          <p className="truncate text-xs text-muted-foreground">
+                          <p className="truncate text-xs leading-tight text-muted-foreground">
                             {expense.category?.name}
                           </p>
                         </div>
                       </div>
-                      <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-                        <span className="text-sm font-semibold whitespace-nowrap tabular-nums">
+                      <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+                        <span className="text-base font-semibold whitespace-nowrap tabular-nums tracking-tight">
                           {formatCurrency(Number(expense.amount))}
                         </span>
                         {isDesktop ? (
@@ -248,7 +256,7 @@ export function ExpenseList({ expenses, showFab = false }: ExpenseListProps) {
       {isDesktop ? (
         <Dialog open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
           <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-md">
-            <DialogHeader>
+            <DialogHeader className="pr-8">
               <DialogTitle>Editar gasto</DialogTitle>
             </DialogHeader>
             {editForm}

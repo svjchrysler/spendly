@@ -21,15 +21,6 @@ export function getCategoryIcon(iconName: string): LucideIcon {
   return iconMap[iconName] ?? Receipt
 }
 
-export const categoryIconOptions = [
-  { value: 'utensils', label: 'Alimentación' },
-  { value: 'car', label: 'Transporte' },
-  { value: 'home', label: 'Vivienda' },
-  { value: 'gamepad-2', label: 'Entretenimiento' },
-  { value: 'heart-pulse', label: 'Salud' },
-  { value: 'receipt', label: 'General' },
-]
-
 export const categoryColorOptions = [
   '#F59E0B',
   '#3B82F6',

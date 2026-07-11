@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -21,13 +20,6 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   useCategories,
@@ -35,28 +27,31 @@ import {
   useDeleteCategory,
   useUpdateCategory,
 } from '@/hooks/useCategories'
+import { CategoryIcon } from '@/components/categories/CategoryIcon'
 import {
-  categoryColorOptions,
-  categoryIconOptions,
-  getCategoryIcon,
-} from '@/lib/category-icons'
+  categoryEmojiOptions,
+  resolveCategoryEmoji,
+} from '@/lib/category-emojis'
+import { categoryColorOptions } from '@/lib/category-icons'
+import { cn } from '@/lib/utils'
 import type { Category } from '@/types/database'
 
-function CategoryForm({
-  category,
-  onSuccess,
-}: {
-  category?: Category
-  onSuccess: () => void
-}) {
+interface CategoryFormProps {
+  readonly category?: Category
+  readonly onSuccess: () => void
+}
+
+function CategoryForm({ category, onSuccess }: CategoryFormProps) {
   const createCategory = useCreateCategory()
   const updateCategory = useUpdateCategory()
   const [name, setName] = useState(category?.name ?? '')
-  const [icon, setIcon] = useState(category?.icon ?? 'receipt')
+  const [icon, setIcon] = useState(
+    resolveCategoryEmoji(category?.icon, category?.name) ?? '📦',
+  )
   const [color, setColor] = useState(category?.color ?? '#3B82F6')
   const isEditing = Boolean(category)
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!name.trim()) {
       toast.error('El nombre es obligatorio')
@@ -88,30 +83,30 @@ function CategoryForm({
           placeholder="Ej. Suscripciones"
         />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="cat-icon">Icono</Label>
-        <Select
-          value={icon}
-          onValueChange={(value) => value && setIcon(value)}
-          items={categoryIconOptions.map((option) => ({
-            value: option.value,
-            label: option.label,
-          }))}
-        >
-          <SelectTrigger id="cat-icon" className="cursor-pointer">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {categoryIconOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value} className="cursor-pointer">
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-2">
-        <Label>Color</Label>
+      <fieldset className="space-y-2">
+        <legend className="text-sm leading-none font-medium">Icono</legend>
+        <div className="flex flex-wrap gap-2">
+          {categoryEmojiOptions.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              onClick={() => setIcon(emoji)}
+              className={cn(
+                'flex size-9 cursor-pointer items-center justify-center rounded-lg border text-lg transition-colors',
+                icon === emoji
+                  ? 'border-primary/50 bg-primary/10'
+                  : 'border-border/60 bg-muted/20 hover:bg-muted/40',
+              )}
+              aria-label={`Icono ${emoji}`}
+              aria-pressed={icon === emoji}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset className="space-y-2">
+        <legend className="text-sm leading-none font-medium">Color</legend>
         <div className="flex flex-wrap gap-2">
           {categoryColorOptions.map((optionColor) => (
             <button
@@ -127,7 +122,7 @@ function CategoryForm({
             />
           ))}
         </div>
-      </div>
+      </fieldset>
       <Button
         type="submit"
         className="w-full cursor-pointer"
@@ -158,8 +153,8 @@ export function CategoriesPage() {
   }
 
   return (
-    <div className="page-stack">
-      <div className="flex flex-col gap-3 border-b border-border pb-6 sm:flex-row sm:items-center sm:justify-between">
+    <div className="page-stack space-y-2">
+      <div className="section-rule flex flex-col gap-3 pb-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="stat-label">Categorías</p>
         <Dialog open={openCreate} onOpenChange={setOpenCreate}>
           <Button
@@ -179,49 +174,49 @@ export function CategoriesPage() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="divide-y divide-border/30">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-28 w-full rounded-xl" />
+            <Skeleton key={i} className="my-2 h-12 w-full" />
           ))}
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="divide-y divide-border/30">
           {categories.map((category) => {
-            const Icon = getCategoryIcon(category.icon)
             return (
-              <Card
+              <div
                 key={category.id}
-                className="border-border bg-transparent transition-colors duration-200 hover:bg-muted/20"
+                className="flex items-center justify-between gap-2 py-3 transition-colors duration-150 hover:bg-muted/10"
               >
-                <CardContent className="flex items-center justify-between gap-2 p-4">
-                  <div className="flex min-w-0 flex-1 items-center gap-3">
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-secondary">
-                      <Icon className="size-4" style={{ color: category.color }} />
-                    </div>
-                    <p className="truncate font-medium">{category.name}</p>
-                  </div>
-                  <div className="flex shrink-0 gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="cursor-pointer"
-                      onClick={() => setEditing(category)}
-                      aria-label="Editar categoría"
-                    >
-                      <Pencil className="size-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="cursor-pointer text-destructive"
-                      onClick={() => setDeleting(category)}
-                      aria-label="Eliminar categoría"
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <CategoryIcon
+                    icon={category.icon}
+                    color={category.color}
+                    name={category.name}
+                    size="md"
+                  />
+                  <p className="truncate font-medium">{category.name}</p>
+                </div>
+                <div className="flex shrink-0 gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="cursor-pointer"
+                    onClick={() => setEditing(category)}
+                    aria-label="Editar categoría"
+                  >
+                    <Pencil className="size-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="cursor-pointer text-destructive"
+                    onClick={() => setDeleting(category)}
+                    aria-label="Eliminar categoría"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+              </div>
             )
           })}
         </div>

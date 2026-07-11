@@ -35,60 +35,51 @@ export function ExpensesPage() {
   const selectedCategory = categories.find((category) => category.id === categoryId)
 
   return (
-    <div className="page-stack">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="stat-label">Gastos del mes</p>
-        <MonthPicker />
-      </div>
-
+    <div className="page-stack space-y-6">
       {!isLoading ? (
-        <div className="data-panel flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="metric-chip-label">
-              {selectedCategory ? selectedCategory.name : 'Todos los gastos'}
-            </p>
-            <p className="text-2xl font-semibold tracking-tight tabular-nums sm:text-3xl">
+        <section className="section-rule flex items-start justify-between gap-3 pb-6">
+          <div className="min-w-0 space-y-2">
+            <p className="stat-value">
               {formatCurrency(total)}
             </p>
-          </div>
-          <div className="shrink-0 text-right">
-            <p className="text-2xl font-semibold tabular-nums">{expenses.length}</p>
-            <p className="text-xs text-muted-foreground">
-              {expenses.length === 1 ? 'gasto' : 'gastos'}
+            <p className="text-sm text-muted-foreground">
+              {selectedCategory ? selectedCategory.name : 'Todos los gastos'}
+              {' · '}
+              {expenses.length} {expenses.length === 1 ? 'gasto' : 'gastos'}
             </p>
           </div>
-        </div>
+          <MonthPicker />
+        </section>
       ) : (
-        <Skeleton className="h-24 w-full rounded-xl" />
+        <Skeleton className="h-20 w-full" />
       )}
 
-      <ExpenseFilters
-        search={search}
-        onSearchChange={setSearch}
-        categoryId={categoryId}
-        onCategoryChange={setCategoryId}
-        categories={categories}
-        loading={categoriesLoading}
-      />
+      <div className="space-y-4">
+        <ExpenseFilters
+          search={search}
+          onSearchChange={setSearch}
+          categoryId={categoryId}
+          onCategoryChange={setCategoryId}
+          categories={categories}
+          loading={categoriesLoading}
+        />
 
-      {isLoading ? (
-        <div className="space-y-3">
-          <Skeleton className="h-24 w-full rounded-xl" />
-          <Skeleton className="h-24 w-full rounded-xl" />
-        </div>
-      ) : (
-        <>
-          {expenses.length === 0 ? (
-            <div className="data-panel py-12 text-center">
-              <p className="font-medium">No hay gastos</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Ajusta los filtros o usa el botón + para agregar uno
-              </p>
-            </div>
-          ) : null}
-          <ExpenseList expenses={expenses} showFab />
-        </>
-      )}
+        {isLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        ) : (
+          <>
+            {expenses.length === 0 ? (
+              <div className="py-8">
+                <p className="text-sm text-muted-foreground">No hay gastos</p>
+              </div>
+            ) : null}
+            <ExpenseList expenses={expenses} showFab />
+          </>
+        )}
+      </div>
     </div>
   )
 }

@@ -17,11 +17,11 @@ function ActionIconBox({
   children,
   color,
   className,
-}: {
+}: Readonly<{
   children: ReactNode
   color: string
   className?: string
-}) {
+}>) {
   return (
     <span
       className={cn(
@@ -39,7 +39,7 @@ export function ExpenseActionSheet({
   expense,
   onEdit,
   onDelete,
-}: ExpenseActionSheetProps) {
+}: Readonly<ExpenseActionSheetProps>) {
   const title = getExpenseLabel(expense.description, expense.category?.name)
 
   return (
@@ -94,7 +94,7 @@ interface ExpenseRowActionsProps {
   onDelete: () => void
 }
 
-export function ExpenseRowActions({ onEdit, onDelete }: ExpenseRowActionsProps) {
+export function ExpenseRowActions({ onEdit, onDelete }: Readonly<ExpenseRowActionsProps>) {
   return (
     <div className="flex shrink-0 items-center gap-0.5">
       <Button

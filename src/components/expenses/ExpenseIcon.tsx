@@ -1,5 +1,5 @@
 import { CategoryIcon } from '@/components/categories/CategoryIcon'
-import { getCategoryEmoji } from '@/lib/category-emojis'
+import { resolveCategoryEmoji } from '@/lib/category-emojis'
 import { extractExpenseEmoji } from '@/lib/expense-display'
 
 interface ExpenseIconProps {
@@ -18,11 +18,14 @@ export function ExpenseIcon({
   categoryColor,
   size = 'md',
   className,
-}: ExpenseIconProps) {
+}: Readonly<ExpenseIconProps>) {
   return (
     <CategoryIcon
-      emoji={extractExpenseEmoji(description) ?? getCategoryEmoji(categoryName)}
-      icon={categoryIcon ?? 'receipt'}
+      emoji={
+        extractExpenseEmoji(description) ??
+        resolveCategoryEmoji(categoryIcon, categoryName)
+      }
+      icon={categoryIcon}
       color={categoryColor}
       name={categoryName}
       size={size}

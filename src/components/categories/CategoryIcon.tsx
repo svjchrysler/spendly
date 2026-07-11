@@ -1,4 +1,4 @@
-import { getCategoryEmoji } from '@/lib/category-emojis'
+import { resolveCategoryEmoji } from '@/lib/category-emojis'
 import { getCategoryIcon } from '@/lib/category-icons'
 import { cn } from '@/lib/utils'
 
@@ -11,7 +11,7 @@ const sizeMap = {
 } as const
 
 interface CategoryIconProps {
-  icon: string
+  icon?: string | null
   color?: string | null
   name?: string | null
   emoji?: string | null
@@ -26,10 +26,10 @@ export function CategoryIcon({
   emoji: emojiProp,
   size = 'md',
   className,
-}: CategoryIconProps) {
-  const emoji = emojiProp ?? getCategoryEmoji(name)
+}: Readonly<CategoryIconProps>) {
+  const emoji = emojiProp ?? resolveCategoryEmoji(icon, name)
   const sizes = sizeMap[size]
-  const Icon = getCategoryIcon(icon)
+  const Icon = getCategoryIcon(icon && !emoji ? icon : 'receipt')
 
   if (size === 'pill') {
     if (emoji) {
