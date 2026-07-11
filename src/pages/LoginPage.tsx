@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { ArrowUpRight, Eye, EyeOff, Lock, Moon, Sun } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowUpRight, Eye, EyeOff, Moon, Sun } from 'lucide-react'
 import { toast } from 'sonner'
 import { BrandMark } from '@/components/layout/BrandMark'
 import { useAuth } from '@/contexts/AuthContext'
@@ -12,19 +12,6 @@ const modules = [
   { name: 'Gastos', detail: 'Registro · filtros · historial' },
   { name: 'Categorías', detail: 'Iconos · colores · predicción' },
 ]
-
-function LiveClock() {
-  const [now, setNow] = useState(() => new Date())
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(new Date()), 1000)
-    return () => window.clearInterval(id)
-  }, [])
-  return (
-    <span className="tabular-nums">
-      {now.toLocaleTimeString('es-BO', { hour12: false })}
-    </span>
-  )
-}
 
 export function LoginPage() {
   const { signIn, resetPassword } = useAuth()
@@ -70,45 +57,39 @@ export function LoginPage() {
         <div className="absolute top-1/3 -right-16 size-64 rounded-full bg-primary/8 blur-3xl" />
       </div>
 
-      <header className="flex items-center justify-between border-b border-border/80 bg-background/50 px-4 py-3 backdrop-blur-md sm:px-6">
+      <header className="flex items-center justify-between border-b border-border/80 bg-background/50 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 backdrop-blur-md sm:px-6">
         <div className="flex items-center gap-2.5 text-sm font-semibold tracking-tight">
           <BrandMark size="sm" />
           Spendly
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-[11px] font-medium tracking-[0.12em] text-muted-foreground uppercase">
-            <span className="size-1.5 animate-pulse rounded-full bg-primary" aria-hidden />
-            En vivo / <LiveClock />
-          </div>
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="pressable inline-flex size-8 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
-            aria-label={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
-          >
-            {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="pressable inline-flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+          aria-label={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
+        >
+          {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
+        </button>
       </header>
 
-      <main className="mx-auto grid w-full max-w-6xl flex-1 gap-10 px-4 py-10 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:py-16">
+      <main className="mx-auto grid w-full max-w-6xl flex-1 content-center gap-10 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-2 lg:gap-16 lg:py-16">
         <section className="flex flex-col justify-center">
-          <p className="stat-label mb-4">No. 01 · Iniciar sesión</p>
-          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+          <h1 className="text-[2.5rem] leading-[1.05] font-semibold tracking-tight sm:text-5xl">
             Bienvenido
             <br />
             <span className="text-primary">de vuelta.</span>
           </h1>
 
-          <form onSubmit={handleLogin} className="mt-10 space-y-6">
+          <form onSubmit={handleLogin} className="mt-8 space-y-5 sm:mt-10 sm:space-y-6">
             <div className="space-y-2">
               <label htmlFor="email" className="stat-label">
-                01 Email
+                Email
               </label>
               <input
                 id="email"
                 type="email"
                 autoComplete="email"
+                inputMode="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 readOnly={Boolean(ownerEmail)}
@@ -124,7 +105,7 @@ export function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-3">
                 <label htmlFor="password" className="stat-label">
-                  02 Contraseña
+                  Contraseña
                 </label>
                 <button
                   type="button"
@@ -149,7 +130,7 @@ export function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-            className="h-12 w-full rounded-xl border border-border/50 bg-transparent px-4 text-base outline-none transition-colors duration-200 focus-visible:border-primary/40 focus-visible:bg-foreground/[0.02] focus-visible:ring-2 focus-visible:ring-primary/20"
+                className="h-12 w-full rounded-xl border border-border/50 bg-transparent px-4 text-base outline-none transition-colors duration-200 focus-visible:border-primary/40 focus-visible:bg-foreground/[0.02] focus-visible:ring-2 focus-visible:ring-primary/20"
               />
             </div>
 
@@ -178,7 +159,7 @@ export function LoginPage() {
         </section>
 
         <aside className="hidden flex-col justify-center border-l border-border pl-10 lg:flex">
-          <p className="stat-label mb-6">Módulos · en vivo</p>
+          <p className="stat-label mb-6">Módulos</p>
           <ul className="space-y-0 divide-y divide-border">
             {modules.map((item) => (
               <li key={item.name} className="flex items-center justify-between gap-4 py-4">
@@ -186,43 +167,19 @@ export function LoginPage() {
                   <p className="text-sm font-semibold tracking-wide uppercase">{item.name}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">{item.detail}</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <svg width="56" height="20" viewBox="0 0 56 20" className="text-primary" aria-hidden>
-                    <path
-                      d="M1 14 L10 10 L18 12 L28 6 L38 9 L47 4 L55 7"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                    />
-                  </svg>
-                  <span className="flex items-center gap-1.5 text-[10px] font-medium tracking-[0.12em] text-primary uppercase">
-                    <span className="size-1.5 rounded-full bg-primary" />
-                    Activo
-                  </span>
-                </div>
+                <span className="flex items-center gap-1.5 text-[10px] font-medium tracking-[0.12em] text-primary uppercase">
+                  <span className="size-1.5 rounded-full bg-primary" />
+                  Activo
+                </span>
               </li>
             ))}
           </ul>
-
-          <div className="mt-10 space-y-2 border-t border-border pt-6">
-            <p className="stat-label text-primary">Acceso restringido</p>
-            <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
-              Consola personal de gastos. El acceso se valida con Supabase Auth
-              {ownerEmail ? ` para ${ownerEmail}.` : '.'}
-            </p>
-          </div>
         </aside>
       </main>
 
-      <footer className="flex flex-col gap-2 border-t border-border px-4 py-3 text-[11px] text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <p className="inline-flex items-center gap-2 tracking-[0.08em] uppercase">
-          <Lock className="size-3" />
-          Sesión cifrada · Supabase Auth
-        </p>
-        <p className="inline-flex items-center gap-2 tracking-[0.08em] uppercase">
-          <span className="size-1.5 rounded-full bg-primary" aria-hidden />
-          Todos los sistemas normales
-        </p>
+      {/* ponytail: no marketing footer on phone — feels like a website */}
+      <footer className="hidden border-t border-border px-6 py-3 text-[11px] text-muted-foreground sm:block pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        Acceso personal · Spendly
       </footer>
     </div>
   )
