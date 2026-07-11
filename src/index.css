@@ -108,14 +108,40 @@
   html {
     @apply scroll-smooth font-sans;
     text-rendering: optimizeLegibility;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    overscroll-behavior: none;
+    touch-action: manipulation;
   }
 
   body {
     @apply min-h-dvh overflow-x-hidden bg-background text-foreground font-sans antialiased;
     font-feature-settings: "ss01" on, "cv11" on, "tnum" on;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
     background-image:
       radial-gradient(ellipse 80% 50% at 50% -30%, rgba(21, 154, 99, 0.08), transparent 55%);
     background-attachment: fixed;
+  }
+
+  /* Installed PWA: feel like a shell, not a browser tab */
+  @media (display-mode: standalone), (display-mode: fullscreen) {
+    html,
+    body {
+      overscroll-behavior-y: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    input,
+    textarea,
+    [contenteditable='true'] {
+      user-select: text;
+      -webkit-user-select: text;
+      -webkit-touch-callout: default;
+    }
   }
 
   .dark body {
