@@ -46,7 +46,9 @@ function InsightCell({
   hint?: string
   tone?: 'primary' | 'destructive'
 }>) {
-  const toneClass = { primary: 'text-primary', destructive: 'text-destructive' }[tone ?? '']
+  let toneClass: string | undefined
+  if (tone === 'primary') toneClass = 'text-primary'
+  else if (tone === 'destructive') toneClass = 'text-destructive'
   return (
     <div className="metric-cell">
       <p className={cn('metric-cell-label', toneClass)}>{label}</p>
