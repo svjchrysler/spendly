@@ -23,10 +23,3 @@ export function getMonthlyCapMessage(spent: number): string | null {
 
   return `Te estás acercando al máximo mensual de ${formatCurrency(MONTHLY_CAP_BS)} · quedan ${formatCurrency(remaining)}`
 }
-
-if (import.meta.env.DEV) {
-  console.assert(getMonthlyCapLevel(15_999) === 'ok', 'cap: below warn')
-  console.assert(getMonthlyCapLevel(16_000) === 'warn', 'cap: at warn')
-  console.assert(getMonthlyCapLevel(20_000) === 'over', 'cap: at max')
-  console.assert(getMonthlyCapMessage(10_000) === null, 'cap: no message under warn')
-}

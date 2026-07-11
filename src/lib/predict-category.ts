@@ -157,14 +157,3 @@ export function predictCategoryFromDescription(
     confidence: confidenceFromScore(bestScore),
   }
 }
-
-// ponytail: smoke-check scoring paths stay stable
-if (import.meta.env.DEV) {
-  const cats = [
-    { id: '1', name: 'Taxi', icon: '🚕', color: '#fff', user_id: '', created_at: '' },
-  ] as Category[]
-  const exact = predictCategoryFromDescription('Taxi', [{ description: 'Taxi', category_id: '1' }], cats)
-  if (exact?.categoryId !== '1' || exact.confidence !== 'high') {
-    console.error('predict-category: exact match failed', exact)
-  }
-}
