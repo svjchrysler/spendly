@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { RouteFallback } from '@/components/layout/RouteFallback'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { MonthProvider } from '@/contexts/MonthContext'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 import { queryClient } from '@/lib/query-client'
 import { AppShell } from '@/components/layout/AppShell'
 import { ProtectedRoute, PublicRoute } from '@/routes/ProtectedRoute'
@@ -23,36 +24,38 @@ const CategoriesPage = lazy(() =>
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <Suspense fallback={<RouteFallback />}>
-            <Routes>
-              <Route element={<PublicRoute />}>
-                <Route path="/login" element={<LoginPage />} />
-              </Route>
-
-              <Route element={<ProtectedRoute />}>
-                <Route
-                  element={
-                    <MonthProvider>
-                      <AppShell />
-                    </MonthProvider>
-                  }
-                >
-                  <Route index element={<DashboardPage />} />
-                  <Route path="gastos" element={<ExpensesPage />} />
-                  <Route path="categorias" element={<CategoriesPage />} />
+      <ThemeProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Suspense fallback={<RouteFallback />}>
+              <Routes>
+                <Route element={<PublicRoute />}>
+                  <Route path="/login" element={<LoginPage />} />
                 </Route>
-              </Route>
 
-              <Route path="/register" element={<Navigate to="/login" replace />} />
-              <Route path="/perfil" element={<Navigate to="/" replace />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-        <Toaster richColors position="top-center" />
-      </AuthProvider>
+                <Route element={<ProtectedRoute />}>
+                  <Route
+                    element={
+                      <MonthProvider>
+                        <AppShell />
+                      </MonthProvider>
+                    }
+                  >
+                    <Route index element={<DashboardPage />} />
+                    <Route path="gastos" element={<ExpensesPage />} />
+                    <Route path="categorias" element={<CategoriesPage />} />
+                  </Route>
+                </Route>
+
+                <Route path="/register" element={<Navigate to="/login" replace />} />
+                <Route path="/perfil" element={<Navigate to="/" replace />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+          <Toaster richColors position="top-center" />
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   )
 }

@@ -56,10 +56,10 @@ export function MonthlyBar({ data }: Readonly<MonthlyBarProps>) {
       <div className="h-52 sm:h-56">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} barSize={isDesktop ? 32 : 22} margin={chartMargins}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis
               dataKey="label"
-              stroke="#737373"
+              stroke="var(--muted-foreground)"
               fontSize={11}
               tickLine={false}
               axisLine={false}
@@ -67,7 +67,7 @@ export function MonthlyBar({ data }: Readonly<MonthlyBarProps>) {
             />
             {isDesktop ? (
               <YAxis
-                stroke="#737373"
+                stroke="var(--muted-foreground)"
                 fontSize={10}
                 tickLine={false}
                 axisLine={false}
@@ -75,13 +75,13 @@ export function MonthlyBar({ data }: Readonly<MonthlyBarProps>) {
                 width={60}
               />
             ) : null}
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'color-mix(in oklab, var(--foreground) 6%, transparent)' }} />
             <Bar dataKey="total" radius={[4, 4, 0, 0]}>
               {data.map((entry, index) => (
                 <Cell
                   key={entry.label}
-                  fill={index === currentIndex ? '#5cdb95' : '#404040'}
-                  fillOpacity={index === currentIndex ? 1 : 0.7}
+                  fill={index === currentIndex ? 'var(--chart-1)' : 'var(--chart-5)'}
+                  fillOpacity={index === currentIndex ? 1 : 0.55}
                 />
               ))}
             </Bar>

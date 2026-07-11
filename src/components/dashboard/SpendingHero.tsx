@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useUpsertBudget } from '@/hooks/useMonthlyStats'
@@ -22,6 +23,7 @@ export function SpendingHero({
 }: Readonly<SpendingHeroProps>) {
   const { year, month } = useMonth()
   const upsertBudget = useUpsertBudget()
+  const reduceMotion = useReducedMotion()
   const [editingBudget, setEditingBudget] = useState(false)
   const [budgetValue, setBudgetValue] = useState(budget?.toString() ?? '')
 
@@ -119,12 +121,20 @@ export function SpendingHero({
 
   return (
     <section className="space-y-8">
-      <div className="space-y-2">
-        <p className="stat-value">{formatCurrency(spent)}</p>
+      <div className="space-y-2.5">
+        <motion.p
+          key={spent}
+          initial={reduceMotion ? false : { opacity: 0.4, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          className="stat-value"
+        >
+          {formatCurrency(spent)}
+        </motion.p>
         {budgetHint}
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-3 gap-5 sm:gap-8">
         <div className="metric-cell">
           <p className="metric-cell-label">Promedio / día</p>
           <p className="metric-cell-value">{formatCurrency(dailyAvg)}</p>

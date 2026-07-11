@@ -22,25 +22,31 @@ export function CategoryAllocation({ data, total, limit = 5 }: Readonly<Category
   const hiddenTotal = hidden.reduce((sum, item) => sum + item.total, 0)
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-5 lg:pt-1">
       <p className="stat-label">Asignación</p>
 
       <div className="space-y-4">
-        {visible.map((item) => {
+        {visible.map((item, index) => {
           const pct = total > 0 ? (item.total / total) * 100 : 0
           return (
-            <div key={item.id} className="space-y-2">
+            <div
+              key={item.id}
+              className="space-y-2"
+              style={{ animationDelay: `${index * 40}ms` }}
+            >
               <div className="flex items-baseline justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-2">
+                <div className="flex min-w-0 items-center gap-2.5">
                   <span
-                    className="size-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: item.color }}
+                    className="size-2 shrink-0 rounded-full shadow-[0_0_8px_currentColor]"
+                    style={{ backgroundColor: item.color, color: item.color }}
                     aria-hidden
                   />
-                  <span className="truncate text-sm font-medium">{item.name}</span>
+                  <span className="truncate text-sm font-medium tracking-tight">
+                    {item.name}
+                  </span>
                 </div>
-                <div className="flex shrink-0 items-baseline gap-2">
-                  <span className="text-sm font-semibold tabular-nums">
+                <div className="flex shrink-0 items-baseline gap-2.5">
+                  <span className="text-sm font-semibold tabular-nums tracking-tight">
                     {formatCurrency(item.total)}
                   </span>
                   <span className="w-9 text-right text-xs tabular-nums text-muted-foreground">
@@ -48,10 +54,13 @@ export function CategoryAllocation({ data, total, limit = 5 }: Readonly<Category
                   </span>
                 </div>
               </div>
-              <div className="h-1 w-full overflow-hidden rounded-full bg-secondary">
+              <div className="bar-track">
                 <div
-                  className="h-full rounded-full transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
-                  style={{ width: `${Math.max(pct, 1)}%`, backgroundColor: item.color }}
+                  className="bar-fill"
+                  style={{
+                    width: `${Math.max(pct, 1)}%`,
+                    backgroundColor: item.color,
+                  }}
                 />
               </div>
             </div>

@@ -37,6 +37,7 @@ import { useIsDesktop } from '@/hooks/useMediaQuery'
 import { useMonth } from '@/contexts/MonthContext'
 import type { ExpenseWithCategory } from '@/types/database'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 interface ExpenseListProps {
   expenses: ExpenseWithCategory[]
@@ -151,25 +152,29 @@ export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListP
     <>
       {addExpenseUi}
 
-      <div className="space-y-2.5">
+      <div className="space-y-5">
         <AnimatePresence mode="popLayout">
-          {grouped.map(({ date, items, subtotal }) => (
+          {grouped.map(({ date, items, subtotal }, groupIndex) => (
             <motion.section
               key={date}
               layout
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              transition={{
+                duration: 0.28,
+                delay: Math.min(groupIndex * 0.04, 0.16),
+                ease: [0.16, 1, 0.3, 1],
+              }}
               className="overflow-hidden"
             >
-              <div className="flex items-center justify-between border-b border-border/40 pb-2">
+              <div className="mb-1 flex items-center justify-between pb-2">
                 <h3 className="stat-label capitalize">{formatDayLabel(date)}</h3>
-                <span className="text-sm font-semibold tabular-nums text-foreground/90">
+                <span className="text-sm font-semibold tabular-nums tracking-tight text-foreground/90">
                   {formatCurrency(subtotal)}
                 </span>
               </div>
-              <div className="divide-y divide-border/30">
+              <div className="divide-y divide-border/25">
                 {items.map((expense) => {
                   return (
                     <motion.div
@@ -192,9 +197,12 @@ export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListP
                               }
                             }
                       }
-                      className="group flex min-w-0 cursor-pointer items-center justify-between gap-2 py-2.5 transition-colors duration-150 hover:bg-muted/15 active:bg-muted/25 sm:gap-3 sm:cursor-default"
+                      className={cn(
+                        'row-hover group flex min-w-0 items-center justify-between gap-3 py-3 sm:cursor-default',
+                        !isDesktop && 'cursor-pointer',
+                      )}
                     >
-                      <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
                         <ExpenseIcon
                           description={expense.description}
                           categoryName={expense.category?.name}
@@ -202,8 +210,8 @@ export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListP
                           categoryColor={expense.category?.color}
                           size="sm"
                         />
-                        <div className="min-w-0">
-                          <p className="truncate text-[15px] font-medium leading-tight">
+                        <div className="min-w-0 space-y-0.5">
+                          <p className="truncate text-[15px] font-medium leading-tight tracking-tight">
                             {getExpenseLabel(expense.description, expense.category?.name)}
                           </p>
                           <p className="truncate text-xs leading-tight text-muted-foreground">
@@ -212,7 +220,7 @@ export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListP
                         </div>
                       </div>
                       <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
-                        <span className="text-base font-semibold whitespace-nowrap tabular-nums tracking-tight">
+                        <span className="text-[15px] font-semibold whitespace-nowrap tabular-nums tracking-tight sm:text-base">
                           {formatCurrency(Number(expense.amount))}
                         </span>
                         {isDesktop ? (

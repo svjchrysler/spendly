@@ -158,7 +158,7 @@ export function DashboardPage() {
       {statsLoading ? (
         <Skeleton className="mb-10 h-40 w-full" />
       ) : (
-        <section className="section-rule grid gap-10 pb-10 pt-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16 lg:pb-12">
+        <section className="section-rule grid gap-10 pb-10 pt-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16 lg:pb-12 lg:pt-6">
           <SpendingHero
             spent={spent}
             transactionCount={expenses.length}
@@ -184,11 +184,11 @@ export function DashboardPage() {
       ) : null}
 
       <section className="space-y-5 pt-8 sm:pt-10">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <p className="stat-label">Actividad reciente</p>
           <Link
             to="/gastos"
-            className="pressable inline-flex cursor-pointer items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary"
+            className="pressable inline-flex cursor-pointer items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
           >
             Ver todos
             <ArrowRight className="size-3.5" />

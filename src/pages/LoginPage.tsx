@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
-import { ArrowUpRight, Eye, EyeOff, Lock } from 'lucide-react'
+import { ArrowUpRight, Eye, EyeOff, Lock, Moon, Sun } from 'lucide-react'
 import { toast } from 'sonner'
+import { BrandMark } from '@/components/layout/BrandMark'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTheme } from '@/contexts/ThemeContext'
 import { ownerEmail } from '@/lib/auth-config'
 import { cn } from '@/lib/utils'
 
@@ -26,6 +28,7 @@ function LiveClock() {
 
 export function LoginPage() {
   const { signIn, resetPassword } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const [email, setEmail] = useState(ownerEmail ?? '')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -68,16 +71,23 @@ export function LoginPage() {
       </div>
 
       <header className="flex items-center justify-between border-b border-border/80 bg-background/50 px-4 py-3 backdrop-blur-md sm:px-6">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <span
-            className="size-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(92,219,149,0.7)]"
-            aria-hidden
-          />
+        <div className="flex items-center gap-2.5 text-sm font-semibold tracking-tight">
+          <BrandMark size="sm" />
           Spendly
         </div>
-        <div className="flex items-center gap-2 text-[11px] font-medium tracking-[0.12em] text-muted-foreground uppercase">
-          <span className="size-1.5 animate-pulse rounded-full bg-primary" aria-hidden />
-          En vivo / <LiveClock />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-[11px] font-medium tracking-[0.12em] text-muted-foreground uppercase">
+            <span className="size-1.5 animate-pulse rounded-full bg-primary" aria-hidden />
+            En vivo / <LiveClock />
+          </div>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="pressable inline-flex size-8 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+            aria-label={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
+          >
+            {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
+          </button>
         </div>
       </header>
 
@@ -104,8 +114,8 @@ export function LoginPage() {
                 readOnly={Boolean(ownerEmail)}
                 required
                 className={cn(
-                  'h-12 w-full rounded-xl border border-border/60 bg-secondary/80 px-4 text-base outline-none transition-shadow duration-200',
-                  'focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/25',
+                  'h-12 w-full rounded-xl border border-border/50 bg-transparent px-4 text-base outline-none transition-colors duration-200',
+                  'focus-visible:border-primary/40 focus-visible:bg-foreground/[0.02] focus-visible:ring-2 focus-visible:ring-primary/20',
                   ownerEmail && 'text-muted-foreground',
                 )}
               />
@@ -139,7 +149,7 @@ export function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="h-12 w-full rounded-xl border border-border/60 bg-secondary/80 px-4 text-base outline-none transition-shadow duration-200 focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/25"
+            className="h-12 w-full rounded-xl border border-border/50 bg-transparent px-4 text-base outline-none transition-colors duration-200 focus-visible:border-primary/40 focus-visible:bg-foreground/[0.02] focus-visible:ring-2 focus-visible:ring-primary/20"
               />
             </div>
 
