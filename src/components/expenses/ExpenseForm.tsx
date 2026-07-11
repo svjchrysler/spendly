@@ -9,6 +9,7 @@ import { ExpenseAmountInput } from '@/components/expenses/ExpenseAmountInput'
 import { ExpenseCategoryPicker } from '@/components/expenses/ExpenseCategoryPicker'
 import { ExpenseDatePicker } from '@/components/expenses/ExpenseDatePicker'
 import { ExpenseNoteInput } from '@/components/expenses/ExpenseNoteInput'
+import { ExpenseFormSkeleton } from '@/components/layout/skeletons'
 import { useCategories } from '@/hooks/useCategories'
 import { useExpenseHistory } from '@/hooks/useExpenseHistory'
 import { useCreateExpense, useUpdateExpense } from '@/hooks/useExpenses'
@@ -141,7 +142,7 @@ export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) 
   }
 
   if (isLoading) {
-    return <p className="text-sm text-muted-foreground">Cargando categorías...</p>
+    return <ExpenseFormSkeleton />
   }
 
   if (categories.length === 0) {

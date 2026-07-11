@@ -3,6 +3,11 @@ import { MonthPicker } from '@/components/layout/MonthPicker'
 import { MonthlyCapAlert } from '@/components/dashboard/MonthlyCapAlert'
 import { ExpenseFilters } from '@/components/expenses/ExpenseFilters'
 import { ExpenseList } from '@/components/expenses/ExpenseList'
+import {
+  ExpenseFiltersSkeleton,
+  ExpenseListSkeleton,
+  ExpensesPageSkeleton,
+} from '@/components/layout/skeletons'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useMonth } from '@/contexts/MonthContext'
 import { useCategories } from '@/hooks/useCategories'
@@ -40,6 +45,10 @@ export function ExpensesPage() {
 
   const selectedCategory = categories.find((category) => category.id === categoryId)
 
+  if (isLoading && categoriesLoading) {
+    return <ExpensesPageSkeleton />
+  }
+
   return (
     <div className="page-stack space-y-6">
       {!isLoading ? <MonthlyCapAlert spent={monthTotal} /> : null}
@@ -47,9 +56,7 @@ export function ExpensesPage() {
       {!isLoading ? (
         <section className="section-rule flex items-start justify-between gap-3 pb-6">
           <div className="min-w-0 space-y-2">
-            <p className="stat-value">
-              {formatCurrency(total)}
-            </p>
+            <p className="stat-value">{formatCurrency(total)}</p>
             <p className="text-sm text-muted-foreground">
               {selectedCategory ? selectedCategory.name : 'Todos los gastos'}
               {' · '}
@@ -59,24 +66,30 @@ export function ExpensesPage() {
           <MonthPicker />
         </section>
       ) : (
-        <Skeleton className="h-20 w-full" />
+        <section className="section-rule flex items-start justify-between gap-3 pb-6">
+          <div className="min-w-0 space-y-3">
+            <Skeleton className="h-10 w-44 sm:h-12 sm:w-56" />
+            <Skeleton className="h-3.5 w-36" />
+          </div>
+          <MonthPicker />
+        </section>
       )}
 
       <div className="space-y-4">
-        <ExpenseFilters
-          search={search}
-          onSearchChange={setSearch}
-          categoryId={categoryId}
-          onCategoryChange={setCategoryId}
-          categories={categories}
-          loading={categoriesLoading}
-        />
+        {categoriesLoading ? (
+          <ExpenseFiltersSkeleton />
+        ) : (
+          <ExpenseFilters
+            search={search}
+            onSearchChange={setSearch}
+            categoryId={categoryId}
+            onCategoryChange={setCategoryId}
+            categories={categories}
+          />
+        )}
 
         {isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
+          <ExpenseListSkeleton rows={6} />
         ) : (
           <>
             {expenses.length === 0 ? (

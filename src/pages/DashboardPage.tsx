@@ -1,3 +1,11 @@
+import {
+  CategoryAllocationSkeleton,
+  ChartSkeleton,
+  DashboardSkeleton,
+  ExpenseListSkeleton,
+  InsightsGridSkeleton,
+  SpendingHeroSkeleton,
+} from '@/components/layout/skeletons'
 import { lazy, Suspense } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
@@ -6,7 +14,6 @@ import { MonthlyCapAlert } from '@/components/dashboard/MonthlyCapAlert'
 import { CategoryAllocation } from '@/components/charts/CategoryAllocation'
 import { ExpenseList } from '@/components/expenses/ExpenseList'
 import { MonthPicker } from '@/components/layout/MonthPicker'
-import { Skeleton } from '@/components/ui/skeleton'
 import { useMonth } from '@/contexts/MonthContext'
 import { useExpenses } from '@/hooks/useExpenses'
 import { formatCurrency } from '@/lib/format'
@@ -117,12 +124,16 @@ export function DashboardPage() {
   const budgetAmount = budget?.amount ?? null
   const remaining = budgetAmount != null ? budgetAmount - spent : null
 
+  if (statsLoading && expensesLoading && historyLoading) {
+    return <DashboardSkeleton />
+  }
+
   let historyPanel = null
   if (historyLoading) {
-    historyPanel = <Skeleton className="h-56 w-full" />
+    historyPanel = <ChartSkeleton />
   } else if (history && history.length > 0) {
     historyPanel = (
-      <Suspense fallback={<Skeleton className="h-56 w-full" />}>
+      <Suspense fallback={<ChartSkeleton />}>
         <MonthlyBar data={history} />
       </Suspense>
     )
@@ -130,12 +141,7 @@ export function DashboardPage() {
 
   let recentPanel = <ExpenseList expenses={recentExpenses} showFab />
   if (expensesLoading) {
-    recentPanel = (
-      <div className="space-y-2">
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
-      </div>
-    )
+    recentPanel = <ExpenseListSkeleton rows={4} />
   } else if (recentExpenses.length === 0) {
     recentPanel = (
       <>
@@ -156,7 +162,10 @@ export function DashboardPage() {
       {!statsLoading ? <MonthlyCapAlert spent={spent} /> : null}
 
       {statsLoading ? (
-        <Skeleton className="mb-10 h-40 w-full" />
+        <section className="section-rule grid gap-10 pb-10 pt-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16 lg:pb-12 lg:pt-6">
+          <SpendingHeroSkeleton />
+          <CategoryAllocationSkeleton />
+        </section>
       ) : (
         <section className="section-rule grid gap-10 pb-10 pt-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16 lg:pb-12 lg:pt-6">
           <SpendingHero
@@ -169,7 +178,9 @@ export function DashboardPage() {
         </section>
       )}
 
-      {!statsLoading ? (
+      {statsLoading ? (
+        <InsightsGridSkeleton />
+      ) : (
         <InsightsGrid
           topCategory={topCategory}
           lowestCategory={lowestCategory}
@@ -177,7 +188,7 @@ export function DashboardPage() {
           remaining={remaining}
           concentration={concentration}
         />
-      ) : null}
+      )}
 
       {historyPanel ? (
         <section className="section-rule py-8 sm:py-10">{historyPanel}</section>

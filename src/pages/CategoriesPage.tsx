@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Skeleton } from '@/components/ui/skeleton'
+import { CategoryListSkeleton } from '@/components/layout/skeletons'
 import {
   useCategories,
   useCreateCategory,
@@ -174,11 +174,7 @@ export function CategoriesPage() {
       </div>
 
       {isLoading ? (
-        <div className="divide-y divide-border/30">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="my-2 h-12 w-full" />
-          ))}
-        </div>
+        <CategoryListSkeleton />
       ) : (
         <div className="divide-y divide-border/30">
           {categories.map((category) => {
