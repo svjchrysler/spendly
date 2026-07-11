@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { MonthPicker } from '@/components/layout/MonthPicker'
+import { MonthlyCapAlert } from '@/components/dashboard/MonthlyCapAlert'
 import { ExpenseFilters } from '@/components/expenses/ExpenseFilters'
 import { ExpenseList } from '@/components/expenses/ExpenseList'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -32,10 +33,17 @@ export function ExpensesPage() {
     [expenses],
   )
 
+  const monthTotal = useMemo(
+    () => allExpenses.reduce((sum, item) => sum + Number(item.amount), 0),
+    [allExpenses],
+  )
+
   const selectedCategory = categories.find((category) => category.id === categoryId)
 
   return (
     <div className="page-stack space-y-6">
+      {!isLoading ? <MonthlyCapAlert spent={monthTotal} /> : null}
+
       {!isLoading ? (
         <section className="section-rule flex items-start justify-between gap-3 pb-6">
           <div className="min-w-0 space-y-2">

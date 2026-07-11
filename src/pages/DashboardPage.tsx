@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { SpendingHero } from '@/components/dashboard/SpendingHero'
+import { MonthlyCapAlert } from '@/components/dashboard/MonthlyCapAlert'
 import { CategoryAllocation } from '@/components/charts/CategoryAllocation'
 import { ExpenseList } from '@/components/expenses/ExpenseList'
 import { MonthPicker } from '@/components/layout/MonthPicker'
@@ -148,14 +149,16 @@ export function DashboardPage() {
 
   return (
     <div className="page-stack">
-      <div className="flex justify-end pb-6">
+      <div className="flex justify-end pb-4">
         <MonthPicker />
       </div>
+
+      {!statsLoading ? <MonthlyCapAlert spent={spent} /> : null}
 
       {statsLoading ? (
         <Skeleton className="mb-10 h-40 w-full" />
       ) : (
-        <section className="section-rule grid gap-10 pb-10 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16 lg:pb-12">
+        <section className="section-rule grid gap-10 pb-10 pt-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16 lg:pb-12">
           <SpendingHero
             spent={spent}
             transactionCount={expenses.length}
