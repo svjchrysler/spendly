@@ -72,13 +72,17 @@ export default defineConfig({
             },
           },
           {
-            // ponytail: NetworkFirst so offline still shows last data; never CacheFirst on money APIs
+            // NetworkFirst + longer TTL: SW serves last API payload when offline
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase',
-              networkTimeoutSeconds: 8,
-              expiration: { maxEntries: 64, maxAgeSeconds: 60 * 60 },
+              networkTimeoutSeconds: 5,
+              expiration: {
+                maxEntries: 96,
+                maxAgeSeconds: 60 * 60 * 24 * 7,
+              },
+              cacheableResponse: { statuses: [0, 200] },
             },
           },
         ],

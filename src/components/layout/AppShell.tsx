@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { LayoutDashboard, Receipt, Tags } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BrandMark } from '@/components/layout/BrandMark'
+import { OfflineBanner } from '@/components/layout/OfflineBanner'
 import { PageEnter } from '@/components/layout/PageEnter'
 import { ProfileMenu } from '@/components/layout/ProfileMenu'
 import { useRealtimeExpenses } from '@/hooks/useRealtimeExpenses'
@@ -59,6 +60,8 @@ export function AppShell() {
           <ProfileMenu />
         </div>
       </header>
+
+      <OfflineBanner />
 
       <main className="mx-auto w-full px-4 pb-[calc(6.25rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:pt-7 md:pb-12 lg:px-8 xl:px-10">
         <PageEnter>

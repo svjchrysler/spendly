@@ -46,9 +46,14 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!alive) return
+      // Keep last session while offline — refresh failures must not force login
+      if (event === 'SIGNED_OUT' && typeof navigator !== 'undefined' && !navigator.onLine) {
+        return
+      }
       setSession(nextSession)
+      setLoading(false)
     })
 
     return () => {
