@@ -72,7 +72,7 @@ export function LoginPage() {
         </button>
       </header>
 
-      <main className="mx-auto grid w-full max-w-6xl flex-1 content-center gap-10 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-2 lg:gap-16 lg:py-16">
+      <main className="mx-auto grid w-full flex-1 content-center gap-10 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-16 xl:px-10">
         <section className="flex flex-col justify-center">
           <h1 className="text-[2.5rem] leading-[1.05] font-semibold tracking-tight sm:text-5xl">
             Bienvenido

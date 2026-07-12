@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Plus } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -106,44 +107,49 @@ export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListP
 
   let addExpenseUi = null
   if (showFab) {
+    // Portal: PageEnter's transform/filter otherwise traps position:fixed
+    const fab = createPortal(
+      <Button
+        type="button"
+        className="fab"
+        onClick={() => setOpenAdd(true)}
+        aria-label="Agregar gasto"
+      >
+        <Plus className="size-6" />
+      </Button>,
+      document.body,
+    )
+
     if (isDesktop) {
       addExpenseUi = (
-        <Dialog open={openAdd} onOpenChange={setOpenAdd}>
-          <Button
-            className="fab"
-            onClick={() => setOpenAdd(true)}
-            aria-label="Agregar gasto"
-          >
-            <Plus className="size-6" />
-          </Button>
-          <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-md">
-            <DialogHeader className="pr-8">
-              <DialogTitle>Nuevo gasto</DialogTitle>
-            </DialogHeader>
-            {addForm}
-          </DialogContent>
-        </Dialog>
+        <>
+          {fab}
+          <Dialog open={openAdd} onOpenChange={setOpenAdd}>
+            <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-md">
+              <DialogHeader className="pr-8">
+                <DialogTitle>Nuevo gasto</DialogTitle>
+              </DialogHeader>
+              {addForm}
+            </DialogContent>
+          </Dialog>
+        </>
       )
     } else {
       addExpenseUi = (
-        <Sheet open={openAdd} onOpenChange={setOpenAdd}>
-          <Button
-            className="fab"
-            aria-label="Agregar gasto"
-            onClick={() => setOpenAdd(true)}
-          >
-            <Plus className="size-6" />
-          </Button>
-          <SheetContent
-            side="bottom"
-            className="max-h-[88dvh] gap-0 overflow-y-auto rounded-t-2xl px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3"
-          >
-            <SheetHeader className="pb-3">
-              <SheetTitle>Nuevo gasto</SheetTitle>
-            </SheetHeader>
-            {addForm}
-          </SheetContent>
-        </Sheet>
+        <>
+          {fab}
+          <Sheet open={openAdd} onOpenChange={setOpenAdd}>
+            <SheetContent
+              side="bottom"
+              className="max-h-[88dvh] gap-0 overflow-y-auto rounded-t-2xl px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3"
+            >
+              <SheetHeader className="pb-3">
+                <SheetTitle>Nuevo gasto</SheetTitle>
+              </SheetHeader>
+              {addForm}
+            </SheetContent>
+          </Sheet>
+        </>
       )
     }
   }

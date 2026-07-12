@@ -205,7 +205,7 @@
   }
 
   .fab {
-    @apply fixed z-40 size-14 cursor-pointer rounded-full bg-primary text-primary-foreground;
+    @apply fixed z-[60] size-14 cursor-pointer rounded-full bg-primary text-primary-foreground;
     box-shadow:
       0 0 0 1px color-mix(in oklab, var(--primary) 28%, transparent),
       0 10px 32px color-mix(in oklab, var(--primary) 28%, transparent),

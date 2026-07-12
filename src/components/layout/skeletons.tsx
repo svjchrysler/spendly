@@ -131,24 +131,25 @@ export function DashboardSkeleton() {
         <Bone className="h-8 w-36 rounded-full" />
       </div>
 
-      <section className="section-rule grid gap-10 pb-10 pt-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16 lg:pb-12 lg:pt-6">
+      <section className="section-rule grid gap-10 pb-10 pt-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16 lg:pb-12 lg:pt-6 xl:gap-24">
         <SpendingHeroSkeleton />
         <CategoryAllocationSkeleton />
       </section>
 
       <InsightsGridSkeleton />
 
-      <section className="section-rule py-8 sm:py-10">
-        <ChartSkeleton />
-      </section>
-
-      <section className="space-y-5 pt-8 sm:pt-10">
-        <div className="flex items-center justify-between">
-          <Bone className="h-2.5 w-32" />
-          <Bone className="h-3 w-16" />
-        </div>
-        <ExpenseListSkeleton rows={4} />
-      </section>
+      <div className="xl:grid xl:grid-cols-2 xl:gap-x-16">
+        <section className="section-rule py-8 sm:py-10 xl:border-b-0">
+          <ChartSkeleton />
+        </section>
+        <section className="space-y-5 pt-8 sm:pt-10 xl:pt-10">
+          <div className="flex items-center justify-between">
+            <Bone className="h-2.5 w-32" />
+            <Bone className="h-3 w-16" />
+          </div>
+          <ExpenseListSkeleton rows={4} />
+        </section>
+      </div>
     </div>
   )
 }

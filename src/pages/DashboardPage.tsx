@@ -162,12 +162,12 @@ export function DashboardPage() {
       {!statsLoading ? <MonthlyCapAlert spent={spent} /> : null}
 
       {statsLoading ? (
-        <section className="section-rule grid gap-10 pb-10 pt-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16 lg:pb-12 lg:pt-6">
+        <section className="section-rule grid gap-10 pb-10 pt-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16 lg:pb-12 lg:pt-6 xl:gap-24">
           <SpendingHeroSkeleton />
           <CategoryAllocationSkeleton />
         </section>
       ) : (
-        <section className="section-rule grid gap-10 pb-10 pt-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16 lg:pb-12 lg:pt-6">
+        <section className="section-rule grid gap-10 pb-10 pt-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16 lg:pb-12 lg:pt-6 xl:gap-24">
           <SpendingHero
             spent={spent}
             transactionCount={expenses.length}
@@ -190,23 +190,25 @@ export function DashboardPage() {
         />
       )}
 
-      {historyPanel ? (
-        <section className="section-rule py-8 sm:py-10">{historyPanel}</section>
-      ) : null}
+      <div className="xl:grid xl:grid-cols-2 xl:gap-x-16 xl:gap-y-0">
+        {historyPanel ? (
+          <section className="section-rule py-8 sm:py-10 xl:border-b-0">{historyPanel}</section>
+        ) : null}
 
-      <section className="space-y-5 pt-8 sm:pt-10">
-        <div className="flex items-center justify-between gap-3">
-          <p className="stat-label">Actividad reciente</p>
-          <Link
-            to="/gastos"
-            className="pressable inline-flex cursor-pointer items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
-          >
-            Ver todos
-            <ArrowRight className="size-3.5" />
-          </Link>
-        </div>
-        {recentPanel}
-      </section>
+        <section className="space-y-5 pt-8 sm:pt-10 xl:pt-10">
+          <div className="flex items-center justify-between gap-3">
+            <p className="stat-label">Actividad reciente</p>
+            <Link
+              to="/gastos"
+              className="pressable inline-flex cursor-pointer items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              Ver todos
+              <ArrowRight className="size-3.5" />
+            </Link>
+          </div>
+          {recentPanel}
+        </section>
+      </div>
     </div>
   )
 }
