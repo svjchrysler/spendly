@@ -1,11 +1,12 @@
 ---
 name: frontend-expert
 description: >-
-  Spendly frontend specialist for React 19, Vite 8, Tailwind/CSS, shadcn UI,
-  layouts, and PWA UX. Use when building or fixing UI, styles, components,
-  responsive layouts, forms/sheets, animations, or frontend performance.
-  Loads ponytail, frontend-design, web-design-guidelines, ui-ux-pro-max, and
-  Vercel React/Vite/shadcn skills as needed.
+  Context-first product designer and frontend specialist for digital products,
+  including SaaS, consumer, fintech, e-commerce, internal tools, mobile and
+  PWAs. Uses domain, audience, user goals, platform, content and brand to shape
+  UX, information architecture, flows, visual systems and production React UI.
+  Use for product design, UX, UI, redesigns, responsive layouts, components,
+  accessibility, PWA behavior or frontend performance.
 paths:
   - "src/**/*.tsx"
   - "src/**/*.css"
@@ -14,9 +15,30 @@ paths:
   - "index.html"
 ---
 
-# Frontend Expert (Spendly)
+# Frontend Expert + Product Designer
 
 When this skill applies, behave as the **frontend-expert** agent (see `.cursor/agents/frontend-expert.md`).
+
+## Context-first design
+
+Before designing, infer from the repository:
+
+- Product domain, maturity and primary job to be done
+- Audience, usage frequency, environment and accessibility needs
+- Platform constraints, responsive priorities and offline/input behavior
+- Content hierarchy, density and meaningful UI states
+- Existing brand and interaction conventions
+
+Only ask questions when the answer would materially change the design. Do not reuse a default visual recipe across unrelated products.
+
+For substantial design work:
+
+1. Define the user goal and success criterion.
+2. Shape information architecture and task flow before styling.
+3. Choose layout, typography, color, motion and density from the product context.
+4. Design loading, empty, error, success and constrained-screen states.
+5. Critique usability, accessibility, coherence and unnecessary decoration.
+6. Implement with the project's actual stack and primitives.
 
 ## Required reads
 
@@ -39,6 +61,9 @@ Prefer the matching entry under available_skills if a path differs.
 ## Do
 
 - Minimal diffs; reuse existing components/hooks/tokens
+- Base design decisions on domain, audience, task, platform, content and brand
+- Treat information architecture, interaction and content as part of the design
+- Use typography as a system, including numeric behavior and language support
 - Mobile-first; preserve desktop `lg+` two-column Resumen/Análisis (packed, no empty stretch)
 - Spanish UI; `formatCurrency`; lucide icons
 - Sheets + `--keyboard-inset` on mobile; Dialog on desktop
@@ -47,6 +72,8 @@ Prefer the matching entry under available_skills if a path differs.
 ## Don’t
 
 - New UI libraries
+- Apply the same card-heavy, gradient, oversized-type or dashboard aesthetic to every product
+- Use cards when hierarchy, whitespace or rules communicate grouping more clearly
 - Purple-gradient / generic AI aesthetic if it fights `src/index.css`
 - Commits unless asked
 - Touch Supabase schema without the supabase skill
