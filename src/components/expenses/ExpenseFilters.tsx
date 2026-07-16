@@ -54,13 +54,7 @@ export function ExpenseFilters({
         ) : null}
       </div>
 
-      <div
-        className="filter-scroll -mx-1 flex gap-2 overflow-x-auto px-1 pb-1"
-        style={{
-          maskImage:
-            'linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent)',
-        }}
-      >
+      <div className="filter-scroll -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
         <button
           type="button"
           disabled={loading}
@@ -91,7 +85,7 @@ export function ExpenseFilters({
             >
               <CategoryIcon
                 icon={category.icon}
-                color={selected ? category.color : category.color}
+                color={category.color}
                 name={category.name}
                 size="pill"
               />

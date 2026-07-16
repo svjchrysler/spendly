@@ -17,10 +17,10 @@ export function MonthlyCapAlert({ spent }: Readonly<MonthlyCapAlertProps>) {
   return (
     <output
       className={cn(
-        'mb-2 flex items-start gap-2.5 border-b py-3.5 text-sm leading-snug',
+        'flex items-start gap-2.5 rounded-xl border px-3.5 py-3 text-sm leading-snug',
         level === 'over'
-          ? 'border-destructive/35 text-destructive'
-          : 'border-amber-500/35 text-amber-300',
+          ? 'border-destructive/30 bg-destructive/8 text-destructive'
+          : 'border-amber-600/25 bg-amber-500/10 text-amber-800 dark:border-amber-500/30 dark:text-amber-200',
       )}
     >
       <AlertTriangle className="mt-0.5 size-4 shrink-0 opacity-90" aria-hidden />

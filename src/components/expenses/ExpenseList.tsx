@@ -175,10 +175,7 @@ export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListP
             >
               {/* Sticky date: sticks under app header until next group pushes it */}
               <div
-                className={cn(
-                  'sticky z-20 -mx-4 mb-0.5 flex items-center justify-between gap-3 border-b border-border/70 bg-background/90 px-4 py-2.5 backdrop-blur-xl',
-                  'sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10',
-                )}
+                className="list-bleed sticky z-20 mb-0.5 flex items-center justify-between gap-3 border-b border-border/70 bg-background/90 py-2.5 backdrop-blur-xl"
                 style={{ top: 'calc(3.5rem + env(safe-area-inset-top, 0px))' }}
               >
                 <h3 className="stat-label capitalize">{formatDayLabel(date)}</h3>

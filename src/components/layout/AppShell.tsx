@@ -21,7 +21,7 @@ export function AppShell() {
 
   return (
     <div className="min-h-dvh overflow-x-clip bg-background">
-      <header className="sticky top-0 z-50 border-b border-border/80 bg-background/75 backdrop-blur-xl pt-[env(safe-area-inset-top)]">
+      <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex h-14 w-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 xl:px-10">
           <div className="flex min-w-0 items-center gap-2.5">
             <BrandMark />
@@ -30,7 +30,7 @@ export function AppShell() {
             </span>
           </div>
 
-          <nav className="hidden h-full flex-1 items-stretch justify-center gap-0.5 md:flex">
+          <nav className="hidden h-full flex-1 items-stretch justify-center gap-1 md:flex">
             {navItems.map(({ to, label, end }) => (
               <NavLink
                 key={to}
@@ -38,7 +38,7 @@ export function AppShell() {
                 end={end}
                 className={({ isActive }) =>
                   cn(
-                    'pressable relative inline-flex cursor-pointer items-center px-4 text-sm font-medium transition-colors duration-200',
+                    'pressable relative inline-flex cursor-pointer items-center rounded-full px-4 text-sm font-medium transition-colors duration-200',
                     isActive
                       ? 'text-foreground'
                       : 'text-muted-foreground hover:text-foreground/80',
@@ -50,7 +50,7 @@ export function AppShell() {
                     {label}
                     <span
                       className={cn(
-                        'absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-primary transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
+                        'absolute inset-x-3 bottom-1.5 h-0.5 rounded-full bg-primary transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
                         isActive ? 'scale-x-100 opacity-100' : 'scale-x-50 opacity-0',
                       )}
                     />
@@ -72,7 +72,7 @@ export function AppShell() {
         </PageEnter>
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border/80 bg-background/80 backdrop-blur-xl md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border/60 bg-background/85 backdrop-blur-xl md:hidden">
         <div className="mx-auto flex max-w-lg items-stretch justify-around px-1 pb-[env(safe-area-inset-bottom)] pt-1">
           {navItems.map(({ to, label, end, icon: Icon }) => (
             <NavLink
@@ -91,7 +91,7 @@ export function AppShell() {
                   <span
                     className={cn(
                       'flex size-8 items-center justify-center rounded-full transition-all duration-250 ease-[cubic-bezier(0.16,1,0.3,1)]',
-                      isActive && 'bg-primary/12',
+                      isActive && 'bg-primary/15',
                     )}
                   >
                     <Icon

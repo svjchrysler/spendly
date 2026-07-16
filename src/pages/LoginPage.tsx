@@ -74,7 +74,7 @@ export function LoginPage() {
 
       <main className="mx-auto grid w-full flex-1 content-center gap-10 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-16 xl:px-10">
         <section className="flex flex-col justify-center">
-          <h1 className="text-[2.5rem] leading-[1.05] font-semibold tracking-tight sm:text-5xl">
+          <h1 className="font-ledger text-pretty text-[2.6rem] leading-[1.05] font-bold tracking-[-0.03em] sm:text-5xl">
             Bienvenido
             <br />
             <span className="text-primary">de vuelta.</span>
@@ -95,8 +95,8 @@ export function LoginPage() {
                 readOnly={Boolean(ownerEmail)}
                 required
                 className={cn(
-                  'h-12 w-full rounded-xl border border-border/50 bg-transparent px-4 text-base outline-none transition-colors duration-200',
-                  'focus-visible:border-primary/40 focus-visible:bg-foreground/[0.02] focus-visible:ring-2 focus-visible:ring-primary/20',
+                  'h-12 w-full rounded-xl border border-border/60 bg-card/60 px-4 text-base outline-none transition-colors duration-200',
+                  'focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/20',
                   ownerEmail && 'text-muted-foreground',
                 )}
               />
@@ -130,7 +130,7 @@ export function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="h-12 w-full rounded-xl border border-border/50 bg-transparent px-4 text-base outline-none transition-colors duration-200 focus-visible:border-primary/40 focus-visible:bg-foreground/[0.02] focus-visible:ring-2 focus-visible:ring-primary/20"
+                className="h-12 w-full rounded-xl border border-border/60 bg-card/60 px-4 text-base outline-none transition-colors duration-200 focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/20"
               />
             </div>
 
@@ -148,9 +148,9 @@ export function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="pressable flex h-12 w-full cursor-pointer items-center justify-between rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-[0_0_28px_rgba(92,219,149,0.28)] hover:bg-primary/90 disabled:opacity-60"
+              className="pressable flex h-12 w-full cursor-pointer items-center justify-between rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-[0_10px_28px_color-mix(in_oklab,var(--primary)_28%,transparent)] hover:bg-primary/90 disabled:opacity-60"
             >
-              <span>{loading ? 'Entrando...' : 'Iniciar sesión'}</span>
+              <span>{loading ? 'Entrando…' : 'Iniciar sesión'}</span>
               <span className="flex size-8 items-center justify-center rounded-lg bg-primary-foreground/10">
                 <ArrowUpRight className="size-4" />
               </span>
@@ -158,13 +158,13 @@ export function LoginPage() {
           </form>
         </section>
 
-        <aside className="hidden flex-col justify-center border-l border-border pl-10 lg:flex">
-          <p className="stat-label mb-6">Módulos</p>
-          <ul className="space-y-0 divide-y divide-border">
+        <aside className="ledger-aside hidden flex-col justify-center lg:flex">
+          <p className="stat-label mb-5">Módulos</p>
+          <ul className="space-y-0 divide-y divide-border/70">
             {modules.map((item) => (
               <li key={item.name} className="flex items-center justify-between gap-4 py-4">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold tracking-wide uppercase">{item.name}</p>
+                  <p className="text-sm font-semibold tracking-tight">{item.name}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">{item.detail}</p>
                 </div>
                 <span className="flex items-center gap-1.5 text-[10px] font-medium tracking-[0.12em] text-primary uppercase">

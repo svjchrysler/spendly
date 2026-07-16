@@ -96,7 +96,7 @@ export function SpendingHeroSkeleton() {
 export function InsightsGridSkeleton() {
   return (
     <section
-      className="grid grid-cols-2 gap-x-6 gap-y-5 border-t border-border pt-5 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4"
+      className="grid grid-cols-2 gap-x-5 gap-y-5 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4"
       aria-hidden
     >
       {Array.from({ length: 4 }, (_, i) => (
@@ -127,19 +127,44 @@ export function ChartSkeleton({ className }: Readonly<{ className?: string }>) {
   )
 }
 
+export function MastheadSkeleton() {
+  return (
+    <div className="flex items-end justify-between gap-3 border-b border-border/70 pb-4" aria-hidden>
+      <div className="space-y-2.5">
+        <Bone className="h-2.5 w-20" />
+        <Bone className="h-9 w-52 sm:h-10 sm:w-64" />
+      </div>
+      <div className="flex items-center gap-1 pb-1">
+        <Bone className="size-9 rounded-full" />
+        <Bone className="size-9 rounded-full" />
+      </div>
+    </div>
+  )
+}
+
 export function DashboardSkeleton() {
   return (
-    <div className="flex flex-col gap-1 pb-4 lg:pb-8" aria-busy="true" aria-label="Cargando resumen">
-      <div className="flex items-center justify-between gap-3 pb-2">
-        <Bone className="h-2.5 w-20" />
-        <Bone className="h-8 w-36 rounded-full" />
-      </div>
-      <div className="grid gap-8 pt-1 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-start lg:gap-x-12 xl:gap-x-16">
-        <div className="flex flex-col gap-6 lg:gap-7">
+    <div className="flex flex-col gap-4 pb-4 lg:gap-5 lg:pb-8" aria-busy="true" aria-label="Cargando resumen">
+      <MastheadSkeleton />
+      <div className="grid gap-8 pt-2 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10">
+        <div className="flex flex-col gap-5 lg:gap-6">
           <SpendingHeroSkeleton />
-          <InsightsGridSkeleton />
+          <div className="border-t border-border/70 pt-5">
+            <InsightsGridSkeleton />
+          </div>
+          <div className="border-t border-border/70 pt-5">
+            <div className="mb-2 flex items-baseline justify-between">
+              <Bone className="h-2.5 w-36" />
+              <Bone className="h-3 w-16" />
+            </div>
+            <div className="divide-y divide-border/25">
+              {Array.from({ length: 3 }, (_, i) => (
+                <ExpenseRowSkeleton key={i} />
+              ))}
+            </div>
+          </div>
         </div>
-        <div className="border-t border-border pt-5 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-12 xl:pl-14">
+        <div className="ledger-aside border-t border-border/70 pt-5 lg:border-t-0 lg:pt-0">
           <CategoryAllocationSkeleton />
         </div>
       </div>
@@ -149,16 +174,25 @@ export function DashboardSkeleton() {
 
 export function AnalisisPageSkeleton() {
   return (
-    <div className="page-stack space-y-6" aria-busy="true" aria-label="Cargando análisis">
-      <div className="flex items-center justify-between gap-3">
-        <Bone className="h-2.5 w-20" />
-        <Bone className="h-8 w-36 rounded-full" />
+    <div
+      className="flex flex-col gap-4 pb-4 lg:gap-5 lg:pb-8"
+      aria-busy="true"
+      aria-label="Cargando análisis"
+    >
+      <MastheadSkeleton />
+      <div className="grid grid-cols-3 gap-4 border-b border-border/70 pb-5">
+        {Array.from({ length: 3 }, (_, i) => (
+          <div key={i} className="space-y-1.5">
+            <Bone className="h-2.5 w-20" />
+            <Bone className="h-6 w-[70%]" />
+          </div>
+        ))}
       </div>
-      <div className="flex flex-col gap-8 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-12 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] xl:gap-x-16">
-        <section className="min-w-0 lg:border-r lg:pr-12 xl:pr-16">
+      <div className="grid gap-8 pt-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10">
+        <section className="min-w-0">
           <ChartSkeleton />
         </section>
-        <section className="min-w-0 border-t border-border pt-6 lg:border-t-0 lg:pt-0">
+        <section className="ledger-aside min-w-0 border-t border-border/70 pt-5 lg:border-t-0 lg:pt-0">
           <CategoryAllocationSkeleton />
         </section>
       </div>
@@ -168,25 +202,32 @@ export function AnalisisPageSkeleton() {
 
 export function ExpensesPageSkeleton() {
   return (
-    <div className="page-stack space-y-6" aria-busy="true" aria-label="Cargando gastos">
-      <section className="section-rule flex items-start justify-between gap-3 pb-6">
-        <div className="space-y-3">
-          <Bone className="h-10 w-44 sm:h-12 sm:w-56" />
-          <Bone className="h-3.5 w-36" />
+    <div className="flex flex-col gap-4 pb-4 lg:gap-5 lg:pb-8" aria-busy="true" aria-label="Cargando gastos">
+      <MastheadSkeleton />
+      <div className="grid gap-6 pt-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+        <div className="ledger-aside order-1 space-y-5 lg:order-2">
+          <section className="space-y-3">
+            <Bone className="h-2.5 w-24" />
+            <Bone className="h-10 w-44" />
+            <Bone className="h-3.5 w-36" />
+          </section>
+          <section className="border-t border-border/70 pt-4">
+            <ExpenseFiltersSkeleton />
+          </section>
         </div>
-        <Bone className="h-8 w-32 rounded-full" />
-      </section>
-      <ExpenseFiltersSkeleton />
-      <ExpenseListSkeleton rows={6} />
+        <div className="order-2 lg:order-1">
+          <ExpenseListSkeleton rows={6} />
+        </div>
+      </div>
     </div>
   )
 }
 
-export function CategoryListSkeleton({ rows = 6 }: Readonly<{ rows?: number }>) {
+export function CategoryListSkeleton({ rows = 8 }: Readonly<{ rows?: number }>) {
   return (
-    <div className="divide-y divide-border/30" aria-hidden>
+    <div className="grid pt-1 sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-3 xl:gap-x-14" aria-hidden>
       {Array.from({ length: rows }, (_, i) => (
-        <div key={i} className="flex items-center justify-between gap-2 py-3">
+        <div key={i} className="flex items-center justify-between gap-2 border-b border-border/40 py-3">
           <div className="flex items-center gap-3">
             <Bone className="size-10 rounded-full" />
             <Bone className={`h-4 ${i % 2 === 0 ? 'w-28' : 'w-20'}`} />
@@ -203,10 +244,13 @@ export function CategoryListSkeleton({ rows = 6 }: Readonly<{ rows?: number }>) 
 
 export function CategoriesPageSkeleton() {
   return (
-    <div className="page-stack space-y-2" aria-busy="true" aria-label="Cargando categorías">
-      <div className="section-rule flex flex-col gap-3 pb-6 sm:flex-row sm:items-center sm:justify-between">
-        <Bone className="h-2.5 w-24" />
-        <Bone className="h-10 w-full rounded-full sm:w-40" />
+    <div className="flex flex-col gap-4 pb-4 lg:gap-5 lg:pb-8" aria-busy="true" aria-label="Cargando categorías">
+      <div className="flex items-end justify-between gap-3 border-b border-border/70 pb-4">
+        <div className="space-y-2.5">
+          <Bone className="h-2.5 w-28" />
+          <Bone className="h-9 w-44 sm:h-10" />
+        </div>
+        <Bone className="h-10 w-24 rounded-lg sm:w-40" />
       </div>
       <CategoryListSkeleton />
     </div>

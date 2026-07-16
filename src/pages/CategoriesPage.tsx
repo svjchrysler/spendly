@@ -153,16 +153,20 @@ export function CategoriesPage() {
   }
 
   return (
-    <div className="page-stack space-y-2">
-      <div className="section-rule flex flex-col gap-3 pb-6 sm:flex-row sm:items-center sm:justify-between">
-        <p className="stat-label">Categorías</p>
+    <div className="flex flex-col gap-4 pb-4 lg:gap-5 lg:pb-8">
+      <header className="flex items-end justify-between gap-3 border-b border-border/70 pb-4">
+        <div className="min-w-0 space-y-1.5">
+          <p className="stat-label">Organiza tus gastos</p>
+          <h1 className="page-title">Categorías</h1>
+        </div>
         <Dialog open={openCreate} onOpenChange={setOpenCreate}>
           <Button
-            className="w-full cursor-pointer gap-2 bg-primary text-primary-foreground hover:bg-primary/90 sm:w-auto"
+            className="cursor-pointer gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={() => setOpenCreate(true)}
           >
             <Plus className="size-4" />
-            Nueva categoría
+            <span className="hidden sm:inline">Nueva categoría</span>
+            <span className="sm:hidden">Nueva</span>
           </Button>
           <DialogContent>
             <DialogHeader>
@@ -171,17 +175,17 @@ export function CategoriesPage() {
             <CategoryForm onSuccess={() => setOpenCreate(false)} />
           </DialogContent>
         </Dialog>
-      </div>
+      </header>
 
       {isLoading ? (
         <CategoryListSkeleton />
       ) : (
-        <div className="divide-y divide-border/30">
+        <div className="grid pt-1 sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-3 xl:gap-x-14">
           {categories.map((category) => {
             return (
               <div
                 key={category.id}
-                className="flex items-center justify-between gap-2 py-3 transition-colors duration-150 hover:bg-muted/10"
+                className="row-hover flex items-center justify-between gap-2 border-b border-border/40 py-3"
               >
                 <div className="flex min-w-0 flex-1 items-center gap-3">
                   <CategoryIcon

@@ -131,7 +131,7 @@ export function ExpenseAmountInput({
             onBlur?.()
           }}
           className={cn(
-            'input-amount w-full max-w-[12ch] min-w-0 border-0 bg-transparent text-center text-3xl font-semibold leading-none tracking-tight text-foreground tabular-nums outline-none placeholder:text-muted-foreground/35 sm:text-4xl',
+            'input-amount font-ledger w-full max-w-[12ch] min-w-0 border-0 bg-transparent text-center text-4xl font-normal leading-none tracking-tight text-foreground tabular-nums outline-none placeholder:text-muted-foreground/35 sm:text-5xl',
             className,
           )}
           {...props}
