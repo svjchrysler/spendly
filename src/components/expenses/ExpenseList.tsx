@@ -141,7 +141,7 @@ export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListP
           <Sheet open={openAdd} onOpenChange={setOpenAdd}>
             <SheetContent
               side="bottom"
-              className="max-h-[88dvh] gap-0 overflow-y-auto rounded-t-2xl px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3"
+              className="gap-0 rounded-t-2xl px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3"
             >
               <SheetHeader className="pb-3">
                 <SheetTitle>Nuevo gasto</SheetTitle>
@@ -158,23 +158,29 @@ export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListP
     <>
       {addExpenseUi}
 
-      <div className="space-y-5">
+      <div className="space-y-1">
         <AnimatePresence mode="popLayout">
           {grouped.map(({ date, items, subtotal }, groupIndex) => (
             <motion.section
               key={date}
-              layout
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
+              // ponytail: opacity only — y/transform makes sticky date headers fail
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{
-                duration: 0.28,
-                delay: Math.min(groupIndex * 0.04, 0.16),
+                duration: 0.24,
+                delay: Math.min(groupIndex * 0.03, 0.12),
                 ease: [0.16, 1, 0.3, 1],
               }}
-              className="overflow-hidden"
             >
-              <div className="mb-1 flex items-center justify-between pb-2">
+              {/* Sticky date: sticks under app header until next group pushes it */}
+              <div
+                className={cn(
+                  'sticky z-20 -mx-4 mb-0.5 flex items-center justify-between gap-3 border-b border-border/70 bg-background/90 px-4 py-2.5 backdrop-blur-xl',
+                  'sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10',
+                )}
+                style={{ top: 'calc(3.5rem + env(safe-area-inset-top, 0px))' }}
+              >
                 <h3 className="stat-label capitalize">{formatDayLabel(date)}</h3>
                 <span className="text-sm font-semibold tabular-nums tracking-tight text-foreground/90">
                   {formatCurrency(subtotal)}
@@ -280,7 +286,7 @@ export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListP
         <Sheet open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
           <SheetContent
             side="bottom"
-            className="max-h-[88dvh] gap-0 overflow-y-auto rounded-t-2xl px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3"
+            className="gap-0 rounded-t-2xl px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3"
           >
             <SheetHeader className="pb-3">
               <SheetTitle>Editar gasto</SheetTitle>

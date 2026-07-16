@@ -75,16 +75,19 @@ export function CategoryAllocationSkeleton() {
 
 export function SpendingHeroSkeleton() {
   return (
-    <div className="space-y-5" aria-hidden>
-      <Bone className="h-2.5 w-28" />
-      <Bone className="h-12 w-[72%] sm:h-14" />
-      <Bone className="h-3.5 w-40" />
-      <div className="space-y-2 pt-2">
-        <div className="flex justify-between">
-          <Bone className="h-3 w-24" />
-          <Bone className="h-3 w-12" />
-        </div>
-        <Bone className="h-1.5 w-full rounded-full" />
+    <div className="space-y-5 sm:space-y-6" aria-hidden>
+      <div className="space-y-2">
+        <Bone className="h-12 w-[72%] sm:h-14" />
+        <Bone className="h-3.5 w-40" />
+        <Bone className="mt-3 h-1.5 max-w-md w-full rounded-full" />
+      </div>
+      <div className="grid grid-cols-3 gap-3 border-t border-border/80 pt-4 sm:gap-8">
+        {Array.from({ length: 3 }, (_, i) => (
+          <div key={i} className="space-y-1.5">
+            <Bone className="h-2.5 w-16" />
+            <Bone className="h-5 w-[70%]" />
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -93,13 +96,13 @@ export function SpendingHeroSkeleton() {
 export function InsightsGridSkeleton() {
   return (
     <section
-      className="section-rule grid grid-cols-2 gap-x-8 gap-y-8 py-8 sm:grid-cols-4 sm:py-10"
+      className="grid grid-cols-2 gap-x-6 gap-y-5 border-t border-border pt-5 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4"
       aria-hidden
     >
       {Array.from({ length: 4 }, (_, i) => (
-        <div key={i} className="metric-cell space-y-2">
+        <div key={i} className="metric-cell space-y-1.5">
           <Bone className="h-2.5 w-16" />
-          <Bone className="h-6 w-[70%]" />
+          <Bone className="h-6 w-[75%]" />
           <Bone className="h-3 w-20" />
         </div>
       ))}
@@ -126,28 +129,37 @@ export function ChartSkeleton({ className }: Readonly<{ className?: string }>) {
 
 export function DashboardSkeleton() {
   return (
-    <div className="page-stack" aria-busy="true" aria-label="Cargando resumen">
-      <div className="flex justify-end pb-4">
+    <div className="flex flex-col gap-1 pb-4 lg:pb-8" aria-busy="true" aria-label="Cargando resumen">
+      <div className="flex items-center justify-between gap-3 pb-2">
+        <Bone className="h-2.5 w-20" />
         <Bone className="h-8 w-36 rounded-full" />
       </div>
+      <div className="grid gap-8 pt-1 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-start lg:gap-x-12 xl:gap-x-16">
+        <div className="flex flex-col gap-6 lg:gap-7">
+          <SpendingHeroSkeleton />
+          <InsightsGridSkeleton />
+        </div>
+        <div className="border-t border-border pt-5 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-12 xl:pl-14">
+          <CategoryAllocationSkeleton />
+        </div>
+      </div>
+    </div>
+  )
+}
 
-      <section className="section-rule grid gap-10 pb-10 pt-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16 lg:pb-12 lg:pt-6 xl:gap-24">
-        <SpendingHeroSkeleton />
-        <CategoryAllocationSkeleton />
-      </section>
-
-      <InsightsGridSkeleton />
-
-      <div className="xl:grid xl:grid-cols-2 xl:gap-x-16">
-        <section className="section-rule py-8 sm:py-10 xl:border-b-0">
+export function AnalisisPageSkeleton() {
+  return (
+    <div className="page-stack space-y-6" aria-busy="true" aria-label="Cargando análisis">
+      <div className="flex items-center justify-between gap-3">
+        <Bone className="h-2.5 w-20" />
+        <Bone className="h-8 w-36 rounded-full" />
+      </div>
+      <div className="flex flex-col gap-8 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-12 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] xl:gap-x-16">
+        <section className="min-w-0 lg:border-r lg:pr-12 xl:pr-16">
           <ChartSkeleton />
         </section>
-        <section className="space-y-5 pt-8 sm:pt-10 xl:pt-10">
-          <div className="flex items-center justify-between">
-            <Bone className="h-2.5 w-32" />
-            <Bone className="h-3 w-16" />
-          </div>
-          <ExpenseListSkeleton rows={4} />
+        <section className="min-w-0 border-t border-border pt-6 lg:border-t-0 lg:pt-0">
+          <CategoryAllocationSkeleton />
         </section>
       </div>
     </div>

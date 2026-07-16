@@ -1,15 +1,22 @@
 import { formatCurrency } from '@/lib/format'
+import { cn } from '@/lib/utils'
 
 interface CategoryAllocationProps {
   data: { id: string; name: string; color: string; icon: string; total: number }[]
   total: number
   limit?: number
+  className?: string
 }
 
-export function CategoryAllocation({ data, total, limit = 5 }: Readonly<CategoryAllocationProps>) {
+export function CategoryAllocation({
+  data,
+  total,
+  limit,
+  className,
+}: Readonly<CategoryAllocationProps>) {
   if (data.length === 0) {
     return (
-      <div className="space-y-4">
+      <div className={cn('space-y-4', className)}>
         <p className="stat-label">Asignación</p>
         <p className="text-sm text-muted-foreground">Sin gastos este mes</p>
       </div>
@@ -17,12 +24,12 @@ export function CategoryAllocation({ data, total, limit = 5 }: Readonly<Category
   }
 
   const sorted = [...data].sort((a, b) => b.total - a.total)
-  const visible = sorted.slice(0, limit)
-  const hidden = sorted.slice(limit)
+  const visible = limit == null ? sorted : sorted.slice(0, limit)
+  const hidden = limit == null ? [] : sorted.slice(limit)
   const hiddenTotal = hidden.reduce((sum, item) => sum + item.total, 0)
 
   return (
-    <section className="space-y-5 lg:pt-1">
+    <section className={cn('space-y-4', className)}>
       <p className="stat-label">Asignación</p>
 
       <div className="space-y-4">
@@ -54,7 +61,7 @@ export function CategoryAllocation({ data, total, limit = 5 }: Readonly<Category
                   </span>
                 </div>
               </div>
-              <div className="bar-track">
+              <div className="bar-track h-1.5">
                 <div
                   className="bar-fill"
                   style={{

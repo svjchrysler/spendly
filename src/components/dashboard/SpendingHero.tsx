@@ -12,14 +12,12 @@ interface SpendingHeroProps {
   spent: number
   transactionCount: number
   budget: number | null
-  topCategory?: { name: string; total: number } | null
 }
 
 export function SpendingHero({
   spent,
   transactionCount,
   budget,
-  topCategory,
 }: Readonly<SpendingHeroProps>) {
   const { year, month } = useMonth()
   const upsertBudget = useUpsertBudget()
@@ -120,43 +118,48 @@ export function SpendingHero({
   }
 
   return (
-    <section className="space-y-8">
-      <div className="space-y-2.5">
+    <div className="space-y-5 sm:space-y-6">
+      <div className="space-y-2">
         <motion.p
           key={spent}
           initial={reduceMotion ? false : { opacity: 0.4, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          className="stat-value"
+          className="stat-value text-[2.75rem] leading-none sm:text-5xl lg:text-[3.25rem]"
         >
           {formatCurrency(spent)}
         </motion.p>
         {budgetHint}
+        {budget != null && budget > 0 && !editingBudget ? (
+          <div className="bar-track mt-3 max-w-md lg:h-1.5">
+            <div
+              className={cn('bar-fill', overBudget ? 'bg-destructive' : 'bg-primary')}
+              style={{ width: `${Math.max(percentage, 2)}%` }}
+            />
+          </div>
+        ) : null}
       </div>
 
-      <div className="grid grid-cols-3 gap-5 sm:gap-8">
-        <div className="metric-cell">
+      <div className="grid grid-cols-3 gap-3 border-t border-border/80 pt-4 sm:gap-8">
+        <div className="metric-cell space-y-1.5">
           <p className="metric-cell-label">Promedio / día</p>
-          <p className="metric-cell-value">{formatCurrency(dailyAvg)}</p>
+          <p className="text-base font-semibold tracking-tight tabular-nums sm:text-lg">
+            {formatCurrency(dailyAvg)}
+          </p>
         </div>
-        <div className="metric-cell">
+        <div className="metric-cell space-y-1.5">
           <p className="metric-cell-label">Gastos</p>
-          <p className="metric-cell-value">{transactionCount}</p>
+          <p className="text-base font-semibold tracking-tight tabular-nums sm:text-lg">
+            {transactionCount}
+          </p>
         </div>
-        <div className="metric-cell">
+        <div className="metric-cell space-y-1.5">
           <p className="metric-cell-label">Días</p>
-          <p className="metric-cell-value">
+          <p className="text-base font-semibold tracking-tight tabular-nums sm:text-lg">
             {dayOfMonth}/{daysInMonth}
           </p>
         </div>
       </div>
-
-      {topCategory ? (
-        <div className="metric-cell sm:hidden">
-          <p className="metric-cell-label">Categoría principal</p>
-          <p className="metric-cell-value truncate">{topCategory.name}</p>
-        </div>
-      ) : null}
-    </section>
+    </div>
   )
 }

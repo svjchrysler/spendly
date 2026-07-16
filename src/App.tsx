@@ -14,6 +14,9 @@ import { LoginPage } from '@/pages/LoginPage'
 const DashboardPage = lazy(() =>
   import('@/pages/DashboardPage').then((module) => ({ default: module.DashboardPage })),
 )
+const AnalisisPage = lazy(() =>
+  import('@/pages/AnalisisPage').then((module) => ({ default: module.AnalisisPage })),
+)
 const ExpensesPage = lazy(() =>
   import('@/pages/ExpensesPage').then((module) => ({ default: module.ExpensesPage })),
 )
@@ -42,6 +45,7 @@ export default function App() {
                     }
                   >
                     <Route index element={<DashboardPage />} />
+                    <Route path="analisis" element={<AnalisisPage />} />
                     <Route path="gastos" element={<ExpensesPage />} />
                     <Route path="categorias" element={<CategoriesPage />} />
                   </Route>

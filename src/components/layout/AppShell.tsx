@@ -1,23 +1,26 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, Receipt, Tags } from 'lucide-react'
+import { ChartColumn, LayoutDashboard, Receipt, Tags } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BrandMark } from '@/components/layout/BrandMark'
 import { OfflineBanner } from '@/components/layout/OfflineBanner'
 import { PageEnter } from '@/components/layout/PageEnter'
 import { ProfileMenu } from '@/components/layout/ProfileMenu'
+import { useKeyboardInset } from '@/hooks/useKeyboardInset'
 import { useRealtimeExpenses } from '@/hooks/useRealtimeExpenses'
 
 const navItems = [
   { to: '/', label: 'Resumen', end: true, icon: LayoutDashboard },
+  { to: '/analisis', label: 'Análisis', icon: ChartColumn },
   { to: '/gastos', label: 'Gastos', icon: Receipt },
   { to: '/categorias', label: 'Categorías', icon: Tags },
 ]
 
 export function AppShell() {
   useRealtimeExpenses()
+  useKeyboardInset()
 
   return (
-    <div className="min-h-dvh overflow-x-hidden bg-background">
+    <div className="min-h-dvh overflow-x-clip bg-background">
       <header className="sticky top-0 z-50 border-b border-border/80 bg-background/75 backdrop-blur-xl pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex h-14 w-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 xl:px-10">
           <div className="flex min-w-0 items-center gap-2.5">
@@ -78,7 +81,7 @@ export function AppShell() {
               end={end}
               className={({ isActive }) =>
                 cn(
-                  'pressable flex min-h-[3.6rem] flex-1 cursor-pointer flex-col items-center justify-center gap-1 px-2 py-2 text-[10px] font-medium tracking-wide',
+                  'pressable flex min-h-[3.4rem] flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 px-1 py-1.5 text-[9px] font-medium tracking-wide',
                   isActive ? 'text-primary' : 'text-muted-foreground',
                 )
               }

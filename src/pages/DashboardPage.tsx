@@ -1,14 +1,8 @@
 import {
-  CategoryAllocationSkeleton,
-  ChartSkeleton,
   DashboardSkeleton,
-  ExpenseListSkeleton,
   InsightsGridSkeleton,
   SpendingHeroSkeleton,
 } from '@/components/layout/skeletons'
-import { lazy, Suspense } from 'react'
-import { Link } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
 import { SpendingHero } from '@/components/dashboard/SpendingHero'
 import { MonthlyCapAlert } from '@/components/dashboard/MonthlyCapAlert'
 import { CategoryAllocation } from '@/components/charts/CategoryAllocation'
@@ -18,29 +12,11 @@ import { useMonth } from '@/contexts/MonthContext'
 import { useExpenses } from '@/hooks/useExpenses'
 import { formatCurrency } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import {
-  useMonthlyBudget,
-  useMonthlyHistory,
-  useMonthlyStats,
-} from '@/hooks/useMonthlyStats'
-
-const MonthlyBar = lazy(() =>
-  import('@/components/charts/MonthlyBar').then((module) => ({
-    default: module.MonthlyBar,
-  })),
-)
+import { useMonthlyBudget, useMonthlyStats } from '@/hooks/useMonthlyStats'
 
 interface CategorySlice {
   name: string
   total: number
-}
-
-interface InsightsGridProps {
-  topCategory: CategorySlice | null
-  lowestCategory: CategorySlice | null
-  budgetAmount: number | null
-  remaining: number | null
-  concentration: number
 }
 
 function InsightCell({
@@ -58,10 +34,12 @@ function InsightCell({
   if (tone === 'primary') toneClass = 'text-primary'
   else if (tone === 'destructive') toneClass = 'text-destructive'
   return (
-    <div className="metric-cell">
+    <div className="metric-cell space-y-1.5">
       <p className={cn('metric-cell-label', toneClass)}>{label}</p>
-      <p className={cn('metric-cell-value truncate', toneClass)}>{value}</p>
-      {hint ? <p className="text-xs tabular-nums text-muted-foreground">{hint}</p> : null}
+      <p className={cn('text-lg font-semibold tracking-tight tabular-nums sm:text-xl', toneClass)}>
+        {value}
+      </p>
+      {hint ? <p className="text-xs tabular-nums text-muted-foreground sm:text-sm">{hint}</p> : null}
     </div>
   )
 }
@@ -72,7 +50,13 @@ function InsightsGrid({
   budgetAmount,
   remaining,
   concentration,
-}: Readonly<InsightsGridProps>) {
+}: Readonly<{
+  topCategory: CategorySlice | null
+  lowestCategory: CategorySlice | null
+  budgetAmount: number | null
+  remaining: number | null
+  concentration: number
+}>) {
   const overBudget = remaining != null && remaining < 0
   let budgetHint: string | undefined
   if (remaining != null) {
@@ -80,7 +64,7 @@ function InsightsGrid({
   }
 
   return (
-    <section className="section-rule grid grid-cols-2 gap-x-8 gap-y-8 py-8 sm:grid-cols-4 sm:py-10">
+    <section className="grid grid-cols-2 gap-x-6 gap-y-5 border-t border-border pt-5 sm:grid-cols-4 sm:gap-x-8 lg:grid-cols-2 xl:grid-cols-4">
       <InsightCell
         label="Mayor gasto"
         tone="primary"
@@ -111,9 +95,7 @@ export function DashboardPage() {
   const { year, month } = useMonth()
   const { data: stats, isLoading: statsLoading } = useMonthlyStats(year, month)
   const { data: budget } = useMonthlyBudget(year, month)
-  const { data: history, isLoading: historyLoading } = useMonthlyHistory()
   const { data: expenses = [], isLoading: expensesLoading } = useExpenses(year, month)
-  const recentExpenses = expenses.slice(0, 8)
 
   const spent = stats?.total ?? 0
   const breakdown = stats?.categoryBreakdown ?? []
@@ -124,91 +106,51 @@ export function DashboardPage() {
   const budgetAmount = budget?.amount ?? null
   const remaining = budgetAmount != null ? budgetAmount - spent : null
 
-  if (statsLoading && expensesLoading && historyLoading) {
+  if (statsLoading && expensesLoading) {
     return <DashboardSkeleton />
   }
 
-  let historyPanel = null
-  if (historyLoading) {
-    historyPanel = <ChartSkeleton />
-  } else if (history && history.length > 0) {
-    historyPanel = (
-      <Suspense fallback={<ChartSkeleton />}>
-        <MonthlyBar data={history} />
-      </Suspense>
-    )
-  }
-
-  let recentPanel = <ExpenseList expenses={recentExpenses} showFab />
-  if (expensesLoading) {
-    recentPanel = <ExpenseListSkeleton rows={4} />
-  } else if (recentExpenses.length === 0) {
-    recentPanel = (
-      <>
-        <div className="py-8">
-          <p className="text-sm text-muted-foreground">Sin gastos este mes</p>
-        </div>
-        <ExpenseList expenses={[]} showFab />
-      </>
-    )
-  }
-
   return (
-    <div className="page-stack">
-      <div className="flex justify-end pb-4">
+    // ponytail: pack content top — stretch/justify-between left a void middle on tall desktops
+    <div className="flex flex-col gap-1 pb-4 lg:pb-8">
+      <div className="flex shrink-0 items-center justify-between gap-3 pb-2">
+        <p className="stat-label">Este mes</p>
         <MonthPicker />
       </div>
 
       {!statsLoading ? <MonthlyCapAlert spent={spent} /> : null}
 
-      {statsLoading ? (
-        <section className="section-rule grid gap-10 pb-10 pt-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16 lg:pb-12 lg:pt-6 xl:gap-24">
-          <SpendingHeroSkeleton />
-          <CategoryAllocationSkeleton />
-        </section>
-      ) : (
-        <section className="section-rule grid gap-10 pb-10 pt-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16 lg:pb-12 lg:pt-6 xl:gap-24">
-          <SpendingHero
-            spent={spent}
-            transactionCount={expenses.length}
-            budget={budgetAmount}
-            topCategory={topCategory ? { name: topCategory.name, total: topCategory.total } : null}
-          />
-          <CategoryAllocation data={breakdown} total={spent} />
-        </section>
-      )}
+      <div className="grid gap-8 pt-1 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-start lg:gap-x-12 xl:gap-x-16">
+        <div className="flex min-w-0 flex-col gap-6 lg:gap-7">
+          {statsLoading ? (
+            <SpendingHeroSkeleton />
+          ) : (
+            <SpendingHero
+              spent={spent}
+              transactionCount={expenses.length}
+              budget={budgetAmount}
+            />
+          )}
 
-      {statsLoading ? (
-        <InsightsGridSkeleton />
-      ) : (
-        <InsightsGrid
-          topCategory={topCategory}
-          lowestCategory={lowestCategory}
-          budgetAmount={budgetAmount}
-          remaining={remaining}
-          concentration={concentration}
-        />
-      )}
+          {statsLoading ? (
+            <InsightsGridSkeleton />
+          ) : (
+            <InsightsGrid
+              topCategory={topCategory}
+              lowestCategory={lowestCategory}
+              budgetAmount={budgetAmount}
+              remaining={remaining}
+              concentration={concentration}
+            />
+          )}
+        </div>
 
-      <div className="xl:grid xl:grid-cols-2 xl:gap-x-16 xl:gap-y-0">
-        {historyPanel ? (
-          <section className="section-rule py-8 sm:py-10 xl:border-b-0">{historyPanel}</section>
-        ) : null}
-
-        <section className="space-y-5 pt-8 sm:pt-10 xl:pt-10">
-          <div className="flex items-center justify-between gap-3">
-            <p className="stat-label">Actividad reciente</p>
-            <Link
-              to="/gastos"
-              className="pressable inline-flex cursor-pointer items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
-              Ver todos
-              <ArrowRight className="size-3.5" />
-            </Link>
-          </div>
-          {recentPanel}
-        </section>
+        <aside className="min-w-0 border-t border-border pt-5 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-12 xl:pl-14">
+          {statsLoading ? null : <CategoryAllocation data={breakdown} total={spent} />}
+        </aside>
       </div>
+
+      <ExpenseList expenses={[]} showFab />
     </div>
   )
 }

@@ -116,7 +116,7 @@
   }
 
   body {
-    @apply min-h-dvh overflow-x-hidden bg-background text-foreground font-sans antialiased;
+    @apply min-h-dvh overflow-x-clip bg-background text-foreground font-sans antialiased;
     font-feature-settings: "ss01" on, "cv11" on, "tnum" on;
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
