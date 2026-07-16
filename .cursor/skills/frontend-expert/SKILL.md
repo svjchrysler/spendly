@@ -49,6 +49,14 @@ Prefer the matching entry under available_skills if a path differs.
 - Commits unless asked
 - Touch Supabase schema without the supabase skill
 
-## Finish
+## Finish (mandatory)
 
-`pnpm exec tsc --noEmit` if TS changed; align skeletons; short note of skipped work (ponytail).
+Before declaring the task done, run **both** and fix until green:
+
+```bash
+pnpm test
+pnpm build
+```
+
+Also align skeletons if loading UI changed. Short ponytail note of skipped work.  
+Never say “listo” if tests or build failed — report the failure and keep fixing.

@@ -157,12 +157,13 @@ Variables `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, opcionales `VITE_CURREN
 ## Skills locales
 
 - Supabase: `.agents/skills/supabase/SKILL.md` — **obligatorio** en tareas de DB/Auth/RLS/Realtime.
-- Frontend expert: subagente `.cursor/agents/frontend-expert.md` + skill `.cursor/skills/frontend-expert/` — UI/React/Vite/CSS; orquesta ponytail, ui-ux-pro-max y skills Vercel.
+- Frontend expert: subagente `.cursor/agents/frontend-expert.md` + skill `.cursor/skills/frontend-expert/` — UI/React/Vite/CSS; orquesta ponytail, ui-ux-pro-max y skills Vercel. **Al terminar desarrollo:** `pnpm test` y `pnpm build` obligatorios (arreglar hasta verde).
 - Design system legacy: `design-system/spendly/MASTER.md` (puede estar desfasado vs tokens reales en `index.css`; priorizar CSS/código).
 
 ## Checklist rápido antes de terminar
 
-- [ ] `pnpm exec tsc --noEmit` limpio si tocaste TS
+- [ ] `pnpm test` verde
+- [ ] `pnpm build` verde (incluye typecheck)
 - [ ] Mobile no roto si el cambio fue de desktop layout
 - [ ] Loading state / skeleton alineado
 - [ ] Copy en español

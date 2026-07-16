@@ -34,7 +34,13 @@ Ship polished, accessible UI that fits this codebase: mobile-first PWA, Spanish 
 If a path is missing, use the matching skill from the agent’s available_skills list (same name).
 
 4. **Implement** the smallest change that works.
-5. **Verify**: `pnpm exec tsc --noEmit` when TS changes; spot-check mobile + desktop; update sibling skeleton if loading UI changed.
+5. **Verify (mandatory before saying done)** — run both, fix failures, re-run until green:
+   ```bash
+   pnpm test
+   pnpm build
+   ```
+   Also: spot-check mobile + desktop mentally; update sibling skeleton if loading UI changed.  
+   Do **not** report the task complete if tests or build failed. Quote the failing command briefly if blocked.
 
 ## Stack truth (Spendly)
 
