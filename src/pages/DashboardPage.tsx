@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import {
+  CategoryAllocationSkeleton,
   DashboardSkeleton,
   ExpenseRowSkeleton,
   InsightsGridSkeleton,
@@ -219,8 +220,13 @@ export function DashboardPage() {
           <RecentMovements expenses={expenses} loading={expensesLoading} />
         </div>
 
-        <aside className="ledger-aside min-w-0 border-t border-border/70 pt-5 lg:border-t-0 lg:pt-0">
-          {statsLoading ? null : <CategoryAllocation data={breakdown} total={spent} />}
+        <aside className="ledger-aside min-w-0 border-t border-border/70 pt-5 lg:sticky lg:top-[calc(4.25rem_+_env(safe-area-inset-top))] lg:border-t-0 lg:pt-0">
+          {/* Top categorías; la asignación completa vive en Análisis */}
+          {statsLoading ? (
+            <CategoryAllocationSkeleton />
+          ) : (
+            <CategoryAllocation data={breakdown} total={spent} limit={8} />
+          )}
         </aside>
       </div>
 

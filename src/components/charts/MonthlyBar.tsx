@@ -53,7 +53,7 @@ export function MonthlyBar({ data }: Readonly<MonthlyBarProps>) {
           Máx. {formatCurrencyCompact(maxTotal)}
         </p>
       </div>
-      <div className="h-52 sm:h-56">
+      <div className="h-52 sm:h-56 lg:h-64">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} barSize={isDesktop ? 32 : 22} margin={chartMargins}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />

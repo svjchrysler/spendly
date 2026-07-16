@@ -117,7 +117,7 @@ export function ChartSkeleton({ className }: Readonly<{ className?: string }>) {
         <Bone className="h-2.5 w-28" />
         <Bone className="h-3 w-20" />
       </div>
-      <div className="flex h-52 items-end gap-2 sm:h-56 sm:gap-3">
+      <div className="flex h-52 items-end gap-2 sm:h-56 sm:gap-3 lg:h-64">
         {[40, 65, 45, 80, 55, 90].map((h) => (
           // ponytail: fixed heights mirror bar chart silhouette
           <Bone key={h} className="flex-1 rounded-t-md" style={{ height: `${h}%` }} />
@@ -189,9 +189,20 @@ export function AnalisisPageSkeleton() {
         ))}
       </div>
       <div className="grid gap-8 pt-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10">
-        <section className="min-w-0">
+        <div className="flex min-w-0 flex-col gap-5">
           <ChartSkeleton />
-        </section>
+          <section className="border-t border-border/70 pt-5">
+            <Bone className="mb-3 h-2.5 w-24" />
+            <div className="divide-y divide-border/25">
+              {Array.from({ length: 4 }, (_, i) => (
+                <div key={i} className="flex items-center justify-between gap-3 py-2.5">
+                  <Bone className={`h-3.5 ${i % 2 === 0 ? 'w-28' : 'w-24'}`} />
+                  <Bone className="h-3.5 w-24" />
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
         <section className="ledger-aside min-w-0 border-t border-border/70 pt-5 lg:border-t-0 lg:pt-0">
           <CategoryAllocationSkeleton />
         </section>
@@ -225,7 +236,7 @@ export function ExpensesPageSkeleton() {
 
 export function CategoryListSkeleton({ rows = 8 }: Readonly<{ rows?: number }>) {
   return (
-    <div className="grid pt-1 sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-3 xl:gap-x-14" aria-hidden>
+    <div className="grid pt-1 sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-12" aria-hidden>
       {Array.from({ length: rows }, (_, i) => (
         <div key={i} className="flex items-center justify-between gap-2 border-b border-border/40 py-3">
           <div className="flex items-center gap-3">

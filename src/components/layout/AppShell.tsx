@@ -22,7 +22,7 @@ export function AppShell() {
   return (
     <div className="min-h-dvh overflow-x-clip bg-background">
       <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex h-14 w-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 xl:px-10">
+        <div className="mx-auto flex h-14 w-full max-w-[88rem] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 xl:px-10">
           <div className="flex min-w-0 items-center gap-2.5">
             <BrandMark />
             <span className="truncate text-sm font-semibold tracking-tight sm:text-[15px]">
@@ -66,7 +66,8 @@ export function AppShell() {
 
       <OfflineBanner />
 
-      <main className="mx-auto w-full px-4 pb-[calc(6.25rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:pt-7 md:pb-12 lg:px-8 xl:px-10">
+      {/* max-w compartida con el header: composición legible en 4K sin regalar espacio en laptops */}
+      <main className="mx-auto w-full max-w-[88rem] px-4 pb-[calc(6.25rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:pt-7 md:pb-12 lg:px-8 xl:px-10">
         <PageEnter>
           <Outlet />
         </PageEnter>
