@@ -2,11 +2,12 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
+  Rectangle,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
+  type BarShapeProps,
 } from 'recharts'
 import { formatCurrency, formatCurrencyCompact } from '@/lib/format'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
@@ -15,6 +16,17 @@ type WeekdayPoint = {
   label: string
   total: number
   count: number
+}
+
+function WeekdayBarShape(props: BarShapeProps) {
+  const isPeak = Boolean(props.payload?.isPeak)
+  return (
+    <Rectangle
+      {...props}
+      fill={isPeak ? 'var(--chart-1)' : 'var(--chart-5)'}
+      fillOpacity={isPeak ? 1 : 0.55}
+    />
+  )
 }
 
 function WeekdayTooltip({
@@ -42,6 +54,10 @@ export function WeekdayBarChart({
 }>) {
   const isDesktop = useIsDesktop()
   const peak = Math.max(...data.map((item) => item.total), 0)
+  const chartData = data.map((item) => ({
+    ...item,
+    isPeak: peak > 0 && item.total === peak,
+  }))
 
   return (
     <section className="space-y-4 border-t border-border/70 pt-5">
@@ -49,7 +65,7 @@ export function WeekdayBarChart({
       <div className="h-48 sm:h-52">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={data}
+            data={chartData}
             layout="vertical"
             margin={{ top: 4, right: isDesktop ? 12 : 4, left: 0, bottom: 0 }}
             barSize={14}
@@ -74,19 +90,7 @@ export function WeekdayBarChart({
               width={36}
             />
             <Tooltip content={<WeekdayTooltip />} cursor={{ fill: 'color-mix(in oklab, var(--foreground) 6%, transparent)' }} />
-            <Bar dataKey="total" radius={[0, 4, 4, 0]}>
-              {data.map((entry) => (
-                <Cell
-                  key={entry.label}
-                  fill={
-                    entry.total === peak && peak > 0
-                      ? 'var(--chart-1)'
-                      : 'var(--chart-5)'
-                  }
-                  fillOpacity={entry.total === peak && peak > 0 ? 1 : 0.55}
-                />
-              ))}
-            </Bar>
+            <Bar dataKey="total" radius={[0, 4, 4, 0]} shape={WeekdayBarShape} />
           </BarChart>
         </ResponsiveContainer>
       </div>
