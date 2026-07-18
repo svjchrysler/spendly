@@ -74,7 +74,7 @@ export function LoginPage() {
 
       <main className="mx-auto grid w-full max-w-6xl flex-1 content-center gap-10 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-16 xl:px-10">
         <section className="flex flex-col justify-center">
-          <h1 className="font-ledger text-pretty text-[2.6rem] leading-[1.05] font-bold tracking-[-0.03em] sm:text-5xl">
+          <h1 className="font-ledger text-pretty text-[2.6rem] leading-[1.05] font-semibold tracking-[-0.04em] sm:text-5xl">
             Bienvenido
             <br />
             <span className="text-primary">de vuelta.</span>

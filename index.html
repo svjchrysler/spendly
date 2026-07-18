@@ -1,41 +1,202 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no, interactive-widget=resizes-content" />
-    <meta name="theme-color" content="#121110" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#f1efe8" media="(prefers-color-scheme: light)" />
-    <meta name="description" content="Spendly — Gestiona tus gastos mensuales" />
-    <meta name="application-name" content="Spendly" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="Spendly" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="format-detection" content="telephone=no" />
-    <title>Spendly</title>
-    <script>
-      (() => {
-        try {
-          const stored = localStorage.getItem('spendly-theme')
-          let theme = 'light'
-          if (stored === 'light' || stored === 'dark') {
-            theme = stored
-          } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            theme = 'dark'
-          }
-          document.documentElement.classList.toggle('dark', theme === 'dark')
-          const color = theme === 'dark' ? '#121110' : '#f1efe8'
-          document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
-            meta.setAttribute('content', color)
-          })
-        } catch {}
-      })()
-    </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no, interactive-widget=resizes-content" />
+  <!-- Placeholders inyectados desde src/lib/palette.ts vía vite transformIndexHtml -->
+  <meta name="theme-color" content="__THEME_DARK__" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="__THEME_LIGHT__" media="(prefers-color-scheme: light)" />
+  <meta name="description" content="Spendly — Gestiona tus gastos mensuales" />
+  <meta name="application-name" content="Spendly" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Spendly" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Spendly</title>
+  <style>
+    /* Splash crítico: sin depender del CSS de la app */
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: __THEME_LIGHT__;
+    }
+
+    html.dark,
+    html.dark body {
+      background: __THEME_DARK__;
+    }
+
+    #app-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.1rem;
+      padding:
+        max(1.5rem, env(safe-area-inset-top)) max(1.5rem, env(safe-area-inset-right)) max(1.5rem, env(safe-area-inset-bottom)) max(1.5rem, env(safe-area-inset-left));
+      background: __THEME_LIGHT__;
+      color: __FG_LIGHT__;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 320ms cubic-bezier(0.16, 1, 0.3, 1), visibility 320ms;
+    }
+
+    html.dark #app-splash {
+      background: __THEME_DARK__;
+      color: __FG_DARK__;
+    }
+
+    #app-splash.is-done {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    #app-splash .mark {
+      position: relative;
+      width: 3.25rem;
+      height: 3.25rem;
+      border-radius: 0.7rem;
+      overflow: hidden;
+      background: __FG_LIGHT__;
+      box-shadow: 0 0 0 1px color-mix(in srgb, __FG_LIGHT__ 20%, transparent);
+    }
+
+    html.dark #app-splash .mark {
+      background: __THEME_DARK__;
+      box-shadow: 0 0 0 1px color-mix(in srgb, __FG_DARK__ 20%, transparent);
+    }
+
+    #app-splash .mark-slash {
+      position: absolute;
+      inset: 20%;
+      border-radius: 999px;
+      background: __THEME_LIGHT__;
+      opacity: 0.9;
+      transform: rotate(-38deg);
+    }
+
+    html.dark #app-splash .mark-slash {
+      background: __FG_DARK__;
+    }
+
+    #app-splash .mark-glow {
+      position: absolute;
+      bottom: 26%;
+      left: 20%;
+      width: 40%;
+      height: 40%;
+      border-radius: 999px;
+      background: __PRIMARY_LIGHT__;
+      opacity: 0.8;
+      filter: blur(1px);
+    }
+
+    html.dark #app-splash .mark-glow {
+      background: __PRIMARY_DARK__;
+    }
+
+    #app-splash .mark-dot {
+      position: absolute;
+      bottom: 30%;
+      left: 26%;
+      width: 28%;
+      height: 28%;
+      border-radius: 999px;
+      background: __PRIMARY_LIGHT__;
+    }
+
+    html.dark #app-splash .mark-dot {
+      background: __PRIMARY_DARK__;
+    }
+
+    #app-splash .wordmark {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+    }
+
+    #app-splash .pulse {
+      width: 1.75rem;
+      height: 2px;
+      border-radius: 999px;
+      background: __PRIMARY_LIGHT__;
+      transform-origin: center;
+      animation: splash-pulse 1.1s ease-in-out infinite;
+    }
+
+    html.dark #app-splash .pulse {
+      background: __PRIMARY_DARK__;
+    }
+
+    @keyframes splash-pulse {
+
+      0%,
+      100% {
+        transform: scaleX(0.45);
+        opacity: 0.45;
+      }
+
+      50% {
+        transform: scaleX(1);
+        opacity: 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #app-splash .pulse {
+        animation: none;
+        opacity: 0.7;
+      }
+
+      #app-splash {
+        transition: none;
+      }
+    }
+  </style>
+  <script>
+    (() => {
+      try {
+        const stored = localStorage.getItem('spendly-theme')
+        let theme = 'light'
+        if (stored === 'light' || stored === 'dark') {
+          theme = stored
+        } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          theme = 'dark'
+        }
+        document.documentElement.classList.toggle('dark', theme === 'dark')
+        const color = theme === 'dark' ? '__THEME_DARK__' : '__THEME_LIGHT__'
+        document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+          meta.setAttribute('content', color)
+        })
+      } catch { }
+    })()
+  </script>
+</head>
+
+<body>
+  <div id="app-splash" role="status" aria-live="polite" aria-label="Cargando Spendly">
+    <div class="mark" aria-hidden="true">
+      <span class="mark-slash"></span>
+      <span class="mark-glow"></span>
+      <span class="mark-dot"></span>
+    </div>
+    <p class="wordmark">Spendly</p>
+    <div class="pulse" aria-hidden="true"></div>
+  </div>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

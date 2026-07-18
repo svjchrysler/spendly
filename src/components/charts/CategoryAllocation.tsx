@@ -6,6 +6,8 @@ interface CategoryAllocationProps {
   total: number
   limit?: number
   className?: string
+  /** Distribuye filas en la altura disponible (Resumen desktop). */
+  fill?: boolean
 }
 
 export function CategoryAllocation({
@@ -13,12 +15,15 @@ export function CategoryAllocation({
   total,
   limit,
   className,
+  fill = false,
 }: Readonly<CategoryAllocationProps>) {
   if (data.length === 0) {
     return (
-      <div className={cn('space-y-4', className)}>
+      <div className={cn(fill ? 'flex h-full flex-col' : 'space-y-4', className)}>
         <p className="stat-label">Asignación</p>
-        <p className="text-sm text-muted-foreground">Sin gastos este mes</p>
+        <p className={cn('text-sm text-muted-foreground', fill && 'flex flex-1 items-center')}>
+          Sin gastos este mes
+        </p>
       </div>
     )
   }
@@ -29,17 +34,25 @@ export function CategoryAllocation({
   const hiddenTotal = hidden.reduce((sum, item) => sum + item.total, 0)
 
   return (
-    <section className={cn('space-y-4', className)}>
-      <p className="stat-label">Asignación</p>
+    <section
+      className={cn(fill ? 'flex h-full min-h-0 flex-col' : 'space-y-4', className)}
+    >
+      <p className="stat-label shrink-0">Asignación</p>
 
-      <div className="space-y-4">
+      <div
+        className={cn(
+          fill
+            ? 'mt-4 flex min-h-0 flex-1 flex-col justify-evenly gap-5'
+            : 'space-y-4',
+        )}
+      >
         {visible.map((item, index) => {
           const pct = total > 0 ? (item.total / total) * 100 : 0
           return (
             <div
               key={item.id}
-              className="space-y-2"
-              style={{ animationDelay: `${index * 40}ms` }}
+              className={cn('space-y-2', fill && 'py-0.5')}
+              style={fill ? undefined : { animationDelay: `${index * 40}ms` }}
             >
               <div className="flex items-baseline justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2.5">
@@ -48,12 +61,12 @@ export function CategoryAllocation({
                     style={{ backgroundColor: item.color, color: item.color }}
                     aria-hidden
                   />
-                  <span className="truncate text-sm font-medium tracking-tight">
+                  <span className="truncate text-sm font-medium tracking-tight sm:text-[15px]">
                     {item.name}
                   </span>
                 </div>
                 <div className="flex shrink-0 items-baseline gap-2.5">
-                  <span className="text-sm font-semibold tabular-nums tracking-tight">
+                  <span className="text-sm font-semibold tabular-nums tracking-tight sm:text-[15px]">
                     {formatCurrency(item.total)}
                   </span>
                   <span className="w-9 text-right text-xs tabular-nums text-muted-foreground">
@@ -61,7 +74,7 @@ export function CategoryAllocation({
                   </span>
                 </div>
               </div>
-              <div className="bar-track h-1.5">
+              <div className={cn('bar-track', fill ? 'h-2' : 'h-1.5')}>
                 <div
                   className="bar-fill"
                   style={{
@@ -75,7 +88,7 @@ export function CategoryAllocation({
         })}
 
         {hidden.length > 0 ? (
-          <div className="flex items-baseline justify-between gap-3 pt-1 text-xs text-muted-foreground">
+          <div className="flex shrink-0 items-baseline justify-between gap-3 pt-1 text-xs text-muted-foreground">
             <span>+{hidden.length} categorías más</span>
             <span className="tabular-nums">{formatCurrency(hiddenTotal)}</span>
           </div>

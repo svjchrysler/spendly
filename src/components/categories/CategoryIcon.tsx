@@ -77,7 +77,10 @@ export function CategoryIcon({
         boxShadow: color ? `inset 0 0 0 1px ${color}33` : undefined,
       }}
     >
-      <Icon className={sizes.icon} style={{ color: color ?? '#5cdb95' }} />
+      <Icon
+        className={cn(sizes.icon, !color && 'text-primary')}
+        style={color ? { color } : undefined}
+      />
     </div>
   )
 }

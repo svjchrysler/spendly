@@ -131,7 +131,7 @@ export function ExpenseDatePicker({ value, onChange }: Readonly<ExpenseDatePicke
         <div
           role="dialog"
           aria-label="Calendario"
-          className="absolute right-0 bottom-full z-50 mb-2 w-[17.5rem] rounded-2xl border border-border/80 bg-popover p-3 shadow-xl shadow-black/40"
+          className="absolute right-0 bottom-full z-50 mb-2 w-[17.5rem] rounded-2xl border border-border/80 bg-popover p-3 shadow-xl shadow-[0_20px_40px_var(--shadow-elevated)]"
         >
           <div className="mb-3 flex items-center justify-between gap-2">
             <button

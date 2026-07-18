@@ -1,6 +1,14 @@
-@import "@fontsource-variable/space-grotesk/index.css";
-@import "@fontsource/space-mono/400.css";
-@import "@fontsource/space-mono/700.css";
+/* ponytail: latin only — es-BO; skip cyrillic/latin-ext in SW precache */
+@font-face {
+  font-family: "Geist Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("@fontsource-variable/geist/files/geist-latin-wght-normal.woff2")
+    format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -8,8 +16,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: "Space Grotesk Variable", "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-ledger: "Space Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-sans: "Geist Variable", "Geist", ui-sans-serif, system-ui, sans-serif;
+  /* Misma familia que la UI: montos tipo referencia (sans geométrica, no mono) */
+  --font-ledger: "Geist Variable", "Geist", ui-sans-serif, system-ui, sans-serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -27,9 +36,16 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-muted: var(--warning-muted);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-overlay: var(--overlay);
+  --color-overlay-strong: var(--overlay-strong);
+  --color-brand-mark: var(--brand-mark);
+  --color-brand-mark-accent: var(--brand-mark-accent);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -46,35 +62,50 @@
   --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Ledger mint — warm paper + forest money (not Inter / not acid-OLED) */
+/*
+  Light: zinc frío + verde mint (misma familia que la referencia dark).
+  Hex canónicos también en src/lib/palette.ts.
+*/
 :root {
-  --background: #f1efe8;
-  --foreground: #1c1b19;
-  --card: #faf9f5;
-  --card-foreground: #1c1b19;
-  --popover: #faf9f5;
-  --popover-foreground: #1c1b19;
-  --primary: #1a7a52;
-  --primary-foreground: #f7faf8;
-  --secondary: #e8e4da;
-  --secondary-foreground: #1c1b19;
-  --muted: #e6e2d8;
-  --muted-foreground: #5f5c54;
-  --accent: #1a7a52;
-  --accent-foreground: #f7faf8;
-  --destructive: #c4474c;
-  --destructive-foreground: #fff8f8;
-  --border: rgba(28, 27, 25, 0.11);
-  --input: rgba(28, 27, 25, 0.12);
-  --ring: #1a7a52;
-  --chart-1: #1a7a52;
-  --chart-2: #6b8f7a;
-  --chart-3: #b08948;
-  --chart-4: #c4474c;
-  --chart-5: #5c6b7a;
+  --background: #f4f4f5;
+  --foreground: #09090b;
+  --card: #ffffff;
+  --card-foreground: #09090b;
+  --popover: #ffffff;
+  --popover-foreground: #09090b;
+  --primary: #16a34a;
+  --primary-foreground: #f0fdf4;
+  --secondary: #e4e4e7;
+  --secondary-foreground: #09090b;
+  --muted: #e4e4e7;
+  --muted-foreground: #71717a;
+  --accent: #16a34a;
+  --accent-foreground: #f0fdf4;
+  --destructive: #dc2626;
+  --destructive-foreground: #fef2f2;
+  --warning: #a16207;
+  --warning-foreground: #713f12;
+  --warning-muted: #fef3c7;
+  --border: color-mix(in oklab, var(--foreground) 10%, transparent);
+  --input: color-mix(in oklab, var(--foreground) 12%, transparent);
+  --ring: #16a34a;
+  --overlay: color-mix(in oklab, #000 10%, transparent);
+  --overlay-strong: color-mix(in oklab, #000 20%, transparent);
+  --shadow: color-mix(in oklab, #000 18%, transparent);
+  --shadow-elevated: color-mix(in oklab, #000 40%, transparent);
+  --brand-mark: #09090b;
+  --brand-mark-accent: #f4f4f5;
+  --chart-1: #16a34a;
+  --chart-2: #4ade80;
+  --chart-3: #a1a1aa;
+  --chart-4: #f87171;
+  --chart-5: #71717a;
   --radius: 0.875rem;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  /* iOS-ish chrome metrics — keep sticky/FAB/main in sync */
+  --app-header-h: 3.5rem;
+  --app-tabbar-h: 3.5rem;
   /* Espeja el padding horizontal del <main> para el full-bleed de listas */
   --list-bleed: 1rem;
 }
@@ -99,30 +130,39 @@
 
 .dark {
   color-scheme: dark;
-  --background: #121110;
-  --foreground: #f0eee8;
-  --card: #1a1916;
-  --card-foreground: #f0eee8;
-  --popover: #1c1b18;
-  --popover-foreground: #f0eee8;
-  --primary: #5dba8a;
-  --primary-foreground: #0c1510;
-  --secondary: #24221e;
-  --secondary-foreground: #f0eee8;
-  --muted: #1e1d1a;
-  --muted-foreground: #9a968c;
-  --accent: #5dba8a;
-  --accent-foreground: #0c1510;
-  --destructive: #e87378;
-  --destructive-foreground: #1a0c0c;
-  --border: rgba(240, 238, 232, 0.1);
-  --input: rgba(240, 238, 232, 0.12);
-  --ring: #5dba8a;
-  --chart-1: #5dba8a;
-  --chart-2: #8aab96;
-  --chart-3: #d4a574;
-  --chart-4: #e87378;
-  --chart-5: #8a9aab;
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #0a0a0a;
+  --card-foreground: #ffffff;
+  --popover: #0a0a0a;
+  --popover-foreground: #ffffff;
+  --primary: #4ade80;
+  --primary-foreground: #052e16;
+  --secondary: #18181b;
+  --secondary-foreground: #ffffff;
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
+  --accent: #4ade80;
+  --accent-foreground: #052e16;
+  --destructive: #f87171;
+  --destructive-foreground: #1c0a0a;
+  --warning: #fbbf24;
+  --warning-foreground: #fef3c7;
+  --warning-muted: #1c1508;
+  --border: color-mix(in oklab, var(--foreground) 8%, transparent);
+  --input: color-mix(in oklab, var(--foreground) 10%, transparent);
+  --ring: #4ade80;
+  --overlay: color-mix(in oklab, #000 60%, transparent);
+  --overlay-strong: color-mix(in oklab, #000 70%, transparent);
+  --shadow: color-mix(in oklab, #000 60%, transparent);
+  --shadow-elevated: color-mix(in oklab, #000 70%, transparent);
+  --brand-mark: #000000;
+  --brand-mark-accent: #ffffff;
+  --chart-1: #4ade80;
+  --chart-2: #86efac;
+  --chart-3: #a1a1aa;
+  --chart-4: #f87171;
+  --chart-5: #71717a;
 }
 
 @layer base {
@@ -146,11 +186,26 @@
     font-feature-settings: "tnum" on;
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
-    /* Soft ledger wash — not neon glow */
+    /* Soft ledger wash — tokens, no hex sueltos */
     background-image:
-      radial-gradient(ellipse 70% 45% at 15% -10%, rgba(26, 122, 82, 0.09), transparent 50%),
-      radial-gradient(ellipse 50% 35% at 100% 0%, rgba(176, 137, 72, 0.06), transparent 45%);
-    background-attachment: fixed;
+      radial-gradient(
+        ellipse 70% 45% at 15% -10%,
+        color-mix(in oklab, var(--primary) 9%, transparent),
+        transparent 50%
+      ),
+      radial-gradient(
+        ellipse 50% 35% at 100% 0%,
+        color-mix(in oklab, var(--chart-3) 6%, transparent),
+        transparent 45%
+      );
+    /* ponytail: scroll on phone — fixed bg paints jank in iOS standalone */
+    background-attachment: scroll;
+  }
+
+  @media (min-width: 1024px) {
+    body {
+      background-attachment: fixed;
+    }
   }
 
   @media (display-mode: standalone), (display-mode: fullscreen) {
@@ -169,12 +224,6 @@
       -webkit-user-select: text;
       -webkit-touch-callout: default;
     }
-  }
-
-  .dark body {
-    background-image:
-      radial-gradient(ellipse 70% 45% at 10% -15%, rgba(93, 186, 138, 0.08), transparent 52%),
-      radial-gradient(ellipse 45% 30% at 100% 5%, rgba(212, 165, 116, 0.04), transparent 48%);
   }
 
   ::selection {
@@ -200,17 +249,17 @@
   }
 
   .stat-label {
-    @apply text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground;
+    @apply text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground;
   }
 
-  /* Masthead: Space Mono — encabezado de cinta de recibo */
+  /* Montos / títulos: Geist bold como la referencia (sans, no mono) */
   .page-title {
-    @apply font-ledger text-[1.55rem] font-bold leading-none tracking-[-0.02em] text-foreground sm:text-[1.8rem];
+    @apply font-ledger text-[1.65rem] font-semibold leading-none tracking-[-0.03em] text-foreground sm:text-[1.9rem];
     text-wrap: balance;
   }
 
   .stat-value {
-    @apply font-ledger text-[2.5rem] font-bold leading-none tracking-[-0.03em] text-foreground tabular-nums sm:text-[3rem] lg:text-[3.35rem];
+    @apply font-ledger text-[2.6rem] font-semibold leading-none tracking-[-0.04em] text-foreground tabular-nums sm:text-[3.15rem] lg:text-[3.5rem];
   }
 
   /* Full-bleed controlado por --list-bleed; ponerla en 0 dentro de columnas */
@@ -229,7 +278,7 @@
   }
 
   .metric-cell-label {
-    @apply text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground;
+    @apply text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground;
   }
 
   .metric-cell-value {
@@ -266,13 +315,18 @@
     box-shadow:
       0 0 0 1px color-mix(in oklab, var(--primary) 22%, transparent),
       0 12px 28px color-mix(in oklab, var(--primary) 22%, transparent),
-      0 2px 8px rgba(0, 0, 0, 0.18);
+      0 2px 8px var(--shadow);
     transition:
       transform 220ms var(--ease-spring),
       background-color 200ms ease,
       box-shadow 220ms ease;
     right: max(1rem, env(safe-area-inset-right));
-    bottom: calc(5.5rem + env(safe-area-inset-bottom));
+    bottom: calc(var(--app-tabbar-h) + 1.25rem + env(safe-area-inset-bottom));
+  }
+
+  .list-section {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 12rem;
   }
 
   .fab:hover {

@@ -1,4 +1,4 @@
-import { LogOut, Mail, Moon, Sun } from 'lucide-react'
+import { LogOut, Mail } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -9,12 +9,10 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/contexts/AuthContext'
-import { useTheme } from '@/contexts/ThemeContext'
 import { isSupabaseConfigured } from '@/lib/supabase'
 
 export function ProfileMenu() {
   const { user, signOut } = useAuth()
-  const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const initials = user?.email?.charAt(0).toUpperCase() ?? 'S'
 
@@ -70,15 +68,7 @@ export function ProfileMenu() {
           ) : null}
         </div>
         <Separator />
-        <div className="space-y-1 p-2">
-          <Button
-            variant="ghost"
-            className="w-full cursor-pointer justify-start gap-2"
-            onClick={toggleTheme}
-          >
-            {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
-            {theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
-          </Button>
+        <div className="p-2">
           <Button
             variant="ghost"
             className="w-full cursor-pointer justify-start gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive"

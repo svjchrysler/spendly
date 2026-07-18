@@ -21,6 +21,7 @@ export function getCategoryIcon(iconName: string): LucideIcon {
   return iconMap[iconName] ?? Receipt
 }
 
+/** Colores de entidad (categoría), no tokens de theme. */
 export const categoryColorOptions = [
   '#F59E0B',
   '#3B82F6',
@@ -30,4 +31,6 @@ export const categoryColorOptions = [
   '#64748B',
   '#EF4444',
   '#06B6D4',
-]
+] as const
+
+export const defaultCategoryColor = categoryColorOptions[1]

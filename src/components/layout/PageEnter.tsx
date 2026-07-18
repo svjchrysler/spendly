@@ -12,7 +12,7 @@ export function PageEnter({ children }: Readonly<{ children: ReactNode }>) {
       key={pathname}
       initial={reduceMotion ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
     >
       {children}
     </motion.div>

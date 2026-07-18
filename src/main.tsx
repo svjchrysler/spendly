@@ -2,8 +2,10 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import { registerPwa } from '@/lib/register-pwa'
+import { armSplashFailsafe } from '@/lib/splash'
 import './index.css'
 
+armSplashFailsafe()
 registerPwa()
 
 createRoot(document.getElementById('root')!).render(

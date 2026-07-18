@@ -3,11 +3,26 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vitest/config'
+import { palette } from './src/lib/palette.ts'
 
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    {
+      name: 'spendly-palette-html',
+      transformIndexHtml(html) {
+        const light = palette.light
+        const dark = palette.dark
+        return html
+          .replaceAll('__THEME_LIGHT__', light.background)
+          .replaceAll('__THEME_DARK__', dark.background)
+          .replaceAll('__FG_LIGHT__', light.foreground)
+          .replaceAll('__FG_DARK__', dark.foreground)
+          .replaceAll('__PRIMARY_LIGHT__', light.primary)
+          .replaceAll('__PRIMARY_DARK__', dark.primary)
+      },
+    },
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: [
@@ -29,9 +44,12 @@ export default defineConfig({
         display: 'standalone',
         display_override: ['standalone', 'minimal-ui'],
         orientation: 'portrait-primary',
-        background_color: '#121110',
-        theme_color: '#121110',
+        background_color: palette.dark.background,
+        theme_color: palette.dark.background,
         categories: ['finance', 'productivity'],
+        // Reuse the open PWA window when launched again (app-like, not a new tab)
+        handle_links: 'preferred',
+        launch_handler: { client_mode: 'navigate-existing' },
         icons: [
           {
             src: 'pwa-192.png',
@@ -53,31 +71,16 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: '/index.html',
+        // Self-hosted fonts only (fontsource) — no Google Fonts runtime caches
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webmanifest}'],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-css',
-              expiration: { maxEntries: 8, maxAgeSeconds: 60 * 60 * 24 * 365 },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-files',
-              expiration: { maxEntries: 16, maxAgeSeconds: 60 * 60 * 24 * 365 },
-            },
-          },
-          {
-            // NetworkFirst + longer TTL: SW serves last API payload when offline
+            // NetworkFirst + short timeout: fail fast to cache on flaky mobile
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase',
-              networkTimeoutSeconds: 5,
+              networkTimeoutSeconds: 3,
               expiration: {
                 maxEntries: 96,
                 maxAgeSeconds: 60 * 60 * 24 * 7,

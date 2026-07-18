@@ -13,6 +13,11 @@ import { useMonth } from '@/contexts/MonthContext'
 import { useCategories } from '@/hooks/useCategories'
 import { useExpenses } from '@/hooks/useExpenses'
 import { formatCurrency } from '@/lib/format'
+import {
+  activeExpenseDays,
+  averageTicket,
+  largestAmount,
+} from '@/lib/month-insights'
 
 export function ExpensesPage() {
   const { year, month } = useMonth()
@@ -45,30 +50,52 @@ export function ExpensesPage() {
 
   const selectedCategory = categories.find((category) => category.id === categoryId)
   const filtered = Boolean(search.trim() || categoryId)
+  const ticket = averageTicket(total, expenses.length)
+  const maxExpense = largestAmount(expenses.map((item) => Number(item.amount)))
+  const daysActive = activeExpenseDays(expenses.map((item) => item.expense_date))
 
   if (isLoading && categoriesLoading) {
     return <ExpensesPageSkeleton />
   }
 
   const summary = (
-    <section className="min-w-0 space-y-2">
-      <p className="stat-label">{filtered ? 'Total filtrado' : 'Total del mes'}</p>
-      {isLoading ? (
-        <Skeleton className="h-10 w-44" />
-      ) : (
-        <p className="stat-value text-[2.4rem] sm:text-[2.6rem] lg:text-[2.8rem]">
-          {formatCurrency(total)}
+    <section className="min-w-0 space-y-3">
+      <div className="space-y-2">
+        <p className="stat-label">{filtered ? 'Total filtrado' : 'Total del mes'}</p>
+        {isLoading ? (
+          <Skeleton className="h-10 w-44" />
+        ) : (
+          <p className="stat-value text-[2.4rem] sm:text-[2.6rem] lg:text-[2.8rem]">
+            {formatCurrency(total)}
+          </p>
+        )}
+        <p className="text-sm text-muted-foreground">
+          {selectedCategory ? selectedCategory.name : 'Todos los gastos'}
+          {' · '}
+          {expenses.length} {expenses.length === 1 ? 'gasto' : 'gastos'}
         </p>
-      )}
-      <p className="text-sm text-muted-foreground">
-        {selectedCategory ? selectedCategory.name : 'Todos los gastos'}
-        {' · '}
-        {expenses.length} {expenses.length === 1 ? 'gasto' : 'gastos'}
-      </p>
-      {filtered && !isLoading ? (
-        <p className="text-xs tabular-nums text-muted-foreground">
-          Mes completo: {formatCurrency(monthTotal)}
-        </p>
+        {filtered && !isLoading ? (
+          <p className="text-xs tabular-nums text-muted-foreground">
+            Mes completo: {formatCurrency(monthTotal)}
+          </p>
+        ) : null}
+      </div>
+
+      {!isLoading && expenses.length > 0 ? (
+        <div className="grid grid-cols-3 gap-3 border-t border-border/70 pt-3">
+          <div className="metric-cell space-y-1">
+            <p className="metric-cell-label">Ticket medio</p>
+            <p className="text-sm font-semibold tabular-nums">{formatCurrency(ticket)}</p>
+          </div>
+          <div className="metric-cell space-y-1">
+            <p className="metric-cell-label">Mayor</p>
+            <p className="text-sm font-semibold tabular-nums">{formatCurrency(maxExpense)}</p>
+          </div>
+          <div className="metric-cell space-y-1">
+            <p className="metric-cell-label">Días activos</p>
+            <p className="text-sm font-semibold tabular-nums">{daysActive}</p>
+          </div>
+        </div>
       ) : null}
     </section>
   )
@@ -106,14 +133,14 @@ export function ExpensesPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 pb-4 lg:gap-5 lg:pb-8">
+    <div className="flex flex-col gap-3 pb-3 lg:gap-4 lg:pb-6">
       <MonthMasthead eyebrow="Gastos" />
 
       {!isLoading ? <MonthlyCapAlert spent={monthTotal} /> : null}
 
-      <div className="grid gap-6 pt-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+      <div className="grid gap-5 pt-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] xl:gap-10">
         {/* Riel sticky: resumen + filtros siempre a mano mientras scrolleas la lista */}
-        <aside className="ledger-aside order-1 min-w-0 space-y-5 lg:order-2 lg:sticky lg:top-[calc(4.25rem_+_env(safe-area-inset-top))]">
+        <aside className="ledger-aside order-1 min-w-0 space-y-4 lg:order-2 lg:sticky lg:top-[calc(var(--app-header-h)_+_env(safe-area-inset-top))]">
           {summary}
           <section className="min-w-0 border-t border-border/70 pt-4">{filters}</section>
         </aside>

@@ -118,21 +118,21 @@ export function SpendingHero({
   }
 
   return (
-    <div className="space-y-5 sm:space-y-6">
-      <div className="space-y-2.5">
+    <div className="space-y-6 sm:space-y-7">
+      <div className="space-y-3">
         <p className="stat-label">Gastado</p>
         <motion.p
           key={spent}
           initial={reduceMotion ? false : { opacity: 0.4, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          className="stat-value leading-none"
+          className="stat-value leading-none lg:text-[3.85rem]"
         >
           {formatCurrency(spent)}
         </motion.p>
         {budgetHint}
         {budget != null && budget > 0 && !editingBudget ? (
-          <div className="bar-track mt-3 max-w-md">
+          <div className="bar-track mt-4 h-2 w-full">
             <div
               className={cn('bar-fill', overBudget ? 'bg-destructive' : 'bg-primary')}
               style={{ width: `${Math.max(percentage, 2)}%` }}
@@ -141,22 +141,28 @@ export function SpendingHero({
         ) : null}
       </div>
 
-      <div className="grid grid-cols-3 gap-3 border-t border-border/70 pt-4 sm:gap-6">
-        <div className="metric-cell space-y-1.5">
+      <div className="grid grid-cols-2 gap-x-5 gap-y-5 border-t border-border/70 pt-5 sm:grid-cols-4 sm:gap-6">
+        <div className="metric-cell space-y-2">
           <p className="metric-cell-label">Promedio / día</p>
-          <p className="text-base font-semibold tracking-tight tabular-nums sm:text-lg">
+          <p className="text-lg font-semibold tracking-tight tabular-nums sm:text-xl">
             {formatCurrency(dailyAvg)}
           </p>
         </div>
-        <div className="metric-cell space-y-1.5">
+        <div className="metric-cell space-y-2">
+          <p className="metric-cell-label">Ticket medio</p>
+          <p className="text-lg font-semibold tracking-tight tabular-nums sm:text-xl">
+            {formatCurrency(transactionCount > 0 ? spent / transactionCount : 0)}
+          </p>
+        </div>
+        <div className="metric-cell space-y-2">
           <p className="metric-cell-label">Gastos</p>
-          <p className="text-base font-semibold tracking-tight tabular-nums sm:text-lg">
+          <p className="text-lg font-semibold tracking-tight tabular-nums sm:text-xl">
             {transactionCount}
           </p>
         </div>
-        <div className="metric-cell space-y-1.5">
+        <div className="metric-cell space-y-2">
           <p className="metric-cell-label">Días</p>
-          <p className="text-base font-semibold tracking-tight tabular-nums sm:text-lg">
+          <p className="text-lg font-semibold tracking-tight tabular-nums sm:text-xl">
             {dayOfMonth}/{daysInMonth}
           </p>
         </div>

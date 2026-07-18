@@ -15,20 +15,20 @@ interface ExpenseActionSheetProps {
 
 function ActionIconBox({
   children,
-  color,
+  tone,
   className,
 }: Readonly<{
   children: ReactNode
-  color: string
+  tone: 'primary' | 'destructive'
   className?: string
 }>) {
   return (
     <span
       className={cn(
-        'flex size-11 items-center justify-center rounded-lg bg-secondary',
+        'flex size-11 items-center justify-center rounded-lg bg-secondary ring-1',
+        tone === 'primary' ? 'ring-primary/35' : 'ring-destructive/35',
         className,
       )}
-      style={{ boxShadow: `inset 0 0 0 1px ${color}33` }}
     >
       {children}
     </span>
@@ -44,8 +44,6 @@ export function ExpenseActionSheet({
 
   return (
     <div className="px-1 pb-1 pt-2">
-      <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-border/80" aria-hidden />
-
       <div className="flex flex-col items-center gap-3 text-center">
         <ExpenseIcon
           description={expense.description}
@@ -67,19 +65,19 @@ export function ExpenseActionSheet({
         <button
           type="button"
           onClick={onEdit}
-          className="flex cursor-pointer flex-col items-center gap-2.5 rounded-xl border border-border/70 bg-muted/25 px-3 py-4 transition-colors hover:bg-muted/40 active:bg-muted/50"
+          className="pressable flex min-h-11 cursor-pointer flex-col items-center gap-2.5 rounded-xl border border-border/70 bg-muted/25 px-3 py-4 transition-colors hover:bg-muted/40 active:bg-muted/50"
         >
-          <ActionIconBox color="#5cdb95">
-            <Pencil className="size-5 text-accent" />
+          <ActionIconBox tone="primary">
+            <Pencil className="size-5 text-primary" />
           </ActionIconBox>
           <span className="text-sm font-medium">Editar</span>
         </button>
         <button
           type="button"
           onClick={onDelete}
-          className="flex cursor-pointer flex-col items-center gap-2.5 rounded-xl border border-destructive/25 bg-destructive/10 px-3 py-4 text-destructive transition-colors hover:bg-destructive/15 active:bg-destructive/20"
+          className="pressable flex min-h-11 cursor-pointer flex-col items-center gap-2.5 rounded-xl border border-destructive/25 bg-destructive/10 px-3 py-4 text-destructive transition-colors hover:bg-destructive/15 active:bg-destructive/20"
         >
-          <ActionIconBox color="#f87171">
+          <ActionIconBox tone="destructive">
             <Trash2 className="size-5" />
           </ActionIconBox>
           <span className="text-sm font-medium">Eliminar</span>

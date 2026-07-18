@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 
 function Bone({
   className,
@@ -53,39 +54,32 @@ export function ExpenseFiltersSkeleton() {
   )
 }
 
-export function CategoryAllocationSkeleton() {
+export function CategoryAllocationSkeleton({
+  fill = false,
+}: Readonly<{ fill?: boolean }>) {
   return (
-    <div className="space-y-5" aria-hidden>
-      <Bone className="h-2.5 w-20" />
-      {Array.from({ length: 4 }, (_, i) => (
-        <div key={i} className="space-y-2">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <Bone className="size-2 rounded-full" />
-              <Bone className={`h-3.5 ${i % 2 === 0 ? 'w-24' : 'w-16'}`} />
+    <div
+      className={cn(fill ? 'flex h-full min-h-0 flex-col' : 'space-y-5')}
+      aria-hidden
+    >
+      <Bone className="h-2.5 w-20 shrink-0" />
+      <div
+        className={cn(
+          fill
+            ? 'mt-4 flex min-h-0 flex-1 flex-col justify-evenly gap-5'
+            : 'space-y-5',
+        )}
+      >
+        {Array.from({ length: 5 }, (_, i) => (
+          <div key={i} className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <Bone className="size-2 rounded-full" />
+                <Bone className={`h-3.5 ${i % 2 === 0 ? 'w-24' : 'w-16'}`} />
+              </div>
+              <Bone className="h-3.5 w-14" />
             </div>
-            <Bone className="h-3.5 w-14" />
-          </div>
-          <Bone className="h-1 w-full rounded-full" />
-        </div>
-      ))}
-    </div>
-  )
-}
-
-export function SpendingHeroSkeleton() {
-  return (
-    <div className="space-y-5 sm:space-y-6" aria-hidden>
-      <div className="space-y-2">
-        <Bone className="h-12 w-[72%] sm:h-14" />
-        <Bone className="h-3.5 w-40" />
-        <Bone className="mt-3 h-1.5 max-w-md w-full rounded-full" />
-      </div>
-      <div className="grid grid-cols-3 gap-3 border-t border-border/80 pt-4 sm:gap-8">
-        {Array.from({ length: 3 }, (_, i) => (
-          <div key={i} className="space-y-1.5">
-            <Bone className="h-2.5 w-16" />
-            <Bone className="h-5 w-[70%]" />
+            <Bone className={cn('w-full rounded-full', fill ? 'h-2' : 'h-1')} />
           </div>
         ))}
       </div>
@@ -93,20 +87,24 @@ export function SpendingHeroSkeleton() {
   )
 }
 
-export function InsightsGridSkeleton() {
+export function SpendingHeroSkeleton() {
   return (
-    <section
-      className="grid grid-cols-2 gap-x-5 gap-y-5 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4"
-      aria-hidden
-    >
-      {Array.from({ length: 4 }, (_, i) => (
-        <div key={i} className="metric-cell space-y-1.5">
-          <Bone className="h-2.5 w-16" />
-          <Bone className="h-6 w-[75%]" />
-          <Bone className="h-3 w-20" />
-        </div>
-      ))}
-    </section>
+    <div className="space-y-6 sm:space-y-7" aria-hidden>
+      <div className="space-y-3">
+        <Bone className="h-2.5 w-16" />
+        <Bone className="h-14 w-[78%] sm:h-16" />
+        <Bone className="h-3.5 w-48" />
+        <Bone className="mt-4 h-2 w-full rounded-full" />
+      </div>
+      <div className="grid grid-cols-2 gap-5 border-t border-border/80 pt-5 sm:grid-cols-4 sm:gap-6">
+        {Array.from({ length: 4 }, (_, i) => (
+          <div key={i} className="space-y-2">
+            <Bone className="h-2.5 w-16" />
+            <Bone className="h-6 w-[70%]" />
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -144,28 +142,29 @@ export function MastheadSkeleton() {
 
 export function DashboardSkeleton() {
   return (
-    <div className="flex flex-col gap-4 pb-4 lg:gap-5 lg:pb-8" aria-busy="true" aria-label="Cargando resumen">
+    <div
+      className="flex min-h-[calc(100dvh-var(--app-header-h)-env(safe-area-inset-top)-5.5rem)] flex-col gap-4 pb-2 md:min-h-[calc(100dvh-var(--app-header-h)-env(safe-area-inset-top)-3.5rem)] lg:gap-5"
+      aria-busy="true"
+      aria-label="Cargando resumen"
+    >
       <MastheadSkeleton />
-      <div className="grid gap-8 pt-2 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10">
-        <div className="flex flex-col gap-5 lg:gap-6">
+      <div className="grid min-h-0 flex-1 gap-6 pt-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-stretch lg:gap-8 xl:gap-10">
+        <div className="flex min-h-0 flex-col gap-6 lg:gap-8">
           <SpendingHeroSkeleton />
-          <div className="border-t border-border/70 pt-5">
-            <InsightsGridSkeleton />
-          </div>
-          <div className="border-t border-border/70 pt-5">
-            <div className="mb-2 flex items-baseline justify-between">
+          <div className="flex min-h-0 flex-1 flex-col border-t border-border/70 pt-5">
+            <div className="mb-1 flex items-baseline justify-between">
               <Bone className="h-2.5 w-36" />
               <Bone className="h-3 w-16" />
             </div>
-            <div className="divide-y divide-border/25">
-              {Array.from({ length: 3 }, (_, i) => (
+            <div className="flex flex-1 flex-col justify-evenly divide-y divide-border/25">
+              {Array.from({ length: 4 }, (_, i) => (
                 <ExpenseRowSkeleton key={i} />
               ))}
             </div>
           </div>
         </div>
-        <div className="ledger-aside border-t border-border/70 pt-5 lg:border-t-0 lg:pt-0">
-          <CategoryAllocationSkeleton />
+        <div className="ledger-aside flex min-h-0 flex-col border-t border-border/70 pt-5 lg:border-t-0 lg:pt-0">
+          <CategoryAllocationSkeleton fill />
         </div>
       </div>
     </div>
@@ -180,15 +179,24 @@ export function AnalisisPageSkeleton() {
       aria-label="Cargando análisis"
     >
       <MastheadSkeleton />
-      <div className="grid grid-cols-3 gap-4 border-b border-border/70 pb-5">
-        {Array.from({ length: 3 }, (_, i) => (
+      <div className="grid grid-cols-2 gap-4 border-b border-border/70 pb-5 sm:grid-cols-4">
+        {Array.from({ length: 4 }, (_, i) => (
           <div key={i} className="space-y-1.5">
             <Bone className="h-2.5 w-20" />
             <Bone className="h-6 w-[70%]" />
           </div>
         ))}
       </div>
-      <div className="grid gap-8 pt-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10">
+      <div className="grid grid-cols-2 gap-4 border-b border-border/70 pb-5 sm:grid-cols-3 lg:grid-cols-6">
+        {Array.from({ length: 6 }, (_, i) => (
+          <div key={i} className="space-y-1.5">
+            <Bone className="h-2.5 w-16" />
+            <Bone className="h-6 w-[75%]" />
+            <Bone className="h-2.5 w-20" />
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-6 pt-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-8 xl:gap-10">
         <div className="flex min-w-0 flex-col gap-5">
           <ChartSkeleton />
           <section className="border-t border-border/70 pt-5">
@@ -202,9 +210,42 @@ export function AnalisisPageSkeleton() {
               ))}
             </div>
           </section>
+          <section className="border-t border-border/70 pt-5">
+            <Bone className="mb-3 h-2.5 w-32" />
+            <Bone className="mb-4 h-44 w-full" />
+            <Bone className="mb-3 h-2.5 w-36" />
+            <Bone className="mb-4 h-40 w-full" />
+            <Bone className="mb-3 h-2.5 w-40" />
+            <Bone className="h-44 w-full" />
+          </section>
         </div>
-        <section className="ledger-aside min-w-0 border-t border-border/70 pt-5 lg:border-t-0 lg:pt-0">
+        <section className="ledger-aside min-w-0 space-y-5 border-t border-border/70 pt-5 lg:border-t-0 lg:pt-0">
+          <div className="flex items-center gap-4">
+            <Bone className="size-36 shrink-0 rounded-full" />
+            <div className="flex-1 space-y-2">
+              {Array.from({ length: 4 }, (_, i) => (
+                <div key={i} className="flex justify-between gap-2">
+                  <Bone className="h-3 w-20" />
+                  <Bone className="h-3 w-8" />
+                </div>
+              ))}
+            </div>
+          </div>
           <CategoryAllocationSkeleton />
+          <section className="border-t border-border/70 pt-5">
+            <Bone className="mb-3 h-2.5 w-28" />
+            <div className="divide-y divide-border/25">
+              {Array.from({ length: 5 }, (_, i) => (
+                <div key={i} className="flex items-center justify-between gap-3 py-2.5">
+                  <div className="space-y-1.5">
+                    <Bone className="h-3.5 w-28" />
+                    <Bone className="h-2.5 w-20" />
+                  </div>
+                  <Bone className="h-3.5 w-16" />
+                </div>
+              ))}
+            </div>
+          </section>
         </section>
       </div>
     </div>

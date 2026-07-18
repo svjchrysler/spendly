@@ -99,7 +99,7 @@ export function ExpenseAmountInput({
         'w-full min-w-0 rounded-2xl border px-4 py-3.5 transition-all duration-200',
         hasError
           ? 'border-destructive/40 bg-destructive/5'
-          : 'border-border/50 bg-muted/15 hover:border-border/70 focus-within:border-primary/40 focus-within:bg-muted/25 focus-within:shadow-[0_0_0_1px_rgba(92,219,149,0.14)]',
+          : 'border-border/50 bg-muted/15 hover:border-border/70 focus-within:border-primary/40 focus-within:bg-muted/25 focus-within:ring-2 focus-within:ring-primary/20',
       )}
     >
       <label htmlFor={id} className="stat-label mb-2 block cursor-text text-center">
@@ -131,7 +131,7 @@ export function ExpenseAmountInput({
             onBlur?.()
           }}
           className={cn(
-            'input-amount font-ledger w-full max-w-[12ch] min-w-0 border-0 bg-transparent text-center text-4xl font-normal leading-none tracking-tight text-foreground tabular-nums outline-none placeholder:text-muted-foreground/35 sm:text-5xl',
+            'input-amount font-ledger w-full max-w-[12ch] min-w-0 border-0 bg-transparent text-center text-4xl font-semibold leading-none tracking-[-0.04em] text-foreground tabular-nums outline-none placeholder:text-muted-foreground/35 sm:text-5xl',
             className,
           )}
           {...props}

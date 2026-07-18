@@ -1,4 +1,6 @@
-export type Theme = 'light' | 'dark'
+import { themeChromeColor, type ThemeName } from '@/lib/palette'
+
+export type Theme = ThemeName
 
 const STORAGE_KEY = 'spendly-theme'
 
@@ -11,7 +13,7 @@ export function getStoredTheme(): Theme {
 export function applyTheme(theme: Theme) {
   document.documentElement.classList.toggle('dark', theme === 'dark')
   localStorage.setItem(STORAGE_KEY, theme)
-  const color = theme === 'dark' ? '#121110' : '#f1efe8'
+  const color = themeChromeColor(theme)
   document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
     meta.setAttribute('content', color)
   })

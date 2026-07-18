@@ -8,6 +8,7 @@ import {
 } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import { dismissSplash } from '@/lib/splash'
 
 interface AuthContextValue {
   user: User | null
@@ -42,6 +43,7 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
       if (!alive) return
       setSession(data.session)
       setLoading(false)
+      dismissSplash()
     })
 
     const {
@@ -54,6 +56,7 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
       }
       setSession(nextSession)
       setLoading(false)
+      dismissSplash()
     })
 
     return () => {

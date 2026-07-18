@@ -9,6 +9,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -32,7 +38,8 @@ import {
   categoryEmojiOptions,
   resolveCategoryEmoji,
 } from '@/lib/category-emojis'
-import { categoryColorOptions } from '@/lib/category-icons'
+import { categoryColorOptions, defaultCategoryColor } from '@/lib/category-icons'
+import { useIsDesktop } from '@/hooks/useMediaQuery'
 import { cn } from '@/lib/utils'
 import type { Category } from '@/types/database'
 
@@ -48,7 +55,7 @@ function CategoryForm({ category, onSuccess }: CategoryFormProps) {
   const [icon, setIcon] = useState(
     resolveCategoryEmoji(category?.icon, category?.name) ?? '📦',
   )
-  const [color, setColor] = useState(category?.color ?? '#3B82F6')
+  const [color, setColor] = useState(category?.color ?? defaultCategoryColor)
   const isEditing = Boolean(category)
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
@@ -112,13 +119,14 @@ function CategoryForm({ category, onSuccess }: CategoryFormProps) {
             <button
               key={optionColor}
               type="button"
-              className="size-8 cursor-pointer rounded-full border-2 transition-transform duration-200 hover:scale-110"
-              style={{
-                backgroundColor: optionColor,
-                borderColor: color === optionColor ? '#fff' : 'transparent',
-              }}
+              className={cn(
+                'size-8 cursor-pointer rounded-full border-2 transition-transform duration-200 hover:scale-110',
+                color === optionColor ? 'border-background' : 'border-transparent',
+              )}
+              style={{ backgroundColor: optionColor }}
               onClick={() => setColor(optionColor)}
               aria-label={`Color ${optionColor}`}
+              aria-pressed={color === optionColor}
             />
           ))}
         </div>
@@ -137,6 +145,7 @@ function CategoryForm({ category, onSuccess }: CategoryFormProps) {
 export function CategoriesPage() {
   const { data: categories = [], isLoading } = useCategories()
   const deleteCategory = useDeleteCategory()
+  const isDesktop = useIsDesktop()
   const [openCreate, setOpenCreate] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
   const [deleting, setDeleting] = useState<Category | null>(null)
@@ -152,6 +161,11 @@ export function CategoriesPage() {
     }
   }
 
+  const createForm = <CategoryForm onSuccess={() => setOpenCreate(false)} />
+  const editForm = editing ? (
+    <CategoryForm category={editing} onSuccess={() => setEditing(null)} />
+  ) : null
+
   return (
     <div className="flex flex-col gap-4 pb-4 lg:gap-5 lg:pb-8">
       <header className="flex items-end justify-between gap-3 border-b border-border/70 pb-4">
@@ -159,22 +173,14 @@ export function CategoriesPage() {
           <p className="stat-label">Organiza tus gastos</p>
           <h1 className="page-title">Categorías</h1>
         </div>
-        <Dialog open={openCreate} onOpenChange={setOpenCreate}>
-          <Button
-            className="cursor-pointer gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-            onClick={() => setOpenCreate(true)}
-          >
-            <Plus className="size-4" />
-            <span className="hidden sm:inline">Nueva categoría</span>
-            <span className="sm:hidden">Nueva</span>
-          </Button>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Nueva categoría</DialogTitle>
-            </DialogHeader>
-            <CategoryForm onSuccess={() => setOpenCreate(false)} />
-          </DialogContent>
-        </Dialog>
+        <Button
+          className="pressable min-h-11 cursor-pointer gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+          onClick={() => setOpenCreate(true)}
+        >
+          <Plus className="size-4" />
+          <span className="hidden sm:inline">Nueva categoría</span>
+          <span className="sm:hidden">Nueva</span>
+        </Button>
       </header>
 
       {isLoading ? (
@@ -185,7 +191,7 @@ export function CategoriesPage() {
             return (
               <div
                 key={category.id}
-                className="row-hover flex items-center justify-between gap-2 border-b border-border/40 py-3"
+                className="row-hover flex min-h-12 items-center justify-between gap-2 border-b border-border/40 py-3"
               >
                 <div className="flex min-w-0 flex-1 items-center gap-3">
                   <CategoryIcon
@@ -200,7 +206,7 @@ export function CategoriesPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="cursor-pointer"
+                    className="size-11 cursor-pointer"
                     onClick={() => setEditing(category)}
                     aria-label="Editar categoría"
                   >
@@ -209,7 +215,7 @@ export function CategoriesPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="cursor-pointer text-destructive"
+                    className="size-11 cursor-pointer text-destructive"
                     onClick={() => setDeleting(category)}
                     aria-label="Eliminar categoría"
                   >
@@ -222,16 +228,51 @@ export function CategoriesPage() {
         </div>
       )}
 
-      <Dialog open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar categoría</DialogTitle>
-          </DialogHeader>
-          {editing ? (
-            <CategoryForm category={editing} onSuccess={() => setEditing(null)} />
-          ) : null}
-        </DialogContent>
-      </Dialog>
+      {isDesktop ? (
+        <>
+          <Dialog open={openCreate} onOpenChange={setOpenCreate}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Nueva categoría</DialogTitle>
+              </DialogHeader>
+              {createForm}
+            </DialogContent>
+          </Dialog>
+          <Dialog open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Editar categoría</DialogTitle>
+              </DialogHeader>
+              {editForm}
+            </DialogContent>
+          </Dialog>
+        </>
+      ) : (
+        <>
+          <Sheet open={openCreate} onOpenChange={setOpenCreate}>
+            <SheetContent
+              side="bottom"
+              className="gap-0 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-1"
+            >
+              <SheetHeader className="pb-3">
+                <SheetTitle>Nueva categoría</SheetTitle>
+              </SheetHeader>
+              {createForm}
+            </SheetContent>
+          </Sheet>
+          <Sheet open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
+            <SheetContent
+              side="bottom"
+              className="gap-0 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-1"
+            >
+              <SheetHeader className="pb-3">
+                <SheetTitle>Editar categoría</SheetTitle>
+              </SheetHeader>
+              {editForm}
+            </SheetContent>
+          </Sheet>
+        </>
+      )}
 
       <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)}>
         <AlertDialogContent>

@@ -21,7 +21,10 @@ export function OfflineBanner() {
   if (!offline) return null
 
   return (
-    <output className="flex w-full items-center justify-center gap-2 border-b border-border/80 bg-muted/80 px-4 py-2 text-center text-[11px] font-medium tracking-[0.08em] text-muted-foreground uppercase backdrop-blur-md">
+    <output
+      aria-live="polite"
+      className="flex w-full items-center justify-center gap-2 border-b border-border/70 bg-muted/85 px-4 py-2 text-center text-[12px] font-medium text-muted-foreground backdrop-blur-md"
+    >
       <WifiOff className="size-3.5 shrink-0" aria-hidden />
       Sin conexión · mostrando la última información
     </output>

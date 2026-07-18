@@ -6,7 +6,8 @@ const WEEK_MS = 1000 * 60 * 60 * 24 * 7
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60,
+      // Warm enough that tab switches / brief app backgrounding feel instant
+      staleTime: 1000 * 90,
       // Keep cached rows around for offline reopen
       gcTime: WEEK_MS,
       retry: (failureCount) => {

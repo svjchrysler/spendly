@@ -141,7 +141,7 @@ export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListP
           <Sheet open={openAdd} onOpenChange={setOpenAdd}>
             <SheetContent
               side="bottom"
-              className="gap-0 rounded-t-2xl px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3"
+              className="gap-0 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-1"
             >
               <SheetHeader className="pb-3">
                 <SheetTitle>Nuevo gasto</SheetTitle>
@@ -160,7 +160,7 @@ export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListP
 
       <div className="space-y-1">
         <AnimatePresence mode="popLayout">
-          {grouped.map(({ date, items, subtotal }, groupIndex) => (
+          {grouped.map(({ date, items, subtotal }) => (
             <motion.section
               key={date}
               // ponytail: opacity only — y/transform makes sticky date headers fail
@@ -168,15 +168,17 @@ export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListP
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{
-                duration: 0.24,
-                delay: Math.min(groupIndex * 0.03, 0.12),
+                duration: 0.18,
                 ease: [0.16, 1, 0.3, 1],
               }}
+              className="list-section"
             >
               {/* Sticky date: sticks under app header until next group pushes it */}
               <div
                 className="list-bleed sticky z-20 mb-0.5 flex items-center justify-between gap-3 border-b border-border/70 bg-background/90 py-2.5 backdrop-blur-xl"
-                style={{ top: 'calc(3.5rem + env(safe-area-inset-top, 0px))' }}
+                style={{
+                  top: 'calc(var(--app-header-h) + env(safe-area-inset-top, 0px))',
+                }}
               >
                 <h3 className="stat-label capitalize">{formatDayLabel(date)}</h3>
                 <span className="text-sm font-semibold tabular-nums tracking-tight text-foreground/90">
@@ -186,9 +188,8 @@ export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListP
               <div className="divide-y divide-border/25">
                 {items.map((expense) => {
                   return (
-                    <motion.div
+                    <div
                       key={expense.id}
-                      layout
                       role={isDesktop ? undefined : 'button'}
                       tabIndex={isDesktop ? undefined : 0}
                       onClick={
@@ -207,7 +208,7 @@ export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListP
                             }
                       }
                       className={cn(
-                        'row-hover group flex min-w-0 items-center justify-between gap-3 py-3 sm:cursor-default',
+                        'row-hover group flex min-h-12 min-w-0 items-center justify-between gap-3 py-3 sm:cursor-default',
                         !isDesktop && 'cursor-pointer',
                       )}
                     >
@@ -239,7 +240,7 @@ export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListP
                           />
                         ) : null}
                       </div>
-                    </motion.div>
+                    </div>
                   )
                 })}
               </div>
@@ -255,7 +256,7 @@ export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListP
         <SheetContent
           side="bottom"
           showCloseButton={false}
-          className="gap-0 rounded-t-2xl border-t border-border/80 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2"
+          className="gap-0 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-1"
         >
           <SheetHeader className="sr-only">
             <SheetTitle>Acciones del gasto</SheetTitle>
@@ -283,7 +284,7 @@ export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListP
         <Sheet open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
           <SheetContent
             side="bottom"
-            className="gap-0 rounded-t-2xl px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3"
+            className="gap-0 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-1"
           >
             <SheetHeader className="pb-3">
               <SheetTitle>Editar gasto</SheetTitle>

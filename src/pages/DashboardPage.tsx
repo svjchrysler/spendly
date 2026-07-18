@@ -4,7 +4,6 @@ import {
   CategoryAllocationSkeleton,
   DashboardSkeleton,
   ExpenseRowSkeleton,
-  InsightsGridSkeleton,
   SpendingHeroSkeleton,
 } from '@/components/layout/skeletons'
 import { SpendingHero } from '@/components/dashboard/SpendingHero'
@@ -17,97 +16,19 @@ import { useMonth } from '@/contexts/MonthContext'
 import { useExpenses } from '@/hooks/useExpenses'
 import { getExpenseLabel } from '@/lib/expense-display'
 import { formatCurrency, formatDayLabel } from '@/lib/format'
-import { cn } from '@/lib/utils'
 import { useMonthlyBudget, useMonthlyStats } from '@/hooks/useMonthlyStats'
 import type { ExpenseWithCategory } from '@/types/database'
-
-interface CategorySlice {
-  name: string
-  total: number
-}
-
-function InsightCell({
-  label,
-  value,
-  hint,
-  tone,
-}: Readonly<{
-  label: string
-  value: string
-  hint?: string
-  tone?: 'primary' | 'destructive'
-}>) {
-  let toneClass: string | undefined
-  if (tone === 'primary') toneClass = 'text-primary'
-  else if (tone === 'destructive') toneClass = 'text-destructive'
-  return (
-    <div className="metric-cell space-y-1.5">
-      <p className={cn('metric-cell-label', toneClass)}>{label}</p>
-      <p className={cn('text-lg font-semibold tracking-tight tabular-nums sm:text-xl', toneClass)}>
-        {value}
-      </p>
-      {hint ? <p className="text-xs tabular-nums text-muted-foreground sm:text-sm">{hint}</p> : null}
-    </div>
-  )
-}
-
-function InsightsGrid({
-  topCategory,
-  lowestCategory,
-  budgetAmount,
-  remaining,
-  concentration,
-}: Readonly<{
-  topCategory: CategorySlice | null
-  lowestCategory: CategorySlice | null
-  budgetAmount: number | null
-  remaining: number | null
-  concentration: number
-}>) {
-  const overBudget = remaining != null && remaining < 0
-  let budgetHint: string | undefined
-  if (remaining != null) {
-    budgetHint = overBudget ? 'Excedido' : `${formatCurrency(remaining)} libre`
-  }
-
-  return (
-    <section className="grid grid-cols-2 gap-x-5 gap-y-5 sm:grid-cols-4 sm:gap-x-6 lg:grid-cols-2 xl:grid-cols-4">
-      <InsightCell
-        label="Mayor gasto"
-        tone="primary"
-        value={topCategory ? topCategory.name : '—'}
-        hint={topCategory ? formatCurrency(topCategory.total) : undefined}
-      />
-      <InsightCell
-        label="Menor gasto"
-        tone={lowestCategory ? 'destructive' : undefined}
-        value={lowestCategory ? lowestCategory.name : '—'}
-        hint={lowestCategory ? formatCurrency(lowestCategory.total) : undefined}
-      />
-      <InsightCell
-        label="Presupuesto"
-        value={budgetAmount != null ? formatCurrency(budgetAmount) : '—'}
-        hint={budgetHint}
-      />
-      <InsightCell
-        label="Concentración"
-        value={`${Math.round(concentration)}%`}
-        hint="en la categoría top"
-      />
-    </section>
-  )
-}
 
 function RecentMovements({
   expenses,
   loading,
 }: Readonly<{ expenses: ExpenseWithCategory[]; loading: boolean }>) {
-  const recent = expenses.slice(0, 6)
+  const recent = expenses.slice(0, 5)
 
   let body: React.ReactNode
   if (loading) {
     body = (
-      <div className="divide-y divide-border/25" aria-hidden>
+      <div className="flex flex-1 flex-col justify-evenly divide-y divide-border/25" aria-hidden>
         {Array.from({ length: 4 }, (_, i) => (
           <ExpenseRowSkeleton key={i} />
         ))}
@@ -115,15 +36,18 @@ function RecentMovements({
     )
   } else if (recent.length === 0) {
     body = (
-      <p className="py-6 text-sm text-muted-foreground">
+      <p className="flex flex-1 items-center py-8 text-sm text-muted-foreground">
         Sin movimientos este mes. Agrega tu primer gasto con el botón +.
       </p>
     )
   } else {
     body = (
-      <div className="divide-y divide-border/25">
+      <div className="flex flex-1 flex-col justify-evenly divide-y divide-border/25">
         {recent.map((expense) => (
-          <div key={expense.id} className="row-hover flex min-w-0 items-center gap-3 py-2.5">
+          <div
+            key={expense.id}
+            className="row-hover flex min-w-0 items-center gap-3.5 py-3.5 sm:py-4"
+          >
             <ExpenseIcon
               description={expense.description}
               categoryName={expense.category?.name}
@@ -131,8 +55,8 @@ function RecentMovements({
               categoryColor={expense.category?.color}
               size="sm"
             />
-            <div className="min-w-0 flex-1 space-y-0.5">
-              <p className="truncate text-sm font-medium leading-tight tracking-tight">
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="truncate text-sm font-medium leading-tight tracking-tight sm:text-[15px]">
                 {getExpenseLabel(expense.description, expense.category?.name)}
               </p>
               <p className="truncate text-xs capitalize leading-tight text-muted-foreground">
@@ -140,7 +64,7 @@ function RecentMovements({
                 {expense.category?.name ? ` · ${expense.category.name}` : ''}
               </p>
             </div>
-            <span className="shrink-0 text-sm font-semibold tabular-nums tracking-tight">
+            <span className="shrink-0 text-sm font-semibold tabular-nums tracking-tight sm:text-[15px]">
               {formatCurrency(Number(expense.amount))}
             </span>
           </div>
@@ -150,8 +74,8 @@ function RecentMovements({
   }
 
   return (
-    <section className="min-w-0 border-t border-border/70 pt-5">
-      <div className="flex items-baseline justify-between gap-3 pb-2">
+    <section className="flex min-h-0 flex-1 flex-col border-t border-border/70 pt-5">
+      <div className="flex shrink-0 items-baseline justify-between gap-3 pb-1">
         <p className="stat-label">Movimientos recientes</p>
         <Link
           to="/gastos"
@@ -174,25 +98,20 @@ export function DashboardPage() {
 
   const spent = stats?.total ?? 0
   const breakdown = stats?.categoryBreakdown ?? []
-  const sorted = [...breakdown].sort((a, b) => b.total - a.total)
-  const topCategory = sorted[0] ?? null
-  const lowestCategory = sorted.length > 1 ? (sorted.at(-1) ?? null) : null
-  const concentration = topCategory && spent > 0 ? (topCategory.total / spent) * 100 : 0
   const budgetAmount = budget?.amount ?? null
-  const remaining = budgetAmount != null ? budgetAmount - spent : null
 
   if (statsLoading && expensesLoading) {
     return <DashboardSkeleton />
   }
 
   return (
-    <div className="flex flex-col gap-4 pb-4 lg:gap-5 lg:pb-8">
+    <div className="flex min-h-[calc(100dvh-var(--app-header-h)-env(safe-area-inset-top)-5.5rem)] flex-col gap-4 pb-2 md:min-h-[calc(100dvh-var(--app-header-h)-env(safe-area-inset-top)-3.5rem)] lg:gap-5">
       <MonthMasthead eyebrow="Resumen" />
 
       {!statsLoading ? <MonthlyCapAlert spent={spent} /> : null}
 
-      <div className="grid gap-8 pt-2 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-start lg:gap-10">
-        <div className="flex min-w-0 flex-col gap-5 lg:gap-6">
+      <div className="grid min-h-0 flex-1 gap-6 pt-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-stretch lg:gap-8 xl:gap-10">
+        <div className="flex min-h-0 min-w-0 flex-col gap-6 lg:gap-8">
           {statsLoading ? (
             <SpendingHeroSkeleton />
           ) : (
@@ -203,29 +122,14 @@ export function DashboardPage() {
             />
           )}
 
-          <div className="border-t border-border/70 pt-5">
-            {statsLoading ? (
-              <InsightsGridSkeleton />
-            ) : (
-              <InsightsGrid
-                topCategory={topCategory}
-                lowestCategory={lowestCategory}
-                budgetAmount={budgetAmount}
-                remaining={remaining}
-                concentration={concentration}
-              />
-            )}
-          </div>
-
           <RecentMovements expenses={expenses} loading={expensesLoading} />
         </div>
 
-        <aside className="ledger-aside min-w-0 border-t border-border/70 pt-5 lg:sticky lg:top-[calc(4.25rem_+_env(safe-area-inset-top))] lg:border-t-0 lg:pt-0">
-          {/* Top categorías; la asignación completa vive en Análisis */}
+        <aside className="ledger-aside flex min-h-0 min-w-0 flex-col border-t border-border/70 pt-5 lg:border-t-0 lg:pt-0">
           {statsLoading ? (
-            <CategoryAllocationSkeleton />
+            <CategoryAllocationSkeleton fill />
           ) : (
-            <CategoryAllocation data={breakdown} total={spent} limit={8} />
+            <CategoryAllocation data={breakdown} total={spent} limit={6} fill />
           )}
         </aside>
       </div>

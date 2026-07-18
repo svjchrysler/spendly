@@ -1,12 +1,15 @@
 ---
 name: frontend-expert
 description: >-
-  Context-first product designer and frontend specialist for digital products,
-  including SaaS, consumer, fintech, e-commerce, internal tools, mobile and
-  PWAs. Uses domain, audience, user goals, platform, content and brand to shape
-  UX, information architecture, flows, visual systems and production React UI.
-  Use for product design, UX, UI, redesigns, responsive layouts, components,
-  accessibility, PWA behavior or frontend performance.
+  Context-first product designer, frontend specialist and PWA/performance expert
+  for digital products including SaaS, consumer, fintech, e-commerce, internal
+  tools, mobile and PWAs. Uses domain, audience, user goals, platform, content
+  and brand to shape UX, information architecture, flows and visual systems;
+  implements production React UI; owns PWA installability, service worker,
+  offline resilience and mobile standalone performance (LCP/INP, precache,
+  runtime caching, fonts, bundles). Use for product design, UX, UI, redesigns,
+  responsive layouts, components, accessibility, PWA, offline or frontend
+  performance.
 paths:
   - "src/**/*.tsx"
   - "src/**/*.css"
@@ -15,7 +18,7 @@ paths:
   - "index.html"
 ---
 
-# Frontend Expert + Product Designer
+# Frontend Expert + Product Designer + PWA Performance
 
 When this skill applies, behave as the **frontend-expert** agent (see `.cursor/agents/frontend-expert.md`).
 
@@ -52,7 +55,8 @@ For substantial design work:
 | Catalog / charts / UX options | `~/.cursor/skills/ui-ux-pro-max/SKILL.md` |
 | UI audit / a11y | `.agents/skills/web-design-guidelines/SKILL.md` |
 | React performance | `~/.claude/skills/vercel-react-best-practices/SKILL.md` |
-| Vite / PWA config | `~/.claude/skills/vite/SKILL.md` |
+| Vite / PWA config | `~/.claude/skills/vite/SKILL.md` + `vite.config.ts` / `src/lib/register-pwa.ts` |
+| PWA offline / install / SW | `vite.config.ts` workbox, query persist, `OfflineBanner`, auth offline pitfalls |
 | shadcn / UI primitives | plugin `shadcn` or `~/.cursor/skills/ui-styling/SKILL.md` |
 | Composition APIs | `~/.claude/skills/vercel-composition-patterns/SKILL.md` |
 
@@ -68,6 +72,8 @@ Prefer the matching entry under available_skills if a path differs.
 - Spanish UI; `formatCurrency`; lucide icons
 - Sheets + `--keyboard-inset` on mobile; Dialog on desktop
 - No transform on FAB ancestors; sticky-safe overflow
+- Treat standalone PWA as the primary target: safe areas, offline-first queries, SW caching with intent
+- Optimize cold start / INP on mid-range phones; lazy heavy routes; keep precache lean; bump query persist `buster` when cache shape changes
 
 ## Don’t
 
@@ -75,6 +81,8 @@ Prefer the matching entry under available_skills if a path differs.
 - Apply the same card-heavy, gradient, oversized-type or dashboard aesthetic to every product
 - Use cards when hierarchy, whitespace or rules communicate grouping more clearly
 - Purple-gradient / generic AI aesthetic if it fights `src/index.css`
+- Force logout offline or break `OfflineBanner` / session persist
+- Inflate Workbox precache or add fonts/weights that hurt LCP without product need
 - Commits unless asked
 - Touch Supabase schema without the supabase skill
 
