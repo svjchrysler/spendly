@@ -7,12 +7,6 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { ownerEmail } from '@/lib/auth-config'
 import { cn } from '@/lib/utils'
 
-const modules = [
-  { name: 'Resumen', detail: 'Gasto del mes · presupuesto' },
-  { name: 'Gastos', detail: 'Registro · filtros · historial' },
-  { name: 'Categorías', detail: 'Iconos · colores · predicción' },
-]
-
 export function LoginPage() {
   const { signIn, resetPassword } = useAuth()
   const { theme, toggleTheme } = useTheme()
@@ -57,11 +51,7 @@ export function LoginPage() {
         <div className="absolute top-1/3 -right-16 size-64 rounded-full bg-primary/8 blur-3xl" />
       </div>
 
-      <header className="flex items-center justify-between border-b border-border/80 bg-background/50 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 backdrop-blur-md sm:px-6">
-        <div className="flex items-center gap-2.5 text-sm font-semibold tracking-tight">
-          <BrandMark size="sm" />
-          Spendly
-        </div>
+      <header className="flex items-center justify-end px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 sm:px-6">
         <button
           type="button"
           onClick={toggleTheme}
@@ -72,13 +62,15 @@ export function LoginPage() {
         </button>
       </header>
 
-      <main className="mx-auto grid w-full max-w-6xl flex-1 content-center gap-10 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-16 xl:px-10">
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-8 sm:px-6 sm:py-10">
         <section className="flex flex-col justify-center">
-          <h1 className="font-ledger text-pretty text-[2.6rem] leading-[1.05] font-semibold tracking-[-0.04em] sm:text-5xl">
-            Bienvenido
-            <br />
-            <span className="text-primary">de vuelta.</span>
+          <BrandMark size="lg" />
+          <h1 className="font-display mt-5 text-[2.6rem] leading-none font-semibold tracking-[-0.02em] sm:text-5xl">
+            Spendly
           </h1>
+          <p className="mt-2.5 text-sm text-muted-foreground">
+            Tu registro personal de gastos.
+          </p>
 
           <form onSubmit={handleLogin} className="mt-8 space-y-5 sm:mt-10 sm:space-y-6">
             <div className="space-y-2">
@@ -157,24 +149,6 @@ export function LoginPage() {
             </button>
           </form>
         </section>
-
-        <aside className="ledger-aside hidden flex-col justify-center lg:flex">
-          <p className="stat-label mb-5">Módulos</p>
-          <ul className="space-y-0 divide-y divide-border/70">
-            {modules.map((item) => (
-              <li key={item.name} className="flex items-center justify-between gap-4 py-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold tracking-tight">{item.name}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{item.detail}</p>
-                </div>
-                <span className="flex items-center gap-1.5 text-[10px] font-medium tracking-[0.12em] text-primary uppercase">
-                  <span className="size-1.5 rounded-full bg-primary" />
-                  Activo
-                </span>
-              </li>
-            ))}
-          </ul>
-        </aside>
       </main>
 
       {/* ponytail: no marketing footer on phone — feels like a website */}

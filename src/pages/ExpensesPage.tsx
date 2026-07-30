@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { MonthMasthead } from '@/components/layout/MonthPicker'
-import { MonthlyCapAlert } from '@/components/dashboard/MonthlyCapAlert'
+import { Button } from '@/components/ui/button'
 import { ExpenseFilters } from '@/components/expenses/ExpenseFilters'
 import { ExpenseList } from '@/components/expenses/ExpenseList'
 import {
@@ -85,15 +85,19 @@ export function ExpensesPage() {
         <div className="grid grid-cols-3 gap-3 border-t border-border/70 pt-3">
           <div className="metric-cell space-y-1">
             <p className="metric-cell-label">Ticket medio</p>
-            <p className="text-sm font-semibold tabular-nums">{formatCurrency(ticket)}</p>
+            <p className="font-ledger text-sm font-semibold tabular-nums">
+              {formatCurrency(ticket)}
+            </p>
           </div>
           <div className="metric-cell space-y-1">
             <p className="metric-cell-label">Mayor</p>
-            <p className="text-sm font-semibold tabular-nums">{formatCurrency(maxExpense)}</p>
+            <p className="font-ledger text-sm font-semibold tabular-nums">
+              {formatCurrency(maxExpense)}
+            </p>
           </div>
           <div className="metric-cell space-y-1">
             <p className="metric-cell-label">Días activos</p>
-            <p className="text-sm font-semibold tabular-nums">{daysActive}</p>
+            <p className="font-ledger text-sm font-semibold tabular-nums">{daysActive}</p>
           </div>
         </div>
       ) : null}
@@ -118,16 +122,30 @@ export function ExpensesPage() {
   } else {
     list = (
       <>
-        {expenses.length === 0 ? (
-          <div className="py-8">
+        {expenses.length === 0 && filtered ? (
+          <div className="flex flex-col items-start gap-3 py-8">
             <p className="text-sm text-muted-foreground">
-              {filtered
-                ? 'No hay gastos que coincidan. Limpia los filtros para ver todo el mes.'
-                : 'Sin gastos este mes. Agrega el primero con el botón +.'}
+              No hay gastos que coincidan con la búsqueda.
             </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="cursor-pointer"
+              onClick={() => {
+                setSearch('')
+                setCategoryId(undefined)
+              }}
+            >
+              Limpiar filtros
+            </Button>
           </div>
         ) : null}
-        <ExpenseList expenses={expenses} showFab />
+        <ExpenseList
+          expenses={expenses}
+          showFab
+          emptyCta={filtered ? undefined : 'Agregar tu primer gasto'}
+        />
       </>
     )
   }
@@ -135,8 +153,6 @@ export function ExpensesPage() {
   return (
     <div className="flex flex-col gap-3 pb-3 lg:gap-4 lg:pb-6">
       <MonthMasthead eyebrow="Gastos" />
-
-      {!isLoading ? <MonthlyCapAlert spent={monthTotal} /> : null}
 
       <div className="grid gap-5 pt-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] xl:gap-10">
         {/* Riel sticky: resumen + filtros siempre a mano mientras scrolleas la lista */}

@@ -44,20 +44,23 @@ export function ExpenseActionSheet({
 
   return (
     <div className="px-1 pb-1 pt-2">
-      <div className="flex flex-col items-center gap-3 text-center">
-        <ExpenseIcon
-          description={expense.description}
-          categoryName={expense.category?.name}
-          categoryIcon={expense.category?.icon}
-          categoryColor={expense.category?.color}
-          size="xl"
-        />
-        <div className="w-full space-y-1">
-          <p className="text-3xl font-semibold tracking-tight text-foreground tabular-nums">
-            {formatCurrency(Number(expense.amount))}
-          </p>
-          <p className="truncate px-4 text-sm font-medium text-foreground">{title}</p>
-          <p className="text-xs text-muted-foreground">{expense.category?.name}</p>
+      {/* Mini-recibo del gasto: firma visual de la marca */}
+      <div className="receipt-edge mx-auto w-full max-w-[17rem] rounded-t-lg bg-secondary px-4 pb-5 pt-4 [--receipt-fill:var(--secondary)]">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <ExpenseIcon
+            description={expense.description}
+            categoryName={expense.category?.name}
+            categoryIcon={expense.category?.icon}
+            categoryColor={expense.category?.color}
+            size="xl"
+          />
+          <div className="w-full space-y-1">
+            <p className="font-ledger text-3xl font-semibold tracking-tight text-foreground tabular-nums">
+              {formatCurrency(Number(expense.amount))}
+            </p>
+            <p className="truncate px-4 text-sm font-medium text-foreground">{title}</p>
+            <p className="text-xs text-muted-foreground">{expense.category?.name}</p>
+          </div>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 /**
  * Fuente de verdad de hex para JS (theme-color meta, PWA manifest, FOUC).
  * Los tokens CSS en `src/index.css` deben espejar estos valores.
- * Dark: referencia portfolio (negro + mint + coral).
+ * Dark: zinc + mint (referencia original).
  */
 export const palette = {
   light: {

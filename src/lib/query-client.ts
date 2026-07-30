@@ -34,5 +34,5 @@ export const queryPersistOptions = {
   persister: queryPersister,
   maxAge: WEEK_MS,
   // ponytail: bump to wipe bad caches after schema/query-key changes
-  buster: 'v1',
+  buster: 'v2',
 }

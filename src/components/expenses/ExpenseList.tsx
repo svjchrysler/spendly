@@ -43,9 +43,80 @@ import { cn } from '@/lib/utils'
 interface ExpenseListProps {
   expenses: ExpenseWithCategory[]
   showFab?: boolean
+  /** Filas planas sin headers de fecha (Resumen); la fecha va en el caption. */
+  compact?: boolean
+  /** Texto del CTA cuando no hay gastos (abre el form de nuevo gasto). */
+  emptyCta?: string
 }
 
-export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListProps>) {
+function ExpenseRow({
+  expense,
+  caption,
+  isDesktop,
+  onOpenActions,
+  onEdit,
+  onDelete,
+}: Readonly<{
+  expense: ExpenseWithCategory
+  caption: string
+  isDesktop: boolean
+  onOpenActions: () => void
+  onEdit: () => void
+  onDelete: () => void
+}>) {
+  return (
+    <div
+      role={isDesktop ? undefined : 'button'}
+      tabIndex={isDesktop ? undefined : 0}
+      onClick={isDesktop ? undefined : onOpenActions}
+      onKeyDown={
+        isDesktop
+          ? undefined
+          : (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onOpenActions()
+              }
+            }
+      }
+      className={cn(
+        'row-hover group flex min-h-12 min-w-0 items-center justify-between gap-3 py-3 sm:cursor-default',
+        !isDesktop && 'cursor-pointer',
+      )}
+    >
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <ExpenseIcon
+          description={expense.description}
+          categoryName={expense.category?.name}
+          categoryIcon={expense.category?.icon}
+          categoryColor={expense.category?.color}
+          size="sm"
+        />
+        <div className="min-w-0 space-y-0.5">
+          <p className="truncate text-[15px] font-medium leading-tight tracking-tight">
+            {getExpenseLabel(expense.description, expense.category?.name)}
+          </p>
+          <p className="truncate text-xs capitalize leading-tight text-muted-foreground">
+            {caption}
+          </p>
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+        <span className="font-ledger text-[15px] font-semibold whitespace-nowrap tabular-nums tracking-tight sm:text-base">
+          {formatCurrency(Number(expense.amount))}
+        </span>
+        {isDesktop ? <ExpenseRowActions onEdit={onEdit} onDelete={onDelete} /> : null}
+      </div>
+    </div>
+  )
+}
+
+export function ExpenseList({
+  expenses,
+  showFab = false,
+  compact = false,
+  emptyCta,
+}: Readonly<ExpenseListProps>) {
   const { year, month } = useMonth()
   const deleteExpense = useDeleteExpense(year, month)
   const [openAdd, setOpenAdd] = useState(false)
@@ -158,7 +229,54 @@ export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListP
     <>
       {addExpenseUi}
 
+      {compact ? (
+        <div className="flex flex-1 flex-col justify-evenly divide-y divide-border/25">
+          {expenses.map((expense) => (
+            <ExpenseRow
+              key={expense.id}
+              expense={expense}
+              caption={`${formatDayLabel(expense.expense_date)}${expense.category?.name ? ` · ${expense.category.name}` : ''}`}
+              isDesktop={isDesktop}
+              onOpenActions={() => setActionExpense(expense)}
+              onEdit={() => openEdit(expense)}
+              onDelete={() => openDelete(expense)}
+            />
+          ))}
+          {expenses.length === 0 && emptyCta ? (
+            <div className="flex flex-1 flex-col items-start justify-center gap-3 py-8">
+              <p className="text-sm text-muted-foreground">
+                Sin movimientos este mes. Tu recibo está en blanco.
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                className="cursor-pointer"
+                onClick={() => setOpenAdd(true)}
+              >
+                <Plus className="size-4" aria-hidden />
+                {emptyCta}
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      ) : (
       <div className="space-y-1">
+        {expenses.length === 0 && emptyCta ? (
+          <div className="flex flex-col items-start gap-3 py-8">
+            <p className="text-sm text-muted-foreground">
+              Sin movimientos este mes. Tu recibo está en blanco.
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              className="cursor-pointer"
+              onClick={() => setOpenAdd(true)}
+            >
+              <Plus className="size-4" aria-hidden />
+              {emptyCta}
+            </Button>
+          </div>
+        ) : null}
         <AnimatePresence mode="popLayout">
           {grouped.map(({ date, items, subtotal }) => (
             <motion.section
@@ -181,73 +299,28 @@ export function ExpenseList({ expenses, showFab = false }: Readonly<ExpenseListP
                 }}
               >
                 <h3 className="stat-label capitalize">{formatDayLabel(date)}</h3>
-                <span className="text-sm font-semibold tabular-nums tracking-tight text-foreground/90">
+                <span className="font-ledger text-sm font-semibold tabular-nums tracking-tight text-foreground/90">
                   {formatCurrency(subtotal)}
                 </span>
               </div>
               <div className="divide-y divide-border/25">
-                {items.map((expense) => {
-                  return (
-                    <div
-                      key={expense.id}
-                      role={isDesktop ? undefined : 'button'}
-                      tabIndex={isDesktop ? undefined : 0}
-                      onClick={
-                        isDesktop
-                          ? undefined
-                          : () => setActionExpense(expense)
-                      }
-                      onKeyDown={
-                        isDesktop
-                          ? undefined
-                          : (e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault()
-                                setActionExpense(expense)
-                              }
-                            }
-                      }
-                      className={cn(
-                        'row-hover group flex min-h-12 min-w-0 items-center justify-between gap-3 py-3 sm:cursor-default',
-                        !isDesktop && 'cursor-pointer',
-                      )}
-                    >
-                      <div className="flex min-w-0 flex-1 items-center gap-3">
-                        <ExpenseIcon
-                          description={expense.description}
-                          categoryName={expense.category?.name}
-                          categoryIcon={expense.category?.icon}
-                          categoryColor={expense.category?.color}
-                          size="sm"
-                        />
-                        <div className="min-w-0 space-y-0.5">
-                          <p className="truncate text-[15px] font-medium leading-tight tracking-tight">
-                            {getExpenseLabel(expense.description, expense.category?.name)}
-                          </p>
-                          <p className="truncate text-xs leading-tight text-muted-foreground">
-                            {expense.category?.name}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
-                        <span className="text-[15px] font-semibold whitespace-nowrap tabular-nums tracking-tight sm:text-base">
-                          {formatCurrency(Number(expense.amount))}
-                        </span>
-                        {isDesktop ? (
-                          <ExpenseRowActions
-                            onEdit={() => openEdit(expense)}
-                            onDelete={() => openDelete(expense)}
-                          />
-                        ) : null}
-                      </div>
-                    </div>
-                  )
-                })}
+                {items.map((expense) => (
+                  <ExpenseRow
+                    key={expense.id}
+                    expense={expense}
+                    caption={expense.category?.name ?? ''}
+                    isDesktop={isDesktop}
+                    onOpenActions={() => setActionExpense(expense)}
+                    onEdit={() => openEdit(expense)}
+                    onDelete={() => openDelete(expense)}
+                  />
+                ))}
               </div>
             </motion.section>
           ))}
         </AnimatePresence>
       </div>
+      )}
 
       <Sheet
         open={Boolean(actionExpense)}

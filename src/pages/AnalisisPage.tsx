@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ReactNode } from 'react'
+import { lazy, Suspense, useState, type ReactNode } from 'react'
 import {
   AnalisisPageSkeleton,
   CategoryAllocationSkeleton,
@@ -181,6 +181,52 @@ function MonthPulse({ report }: Readonly<{ report: MonthReport }>) {
   )
 }
 
+type AnalysisPanel = 'historial' | 'ritmo'
+
+const panelOptions: { id: AnalysisPanel; label: string }[] = [
+  { id: 'historial', label: 'Historial' },
+  { id: 'ritmo', label: 'Ritmo del mes' },
+]
+
+function PanelSwitch({
+  value,
+  onChange,
+}: Readonly<{ value: AnalysisPanel; onChange: (panel: AnalysisPanel) => void }>) {
+  return (
+    <div
+      role="tablist"
+      aria-label="Vista de análisis"
+      className="flex w-fit items-center gap-1 rounded-lg border border-border/70 bg-muted/50 p-1"
+      onKeyDown={(e) => {
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+        e.preventDefault()
+        onChange(value === 'historial' ? 'ritmo' : 'historial')
+      }}
+    >
+      {panelOptions.map((option) => (
+        <button
+          key={option.id}
+          type="button"
+          role="tab"
+          id={`tab-${option.id}`}
+          aria-selected={value === option.id}
+          aria-controls={`panel-${option.id}`}
+          tabIndex={value === option.id ? 0 : -1}
+          onClick={() => onChange(option.id)}
+          className={cn(
+            'pressable min-h-9 cursor-pointer rounded-md px-3.5 text-sm font-medium transition-colors',
+            value === option.id
+              ? 'bg-card text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 function TopExpensesList({ report }: Readonly<{ report: MonthReport }>) {
   if (report.top.length === 0) {
     return (
@@ -269,6 +315,7 @@ function MonthDetail({
 }
 
 export function AnalisisPage() {
+  const [panel, setPanel] = useState<AnalysisPanel>('historial')
   const { year, month } = useMonth()
   const { data: stats, isLoading: statsLoading } = useMonthlyStats(year, month)
   const { data: history, isLoading: historyLoading } = useMonthlyHistory()
@@ -313,21 +360,43 @@ export function AnalisisPage() {
     <div className="flex flex-col gap-3 pb-3 lg:gap-4 lg:pb-6">
       <MonthMasthead eyebrow="Análisis" />
 
-      {history && history.length > 1 ? <TrendStrip history={history} /> : null}
-
       {!expensesLoading ? <MonthPulse report={report} /> : null}
 
       <div className="grid gap-6 pt-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-start lg:gap-8 xl:gap-10">
         <div className="flex min-w-0 flex-col gap-5">
-          <section className="min-w-0">{historyPanel}</section>
-          {history && history.length > 0 ? <MonthDetail history={history} /> : null}
-          {report.spent > 0 ? (
-            <Suspense fallback={<ChartSkeleton />}>
-              <DailyPaceChart data={report.dailyPace} budget={report.budget} />
-              <WeekOfMonthChart data={report.byWeek} />
-              <WeekdayBarChart data={weekdayRows} />
-            </Suspense>
-          ) : null}
+          <PanelSwitch value={panel} onChange={setPanel} />
+
+          {panel === 'historial' ? (
+            <div
+              role="tabpanel"
+              id="panel-historial"
+              aria-labelledby="tab-historial"
+              className="flex min-w-0 flex-col gap-5"
+            >
+              {history && history.length > 1 ? <TrendStrip history={history} /> : null}
+              <section className="min-w-0">{historyPanel}</section>
+              {history && history.length > 0 ? <MonthDetail history={history} /> : null}
+            </div>
+          ) : (
+            <div
+              role="tabpanel"
+              id="panel-ritmo"
+              aria-labelledby="tab-ritmo"
+              className="flex min-w-0 flex-col gap-5"
+            >
+              {report.spent > 0 ? (
+                <Suspense fallback={<ChartSkeleton />}>
+                  <DailyPaceChart data={report.dailyPace} budget={report.budget} />
+                  <WeekOfMonthChart data={report.byWeek} />
+                  <WeekdayBarChart data={weekdayRows} />
+                </Suspense>
+              ) : (
+                <p className="py-8 text-sm text-muted-foreground">
+                  Sin movimientos este mes para medir el ritmo.
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         <section className="ledger-aside min-w-0 space-y-5 border-t border-border/70 pt-4 lg:sticky lg:top-[calc(var(--app-header-h)_+_env(safe-area-inset-top))] lg:border-t-0 lg:pt-0">

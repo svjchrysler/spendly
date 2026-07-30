@@ -6,7 +6,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
   <meta name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no, interactive-widget=resizes-content" />
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
   <!-- Placeholders inyectados desde src/lib/palette.ts vía vite transformIndexHtml -->
   <meta name="theme-color" content="__THEME_DARK__" media="(prefers-color-scheme: dark)" />
   <meta name="theme-color" content="__THEME_LIGHT__" media="(prefers-color-scheme: light)" />
@@ -62,11 +62,15 @@
       pointer-events: none;
     }
 
+    /* Marca "Tinta y Sol": moneda con ranura sobre campo de tinta */
     #app-splash .mark {
       position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       width: 3.25rem;
       height: 3.25rem;
-      border-radius: 0.7rem;
+      border-radius: 0.65rem;
       overflow: hidden;
       background: __FG_LIGHT__;
       box-shadow: 0 0 0 1px color-mix(in srgb, __FG_LIGHT__ 20%, transparent);
@@ -77,47 +81,28 @@
       box-shadow: 0 0 0 1px color-mix(in srgb, __FG_DARK__ 20%, transparent);
     }
 
-    #app-splash .mark-slash {
+    #app-splash .mark-coin {
       position: absolute;
-      inset: 20%;
-      border-radius: 999px;
-      background: __THEME_LIGHT__;
-      opacity: 0.9;
-      transform: rotate(-38deg);
-    }
-
-    html.dark #app-splash .mark-slash {
-      background: __FG_DARK__;
-    }
-
-    #app-splash .mark-glow {
-      position: absolute;
-      bottom: 26%;
-      left: 20%;
-      width: 40%;
-      height: 40%;
-      border-radius: 999px;
-      background: __PRIMARY_LIGHT__;
-      opacity: 0.8;
-      filter: blur(1px);
-    }
-
-    html.dark #app-splash .mark-glow {
-      background: __PRIMARY_DARK__;
-    }
-
-    #app-splash .mark-dot {
-      position: absolute;
-      bottom: 30%;
-      left: 26%;
-      width: 28%;
-      height: 28%;
+      width: 58%;
+      height: 58%;
       border-radius: 999px;
       background: __PRIMARY_LIGHT__;
     }
 
-    html.dark #app-splash .mark-dot {
+    html.dark #app-splash .mark-coin {
       background: __PRIMARY_DARK__;
+    }
+
+    #app-splash .mark-slot {
+      position: absolute;
+      width: 36%;
+      height: 11%;
+      border-radius: 999px;
+      background: __FG_LIGHT__;
+    }
+
+    html.dark #app-splash .mark-slot {
+      background: __THEME_DARK__;
     }
 
     #app-splash .wordmark {
@@ -165,32 +150,14 @@
       }
     }
   </style>
-  <script>
-    (() => {
-      try {
-        const stored = localStorage.getItem('spendly-theme')
-        let theme = 'light'
-        if (stored === 'light' || stored === 'dark') {
-          theme = stored
-        } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-          theme = 'dark'
-        }
-        document.documentElement.classList.toggle('dark', theme === 'dark')
-        const color = theme === 'dark' ? '__THEME_DARK__' : '__THEME_LIGHT__'
-        document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
-          meta.setAttribute('content', color)
-        })
-      } catch { }
-    })()
-  </script>
+  <script src="/theme-boot.js"></script>
 </head>
 
 <body>
   <div id="app-splash" role="status" aria-live="polite" aria-label="Cargando Spendly">
     <div class="mark" aria-hidden="true">
-      <span class="mark-slash"></span>
-      <span class="mark-glow"></span>
-      <span class="mark-dot"></span>
+      <span class="mark-coin"></span>
+      <span class="mark-slot"></span>
     </div>
     <p class="wordmark">Spendly</p>
     <div class="pulse" aria-hidden="true"></div>

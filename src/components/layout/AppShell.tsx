@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { NavLink, Outlet } from 'react-router-dom'
 import { ChartColumn, LayoutDashboard, Moon, Receipt, Sun, Tags } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -5,9 +6,11 @@ import { BrandMark } from '@/components/layout/BrandMark'
 import { OfflineBanner } from '@/components/layout/OfflineBanner'
 import { PageEnter } from '@/components/layout/PageEnter'
 import { ProfileMenu } from '@/components/layout/ProfileMenu'
+import { useMonth } from '@/contexts/MonthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useKeyboardInset } from '@/hooks/useKeyboardInset'
 import { useRealtimeExpenses } from '@/hooks/useRealtimeExpenses'
+import { prefetchMonthData } from '@/lib/prefetch-month'
 
 const navItems = [
   {
@@ -44,6 +47,13 @@ export function AppShell() {
   useRealtimeExpenses()
   useKeyboardInset()
   const { theme, toggleTheme } = useTheme()
+  const { year, month } = useMonth()
+  const queryClient = useQueryClient()
+
+  function warmRoute(prefetch: () => Promise<unknown>) {
+    void prefetch()
+    prefetchMonthData(queryClient, year, month)
+  }
 
   return (
     <div className="min-h-dvh overflow-x-clip bg-background">
@@ -51,7 +61,7 @@ export function AppShell() {
         <div className="mx-auto flex h-[var(--app-header-h)] w-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="flex min-w-0 items-center gap-2.5">
             <BrandMark />
-            <span className="truncate text-sm font-semibold tracking-tight sm:text-[15px]">
+            <span className="font-display truncate text-sm font-semibold tracking-tight sm:text-[15px]">
               Spendly
             </span>
           </div>
@@ -65,8 +75,9 @@ export function AppShell() {
                 key={to}
                 to={to}
                 end={end}
-                onPointerEnter={() => void prefetch()}
-                onFocus={() => void prefetch()}
+                viewTransition
+                onPointerEnter={() => warmRoute(prefetch)}
+                onFocus={() => warmRoute(prefetch)}
                 className={({ isActive }) =>
                   cn(
                     'pressable relative inline-flex min-h-11 cursor-pointer items-center rounded-full px-4 text-sm font-medium transition-colors duration-200',
@@ -125,8 +136,9 @@ export function AppShell() {
                 key={to}
                 to={to}
                 end={end}
-                onPointerEnter={() => void prefetch()}
-                onFocus={() => void prefetch()}
+                viewTransition
+                onPointerEnter={() => warmRoute(prefetch)}
+                onFocus={() => warmRoute(prefetch)}
                 className={({ isActive }) =>
                   cn(
                     'pressable flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 px-1 py-1 text-[10px] font-medium tracking-wide',

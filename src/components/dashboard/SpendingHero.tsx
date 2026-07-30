@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { MonthlyCapAlert } from '@/components/dashboard/MonthlyCapAlert'
 import { useUpsertBudget } from '@/hooks/useMonthlyStats'
 import { useMonth } from '@/contexts/MonthContext'
 import { formatCurrency } from '@/lib/format'
@@ -51,13 +52,15 @@ export function SpendingHero({
   }
 
   let budgetHint: ReactNode = (
-    <button
+    <Button
       type="button"
-      className="pressable cursor-pointer text-sm text-muted-foreground hover:text-primary"
+      variant="outline"
+      size="sm"
+      className="cursor-pointer"
       onClick={() => setEditingBudget(true)}
     >
       Definir presupuesto
-    </button>
+    </Button>
   )
 
   if (budget != null && !editingBudget) {
@@ -117,16 +120,22 @@ export function SpendingHero({
     )
   }
 
+  // Firma visual: el resumen del mes como recibo (borde perforado abajo)
   return (
-    <div className="space-y-6 sm:space-y-7">
+    <div className="receipt-edge rounded-t-lg bg-card px-4 pt-5 pb-5 shadow-[0_14px_28px_-20px_var(--shadow)] sm:px-6 sm:pt-6 sm:pb-6">
       <div className="space-y-3">
-        <p className="stat-label">Gastado</p>
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="stat-label">Gastado</p>
+          <p className="stat-label font-ledger text-muted-foreground/70">
+            Recibo · {String(month).padStart(2, '0')}/{year}
+          </p>
+        </div>
         <motion.p
           key={spent}
           initial={reduceMotion ? false : { opacity: 0.4, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          className="stat-value leading-none lg:text-[3.85rem]"
+          className="stat-value leading-none lg:text-[3.5rem]"
         >
           {formatCurrency(spent)}
         </motion.p>
@@ -141,32 +150,30 @@ export function SpendingHero({
         ) : null}
       </div>
 
-      <div className="grid grid-cols-2 gap-x-5 gap-y-5 border-t border-border/70 pt-5 sm:grid-cols-4 sm:gap-6">
+      <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-5 border-t border-dashed border-border pt-4 sm:grid-cols-4 sm:gap-6">
         <div className="metric-cell space-y-2">
           <p className="metric-cell-label">Promedio / día</p>
-          <p className="text-lg font-semibold tracking-tight tabular-nums sm:text-xl">
-            {formatCurrency(dailyAvg)}
-          </p>
+          <p className="metric-cell-value">{formatCurrency(dailyAvg)}</p>
         </div>
         <div className="metric-cell space-y-2">
           <p className="metric-cell-label">Ticket medio</p>
-          <p className="text-lg font-semibold tracking-tight tabular-nums sm:text-xl">
+          <p className="metric-cell-value">
             {formatCurrency(transactionCount > 0 ? spent / transactionCount : 0)}
           </p>
         </div>
         <div className="metric-cell space-y-2">
           <p className="metric-cell-label">Gastos</p>
-          <p className="text-lg font-semibold tracking-tight tabular-nums sm:text-xl">
-            {transactionCount}
-          </p>
+          <p className="metric-cell-value">{transactionCount}</p>
         </div>
         <div className="metric-cell space-y-2">
           <p className="metric-cell-label">Días</p>
-          <p className="text-lg font-semibold tracking-tight tabular-nums sm:text-xl">
+          <p className="metric-cell-value">
             {dayOfMonth}/{daysInMonth}
           </p>
         </div>
       </div>
+
+      <MonthlyCapAlert spent={spent} />
     </div>
   )
 }

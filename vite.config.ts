@@ -75,11 +75,17 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webmanifest}'],
         runtimeCaching: [
           {
-            // NetworkFirst + short timeout: fail fast to cache on flaky mobile
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+            // Never cache auth tokens / session responses
+            urlPattern: /^https:\/\/.*\.supabase\.co\/auth\/v1\/.*/i,
+            handler: 'NetworkOnly',
+          },
+          {
+            // REST reads only — fail fast to cache on flaky mobile
+            urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
             handler: 'NetworkFirst',
+            method: 'GET',
             options: {
-              cacheName: 'supabase',
+              cacheName: 'supabase-rest',
               networkTimeoutSeconds: 3,
               expiration: {
                 maxEntries: 96,

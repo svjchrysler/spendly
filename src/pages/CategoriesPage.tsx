@@ -186,27 +186,32 @@ export function CategoriesPage() {
       {isLoading ? (
         <CategoryListSkeleton />
       ) : (
-        <div className="grid pt-1 sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-12">
+        <div className="grid gap-3 pt-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {categories.map((category) => {
             return (
               <div
                 key={category.id}
-                className="row-hover flex min-h-12 items-center justify-between gap-2 border-b border-border/40 py-3"
+                className="row-hover flex min-h-14 items-center justify-between gap-2 rounded-lg border border-border/50 bg-card/40 px-3 py-3"
               >
                 <div className="flex min-w-0 flex-1 items-center gap-3">
-                  <CategoryIcon
-                    icon={category.icon}
-                    color={category.color}
-                    name={category.name}
-                    size="md"
-                  />
-                  <p className="truncate font-medium">{category.name}</p>
+                  <span
+                    className="flex size-10 shrink-0 items-center justify-center rounded-md ring-1 ring-border/60"
+                    style={{ backgroundColor: `${category.color}22` }}
+                  >
+                    <CategoryIcon
+                      icon={category.icon}
+                      color={category.color}
+                      name={category.name}
+                      size="md"
+                    />
+                  </span>
+                  <p className="truncate font-medium tracking-tight">{category.name}</p>
                 </div>
-                <div className="flex shrink-0 gap-1">
+                <div className="flex shrink-0 gap-0.5 opacity-70 transition-opacity group-hover:opacity-100">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="size-11 cursor-pointer"
+                    className="size-10 cursor-pointer"
                     onClick={() => setEditing(category)}
                     aria-label="Editar categoría"
                   >
@@ -215,7 +220,7 @@ export function CategoriesPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="size-11 cursor-pointer text-destructive"
+                    className="size-10 cursor-pointer text-destructive"
                     onClick={() => setDeleting(category)}
                     aria-label="Eliminar categoría"
                   >
