@@ -82,7 +82,7 @@ export function ExpensesPage() {
       </div>
 
       {!isLoading && expenses.length > 0 ? (
-        <div className="grid grid-cols-3 gap-3 border-t border-border/70 pt-3">
+        <div className="grid grid-cols-3 divide-x divide-border/60 border-t border-border/70 pt-3 [&>*]:px-4 [&>*:first-child]:pl-0 [&>*:last-child]:pr-0">
           <div className="metric-cell space-y-1">
             <p className="metric-cell-label">Ticket medio</p>
             <p className="font-ledger text-sm font-semibold tabular-nums">

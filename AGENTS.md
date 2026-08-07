@@ -41,7 +41,15 @@ pnpm test
 pnpm preview
 ```
 
-Env: copiar `.env.example` → `.env.local`. Solo `VITE_*`. Nunca `service_role` en el cliente.
+**Solo Docker** (sin Node/pnpm en la máquina):
+
+```bash
+cp .env.example .env   # o: docker compose --env-file .env.local …
+docker compose up --build -d
+# → http://localhost:8080
+```
+
+Env: copiar `.env.example` → `.env.local` (dev) o `.env` (compose). Solo `VITE_*`. Nunca `service_role` en el cliente.
 
 ## Arquitectura
 
@@ -78,9 +86,11 @@ Nav: 4 tabs. Mobile = bottom bar. Desktop = header tabs.
 
 - Queries en hooks (`useExpenses`, `useCategories`, `useMonthlyStats`, …).
 - Keys tipicas: `['expenses', …]`, `['monthly-stats', year, month]`, `['categories']`, `['monthly-budget', year, month]`.
+- `['expense-history']` va **fuera** del prefijo `['expenses']` a propósito: bajo ese prefijo cada mutation lo invalidaba y re-bajaba 1500 filas solo para predecir categoría.
+- Los `queryFn` del mes viven en `fetchMonthExpenses` / `fetchMonthlyStats` / `fetchCategories` (exportados desde los hooks) y los reusa `prefetch-month.ts` — no duplicar el select.
 - Mutations con optimistic updates + invalidate de stats.
 - Realtime: `useRealtimeExpenses` montado en `AppShell`.
-- Persist cache: key `spendly-query-cache`, buster `v1` — **bumpear buster** si cambian query keys / shape.
+- Persist cache: key `spendly-query-cache`, buster `v3` — **bumpear buster** si cambian query keys / shape.
 - `MonthContext` define `year`/`month` global para casi todas las queries.
 
 ### Auth / offline

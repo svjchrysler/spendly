@@ -15,25 +15,28 @@ type ExpenseInput = {
   expense_date: string
 }
 
+/** Fuente única del fetch del mes — la comparte el prefetch de los tabs. */
+export async function fetchMonthExpenses(year: number, month: number) {
+  const { start, end } = getMonthRange(year, month)
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('*, category:categories(*)')
+    .gte('expense_date', start)
+    .lte('expense_date', end)
+    .order('expense_date', { ascending: false })
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data as ExpenseWithCategory[]
+}
+
 export function useExpenses(year: number, month: number) {
   const { user } = useAuth()
-  const { start, end } = getMonthRange(year, month)
 
   return useQuery({
     queryKey: expenseKeys.month(year, month),
     enabled: Boolean(user),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('expenses')
-        .select('*, category:categories(*)')
-        .gte('expense_date', start)
-        .lte('expense_date', end)
-        .order('expense_date', { ascending: false })
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      return data as ExpenseWithCategory[]
-    },
+    queryFn: () => fetchMonthExpenses(year, month),
   })
 }
 

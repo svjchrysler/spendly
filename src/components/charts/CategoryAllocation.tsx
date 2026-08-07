@@ -57,8 +57,8 @@ export function CategoryAllocation({
               <div className="flex items-baseline justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2.5">
                   <span
-                    className="size-2 shrink-0 rounded-full shadow-[0_0_8px_currentColor]"
-                    style={{ backgroundColor: item.color, color: item.color }}
+                    className="size-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: item.color }}
                     aria-hidden
                   />
                   <span className="truncate text-sm font-medium tracking-tight sm:text-[15px]">
@@ -66,10 +66,10 @@ export function CategoryAllocation({
                   </span>
                 </div>
                 <div className="flex shrink-0 items-baseline gap-2.5">
-                  <span className="text-sm font-semibold tabular-nums tracking-tight sm:text-[15px]">
+                  <span className="font-ledger text-sm font-semibold tabular-nums tracking-tight sm:text-[15px]">
                     {formatCurrency(item.total)}
                   </span>
-                  <span className="w-9 text-right text-xs tabular-nums text-muted-foreground">
+                  <span className="w-10 text-right font-ledger text-xs tabular-nums text-muted-foreground">
                     {pct < 1 && pct > 0 ? pct.toFixed(1) : Math.round(pct)}%
                   </span>
                 </div>
@@ -88,9 +88,9 @@ export function CategoryAllocation({
         })}
 
         {hidden.length > 0 ? (
-          <div className="flex shrink-0 items-baseline justify-between gap-3 pt-1 text-xs text-muted-foreground">
+          <div className="flex shrink-0 items-baseline justify-between gap-3 border-t border-border/60 pt-3 text-xs text-muted-foreground">
             <span>+{hidden.length} categorías más</span>
-            <span className="tabular-nums">{formatCurrency(hiddenTotal)}</span>
+            <span className="font-ledger tabular-nums">{formatCurrency(hiddenTotal)}</span>
           </div>
         ) : null}
       </div>

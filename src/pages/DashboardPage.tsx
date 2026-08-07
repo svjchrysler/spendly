@@ -27,7 +27,7 @@ function RecentMovements({
         <p className="stat-label">Movimientos recientes</p>
         <Link
           to="/gastos"
-          className="pressable inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-primary hover:text-primary/80"
+          className="pressable -my-3.5 inline-flex cursor-pointer items-center gap-1 py-3.5 text-xs font-medium text-primary hover:text-primary/80"
         >
           Ver todos
           <ArrowRight className="size-3.5" aria-hidden />

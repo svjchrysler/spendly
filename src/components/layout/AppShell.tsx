@@ -106,7 +106,7 @@ export function AppShell() {
             <button
               type="button"
               onClick={toggleTheme}
-              className="pressable inline-flex size-9 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+              className="pressable inline-flex size-11 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
               aria-label={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
             >
               {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}

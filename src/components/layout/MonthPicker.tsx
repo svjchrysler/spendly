@@ -20,7 +20,7 @@ export function MonthMasthead({ eyebrow }: Readonly<{ eyebrow: string }>) {
         <Button
           variant="ghost"
           size="icon"
-          className="size-9 cursor-pointer rounded-full text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
+          className="size-11 cursor-pointer rounded-full text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
           onClick={goToPreviousMonth}
           aria-label="Mes anterior"
         >
@@ -29,7 +29,7 @@ export function MonthMasthead({ eyebrow }: Readonly<{ eyebrow: string }>) {
         <Button
           variant="ghost"
           size="icon"
-          className="size-9 cursor-pointer rounded-full text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
+          className="size-11 cursor-pointer rounded-full text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
           onClick={goToNextMonth}
           aria-label="Mes siguiente"
         >

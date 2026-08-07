@@ -89,20 +89,17 @@ export function CategoryAllocationSkeleton({
 
 export function SpendingHeroSkeleton() {
   return (
-    <div
-      className="receipt-edge rounded-t-lg bg-card px-4 pt-5 pb-5 sm:px-6 sm:pt-6 sm:pb-6"
-      aria-hidden
-    >
-      <div className="space-y-3">
-        <div className="flex items-baseline justify-between gap-3">
-          <Bone className="h-2.5 w-16" />
-          <Bone className="h-2.5 w-24" />
-        </div>
+    <div className="min-w-0" aria-hidden>
+      <div className="flex items-baseline justify-between gap-3 border-b border-border/70 pb-2.5">
+        <Bone className="h-2.5 w-16" />
+        <Bone className="h-2.5 w-24" />
+      </div>
+      <div className="space-y-3 pt-4">
         <Bone className="h-12 w-[78%] sm:h-14" />
         <Bone className="h-8 w-40 rounded-md" />
         <Bone className="mt-4 h-2 w-full rounded-full" />
       </div>
-      <div className="mt-5 grid grid-cols-2 gap-5 border-t border-dashed border-border pt-4 sm:grid-cols-4 sm:gap-6">
+      <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-5 border-t border-dashed border-border pt-4 sm:grid-cols-4 sm:gap-x-0 sm:gap-y-0 sm:divide-x sm:divide-border/60 sm:[&>*]:px-5 sm:[&>*:first-child]:pl-0 sm:[&>*:last-child]:pr-0">
         {Array.from({ length: 4 }, (_, i) => (
           <div key={i} className="space-y-2">
             <Bone className="h-2.5 w-16" />
@@ -240,14 +237,14 @@ export function ExpensesPageSkeleton() {
 
 export function CategoryListSkeleton({ rows = 8 }: Readonly<{ rows?: number }>) {
   return (
-    <div className="grid gap-3 pt-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-hidden>
+    <div className="grid pt-1 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3 xl:grid-cols-4" aria-hidden>
       {Array.from({ length: rows }, (_, i) => (
         <div
           key={i}
-          className="flex min-h-14 items-center justify-between gap-2 rounded-lg border border-border/50 px-3 py-3"
+          className="flex min-h-14 items-center justify-between gap-2 border-b border-border/60 py-2.5"
         >
           <div className="flex items-center gap-3">
-            <Bone className="size-10 rounded-md" />
+            <Bone className="size-9 rounded-lg" />
             <Bone className={`h-4 ${i % 2 === 0 ? 'w-28' : 'w-20'}`} />
           </div>
           <div className="flex gap-1">

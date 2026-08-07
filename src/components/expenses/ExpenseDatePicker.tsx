@@ -86,7 +86,7 @@ export function ExpenseDatePicker({ value, onChange }: Readonly<ExpenseDatePicke
             onChange(toDateString(new Date()))
           }}
           className={cn(
-            'pressable h-10 min-w-0 cursor-pointer rounded-xl border text-sm font-medium',
+            'pressable h-11 min-w-0 cursor-pointer rounded-xl border text-sm font-medium',
             todaySelected
               ? 'border-primary/45 bg-primary/12 text-foreground'
               : 'border-border/60 bg-muted/15 text-muted-foreground hover:bg-muted/30 hover:text-foreground',
@@ -101,7 +101,7 @@ export function ExpenseDatePicker({ value, onChange }: Readonly<ExpenseDatePicke
             onChange(toDateString(subDays(new Date(), 1)))
           }}
           className={cn(
-            'pressable h-10 min-w-0 cursor-pointer rounded-xl border text-sm font-medium',
+            'pressable h-11 min-w-0 cursor-pointer rounded-xl border text-sm font-medium',
             yesterdaySelected
               ? 'border-primary/45 bg-primary/12 text-foreground'
               : 'border-border/60 bg-muted/15 text-muted-foreground hover:bg-muted/30 hover:text-foreground',
@@ -116,7 +116,7 @@ export function ExpenseDatePicker({ value, onChange }: Readonly<ExpenseDatePicke
           aria-label="Elegir otra fecha"
           onClick={() => setOpen((v) => !v)}
           className={cn(
-            'pressable inline-flex h-10 min-w-0 cursor-pointer items-center justify-center gap-1 rounded-xl border px-1.5 text-sm font-medium capitalize',
+            'pressable inline-flex h-11 min-w-0 cursor-pointer items-center justify-center gap-1 rounded-xl border px-1.5 text-sm font-medium capitalize',
             otherSelected || open
               ? 'border-primary/45 bg-primary/12 text-foreground'
               : 'border-border/60 bg-muted/15 text-muted-foreground hover:bg-muted/30 hover:text-foreground',

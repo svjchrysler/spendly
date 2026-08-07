@@ -1,11 +1,10 @@
-import { lazy, Suspense, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useMemo, useState, type ReactNode } from 'react'
 import {
   AnalisisPageSkeleton,
   CategoryAllocationSkeleton,
   ChartSkeleton,
 } from '@/components/layout/skeletons'
 import { CategoryAllocation } from '@/components/charts/CategoryAllocation'
-import { CategoryDonut } from '@/components/charts/CategoryDonut'
 import { MonthMasthead } from '@/components/layout/MonthPicker'
 import { useMonth } from '@/contexts/MonthContext'
 import { useExpenses } from '@/hooks/useExpenses'
@@ -15,6 +14,14 @@ import { getExpenseLabel } from '@/lib/expense-display'
 import { topShare } from '@/lib/month-insights'
 import { buildMonthReport, type MonthReport } from '@/lib/month-report'
 import { cn } from '@/lib/utils'
+
+// Todos los charts son lazy: recharts (~111 kB gz) queda fuera del critical path
+// y las métricas numéricas de la página pintan sin esperarlo.
+const CategoryDonut = lazy(() =>
+  import('@/components/charts/CategoryDonut').then((module) => ({
+    default: module.CategoryDonut,
+  })),
+)
 
 const MonthlyBar = lazy(() =>
   import('@/components/charts/MonthlyBar').then((module) => ({
@@ -70,7 +77,7 @@ function TrendStrip({
   }
 
   return (
-    <section className="grid grid-cols-2 gap-x-4 gap-y-4 border-b border-border/70 pb-5 sm:grid-cols-4">
+    <section className="grid grid-cols-2 gap-x-4 gap-y-4 border-b border-border/70 pb-5 sm:grid-cols-4 sm:gap-x-0 sm:divide-x sm:divide-border/60 sm:[&>*]:px-5 sm:[&>*:first-child]:pl-0 sm:[&>*:last-child]:pr-0">
       <div className="metric-cell space-y-1.5">
         <p className="metric-cell-label">Promedio mensual</p>
         <p className="metric-cell-value">{formatCurrency(average)}</p>
@@ -106,7 +113,7 @@ function MonthPulse({ report }: Readonly<{ report: MonthReport }>) {
     report.remaining != null && report.remaining < 0
 
   return (
-    <section className="grid grid-cols-2 gap-x-4 gap-y-4 border-b border-border/70 pb-5 sm:grid-cols-3 lg:grid-cols-6">
+    <section className="grid grid-cols-2 gap-x-4 gap-y-4 border-b border-border/70 pb-5 sm:grid-cols-3 lg:grid-cols-6 lg:gap-x-0 lg:divide-x lg:divide-border/60 lg:[&>*]:px-4 lg:[&>*:first-child]:pl-0 lg:[&>*:last-child]:pr-0">
       <div className="metric-cell space-y-1.5">
         <p className="metric-cell-label">Movimientos</p>
         <p className="metric-cell-value">{report.count}</p>
@@ -193,10 +200,11 @@ function PanelSwitch({
   onChange,
 }: Readonly<{ value: AnalysisPanel; onChange: (panel: AnalysisPanel) => void }>) {
   return (
+    // Tabs editoriales: mismo subrayado que la nav de desktop, sin chip elevado
     <div
       role="tablist"
       aria-label="Vista de análisis"
-      className="flex w-fit items-center gap-1 rounded-lg border border-border/70 bg-muted/50 p-1"
+      className="flex w-full items-center gap-6 border-b border-border/70"
       onKeyDown={(e) => {
         if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
         e.preventDefault()
@@ -214,13 +222,21 @@ function PanelSwitch({
           tabIndex={value === option.id ? 0 : -1}
           onClick={() => onChange(option.id)}
           className={cn(
-            'pressable min-h-9 cursor-pointer rounded-md px-3.5 text-sm font-medium transition-colors',
+            'pressable relative -mb-px min-h-10 cursor-pointer rounded-sm px-0.5 pb-2.5 text-sm font-medium transition-colors',
+            'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
             value === option.id
-              ? 'bg-card text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground',
+              ? 'text-foreground'
+              : 'text-muted-foreground hover:text-foreground/80',
           )}
         >
           {option.label}
+          <span
+            className={cn(
+              'absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-primary transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
+              value === option.id ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0',
+            )}
+            aria-hidden
+          />
         </button>
       ))}
     </div>
@@ -255,7 +271,7 @@ function TopExpensesList({ report }: Readonly<{ report: MonthReport }>) {
                 {expense.category?.name ? ` · ${expense.category.name}` : ''}
               </p>
             </div>
-            <p className="shrink-0 text-sm font-semibold tabular-nums tracking-tight">
+            <p className="shrink-0 font-ledger text-sm font-semibold tabular-nums tracking-tight">
               {formatCurrency(Number(expense.amount))}
             </p>
           </div>
@@ -283,7 +299,7 @@ function MonthDetail({
             delta = (
               <span
                 className={cn(
-                  'w-12 text-right text-xs tabular-nums',
+                  'w-12 text-right font-ledger text-xs tabular-nums',
                   rising ? 'text-destructive' : 'text-primary',
                 )}
               >
@@ -301,7 +317,7 @@ function MonthDetail({
                 {capitalize(item.label)}
               </span>
               <span className="flex shrink-0 items-baseline gap-2.5">
-                <span className="text-sm font-semibold tabular-nums tracking-tight">
+                <span className="font-ledger text-sm font-semibold tabular-nums tracking-tight">
                   {formatCurrency(item.total)}
                 </span>
                 {delta ?? <span className="w-12" aria-hidden />}
@@ -326,11 +342,22 @@ export function AnalisisPage() {
   const breakdown = stats?.categoryBreakdown ?? []
   const topThree = topShare(breakdown, spent, 3)
 
-  const report = buildMonthReport(
-    expenses ?? [],
-    year,
-    month,
-    budget?.amount ?? null,
+  // Agrega todo el mes (orden, medianas, series diarias): sin memo se recalcula
+  // en cada toggle del PanelSwitch, que es puro cambio de estado local.
+  const budgetAmount = budget?.amount ?? null
+  const report = useMemo(
+    () => buildMonthReport(expenses ?? [], year, month, budgetAmount),
+    [expenses, year, month, budgetAmount],
+  )
+
+  const weekdayRows = useMemo(
+    () =>
+      report.byWeekday.map((item) => ({
+        label: item.label,
+        total: item.total,
+        count: item.count,
+      })),
+    [report],
   )
 
   if (statsLoading && historyLoading && expensesLoading) {
@@ -349,12 +376,6 @@ export function AnalisisPage() {
       </Suspense>
     )
   }
-
-  const weekdayRows = report.byWeekday.map((item) => ({
-    label: item.label,
-    total: item.total,
-    count: item.count,
-  }))
 
   return (
     <div className="flex flex-col gap-3 pb-3 lg:gap-4 lg:pb-6">
@@ -404,7 +425,9 @@ export function AnalisisPage() {
             <CategoryAllocationSkeleton />
           ) : (
             <>
-              <CategoryDonut data={breakdown} total={spent} />
+              <Suspense fallback={<ChartSkeleton />}>
+                <CategoryDonut data={breakdown} total={spent} />
+              </Suspense>
               <CategoryAllocation data={breakdown} total={spent} />
               {spent > 0 ? (
                 <p className="text-xs text-muted-foreground">

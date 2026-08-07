@@ -60,56 +60,59 @@ export function useUpsertBudget() {
   })
 }
 
+type StatRow = {
+  amount: number
+  category_id: string
+  category: { name: string; color: string; icon: string } | null
+}
+
+/** Fuente única del agregado del mes — la comparte el prefetch de los tabs. */
+export async function fetchMonthlyStats(year: number, month: number) {
+  const { start, end } = getMonthRange(year, month)
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('amount, category_id, category:categories(name, color, icon)')
+    .gte('expense_date', start)
+    .lte('expense_date', end)
+
+  if (error) throw error
+
+  const rows = (data ?? []) as StatRow[]
+  const total = rows.reduce((sum, item) => sum + Number(item.amount), 0)
+  const byCategory = new Map<
+    string,
+    { name: string; color: string; icon: string; total: number }
+  >()
+
+  for (const item of rows) {
+    const category = item.category
+    if (!category) continue
+    const existing = byCategory.get(item.category_id) ?? {
+      name: category.name,
+      color: category.color,
+      icon: category.icon,
+      total: 0,
+    }
+    existing.total += Number(item.amount)
+    byCategory.set(item.category_id, existing)
+  }
+
+  return {
+    total,
+    categoryBreakdown: Array.from(byCategory.entries()).map(([id, value]) => ({
+      id,
+      ...value,
+    })),
+  }
+}
+
 export function useMonthlyStats(year: number, month: number) {
   const { user } = useAuth()
-  const { start, end } = getMonthRange(year, month)
 
   return useQuery({
     queryKey: ['monthly-stats', year, month],
     enabled: Boolean(user),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('expenses')
-        .select('amount, category_id, category:categories(name, color, icon)')
-        .gte('expense_date', start)
-        .lte('expense_date', end)
-
-      if (error) throw error
-
-      type StatRow = {
-        amount: number
-        category_id: string
-        category: { name: string; color: string; icon: string } | null
-      }
-
-      const rows = (data ?? []) as StatRow[]
-      const total = rows.reduce((sum, item) => sum + Number(item.amount), 0)
-      const byCategory = new Map<
-        string,
-        { name: string; color: string; icon: string; total: number }
-      >()
-
-      for (const item of rows) {
-        const category = item.category
-        if (!category) continue
-        const existing = byCategory.get(item.category_id) ?? {
-          name: category.name,
-          color: category.color,
-          icon: category.icon,
-          total: 0,
-        }
-        existing.total += Number(item.amount)
-        byCategory.set(item.category_id, existing)
-      }
-
-      return {
-        total,
-        categoryBreakdown: Array.from(byCategory.entries()).map(([id, value]) => ({
-          id,
-          ...value,
-        })),
-      }
-    },
+    queryFn: () => fetchMonthlyStats(year, month),
   })
 }
 
@@ -121,29 +124,43 @@ export function useMonthlyHistory(monthsBack = 6) {
     enabled: Boolean(user),
     queryFn: async () => {
       const now = new Date()
-      const results: { year: number; month: number; total: number; label: string }[] = []
-
-      for (let i = monthsBack - 1; i >= 0; i--) {
-        const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
-        const year = date.getFullYear()
-        const month = date.getMonth() + 1
-        const { start, end } = getMonthRange(year, month)
-
-        const { data, error } = await supabase
-          .from('expenses')
-          .select('amount')
-          .gte('expense_date', start)
-          .lte('expense_date', end)
-
-        if (error) throw error
-
-        const total = data.reduce((sum, item) => sum + Number(item.amount), 0)
-        results.push({
-          year,
-          month,
-          total,
+      const results = Array.from({ length: monthsBack }, (_, index) => {
+        const date = new Date(
+          now.getFullYear(),
+          now.getMonth() - (monthsBack - 1 - index),
+          1,
+        )
+        return {
+          year: date.getFullYear(),
+          month: date.getMonth() + 1,
+          total: 0,
           label: date.toLocaleDateString('es-ES', { month: 'short' }),
-        })
+        }
+      })
+
+      // ponytail: un round-trip sobre el rango completo y bucketing en cliente.
+      // Antes era una query por mes, secuenciales — 6 viajes al abrir Análisis.
+      const oldest = new Date(now.getFullYear(), now.getMonth() - (monthsBack - 1), 1)
+      const { start } = getMonthRange(oldest.getFullYear(), oldest.getMonth() + 1)
+      const { end } = getMonthRange(now.getFullYear(), now.getMonth() + 1)
+
+      const { data, error } = await supabase
+        .from('expenses')
+        .select('amount, expense_date')
+        .gte('expense_date', start)
+        .lte('expense_date', end)
+
+      if (error) throw error
+
+      const byMonth = new Map(
+        results.map((item) => [
+          `${item.year}-${String(item.month).padStart(2, '0')}`,
+          item,
+        ]),
+      )
+      for (const row of data ?? []) {
+        const bucket = byMonth.get(row.expense_date.slice(0, 7))
+        if (bucket) bucket.total += Number(row.amount)
       }
 
       return results

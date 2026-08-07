@@ -36,7 +36,8 @@ export function ExpenseFilters({
             placeholder="Buscar por descripción..."
             disabled={loading}
             aria-label="Buscar gastos"
-            className="h-9 w-full bg-transparent pl-7 text-sm text-foreground outline-none placeholder:text-muted-foreground/70 disabled:opacity-50"
+            // text-base: bajo 16px iOS hace zoom al enfocar y descuadra la PWA
+            className="h-11 w-full bg-transparent pl-7 text-base text-foreground outline-none placeholder:text-muted-foreground/70 disabled:opacity-50"
           />
         </div>
         {hasFilters ? (

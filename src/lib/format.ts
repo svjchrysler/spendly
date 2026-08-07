@@ -2,21 +2,31 @@ import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { appCurrency, appLocale } from '@/lib/currency-config'
 
+// ponytail: construir Intl.NumberFormat es caro y formatCurrency corre por fila
+// de lista y por tick de chart — cacheamos una instancia por (moneda, notación).
+const numberFormatters = new Map<string, Intl.NumberFormat>()
+
+function currencyFormatter(currency: string, compact: boolean) {
+  const key = `${currency}:${compact}`
+  let formatter = numberFormatters.get(key)
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(
+      appLocale,
+      compact
+        ? { style: 'currency', currency, notation: 'compact', maximumFractionDigits: 1 }
+        : { style: 'currency', currency, minimumFractionDigits: 2 },
+    )
+    numberFormatters.set(key, formatter)
+  }
+  return formatter
+}
+
 export function formatCurrency(amount: number, currency = appCurrency) {
-  return new Intl.NumberFormat(appLocale, {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-  }).format(amount)
+  return currencyFormatter(currency, false).format(amount)
 }
 
 export function formatCurrencyCompact(amount: number, currency = appCurrency) {
-  return new Intl.NumberFormat(appLocale, {
-    style: 'currency',
-    currency,
-    notation: 'compact',
-    maximumFractionDigits: 1,
-  }).format(amount)
+  return currencyFormatter(currency, true).format(amount)
 }
 
 export function formatMonthYear(year: number, month: number) {

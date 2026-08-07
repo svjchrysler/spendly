@@ -1,13 +1,27 @@
+# Spendly — solo Docker. Build inyecta VITE_* (Vite las bakea en el bundle).
+#
+#   cp .env.example .env   # o usá --env-file .env.local
+#   docker compose up --build -d
+#   open http://localhost:8080
+
 services:
   web:
     build:
       context: .
+      dockerfile: Dockerfile
       args:
-        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
-        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:?set VITE_SUPABASE_URL in .env}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:?set VITE_SUPABASE_ANON_KEY in .env}
         VITE_OWNER_EMAIL: ${VITE_OWNER_EMAIL:-}
         VITE_CURRENCY: ${VITE_CURRENCY:-BOB}
         VITE_CURRENCY_LOCALE: ${VITE_CURRENCY_LOCALE:-es-BO}
+    image: spendly:local
     ports:
       - "${PORT:-8080}:80"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 5s

@@ -14,6 +14,20 @@ describe('formatCurrency', () => {
     expect(formatted).toMatch(/16[.  ]?236[,.]47/)
     expect(formatted.toLowerCase()).toMatch(/bs/)
   })
+
+  it('reuses the cached formatter without changing output', () => {
+    // El cache es por (moneda, notación): repetir y alternar no debe filtrar
+    // opciones de una variante a la otra.
+    expect(formatCurrency(1234.5)).toBe(formatCurrency(1234.5))
+    expect(formatCurrency(1234.5)).not.toBe(formatCurrencyCompact(1234.5))
+    expect(formatCurrency(1234.5)).toMatch(/50/)
+  })
+
+  it('honours an explicit currency override', () => {
+    const usd = formatCurrency(10, 'USD')
+    expect(usd).toMatch(/10[,.]00/)
+    expect(usd).not.toBe(formatCurrency(10))
+  })
 })
 
 describe('formatCurrencyCompact', () => {

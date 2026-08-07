@@ -186,28 +186,24 @@ export function CategoriesPage() {
       {isLoading ? (
         <CategoryListSkeleton />
       ) : (
-        <div className="grid gap-3 pt-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        // Índice ruleado: filas planas separadas por filete, sin cajas
+        <div className="grid pt-1 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3 xl:grid-cols-4">
           {categories.map((category) => {
             return (
               <div
                 key={category.id}
-                className="row-hover flex min-h-14 items-center justify-between gap-2 rounded-lg border border-border/50 bg-card/40 px-3 py-3"
+                className="row-hover group flex min-h-14 items-center justify-between gap-2 border-b border-border/60 py-2.5"
               >
                 <div className="flex min-w-0 flex-1 items-center gap-3">
-                  <span
-                    className="flex size-10 shrink-0 items-center justify-center rounded-md ring-1 ring-border/60"
-                    style={{ backgroundColor: `${category.color}22` }}
-                  >
-                    <CategoryIcon
-                      icon={category.icon}
-                      color={category.color}
-                      name={category.name}
-                      size="md"
-                    />
-                  </span>
+                  <CategoryIcon
+                    icon={category.icon}
+                    color={category.color}
+                    name={category.name}
+                    size="md"
+                  />
                   <p className="truncate font-medium tracking-tight">{category.name}</p>
                 </div>
-                <div className="flex shrink-0 gap-0.5 opacity-70 transition-opacity group-hover:opacity-100">
+                <div className="flex shrink-0 gap-0.5 opacity-60 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
                   <Button
                     variant="ghost"
                     size="icon"

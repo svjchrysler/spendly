@@ -51,16 +51,15 @@ export function SpendingHero({
     }
   }
 
+  // Afordancia de texto, no chip: la columna del monto se lee de corrido
   let budgetHint: ReactNode = (
-    <Button
+    <button
       type="button"
-      variant="outline"
-      size="sm"
-      className="cursor-pointer"
+      className="pressable inline-flex min-h-11 cursor-pointer items-center text-sm font-medium text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary/60"
       onClick={() => setEditingBudget(true)}
     >
       Definir presupuesto
-    </Button>
+    </button>
   )
 
   if (budget != null && !editingBudget) {
@@ -76,7 +75,7 @@ export function SpendingHero({
           : `${formatCurrency(remaining!)} disponibles · ${Math.round(percentage)}% usado`}
         <button
           type="button"
-          className="pressable ml-2 cursor-pointer text-muted-foreground hover:text-foreground"
+          className="pressable ml-2.5 cursor-pointer font-normal text-muted-foreground underline decoration-border underline-offset-4 hover:text-foreground hover:decoration-foreground/40"
           onClick={() => {
             setBudgetValue(budget.toString())
             setEditingBudget(true)
@@ -96,7 +95,7 @@ export function SpendingHero({
           value={budgetValue}
           onChange={(e) => setBudgetValue(e.target.value)}
           placeholder="Presupuesto"
-          className="h-9 border-0 border-b border-border bg-transparent px-0 shadow-none focus-visible:border-primary/50 focus-visible:ring-0"
+          className="h-11 border-0 border-b border-border bg-transparent px-0 shadow-none focus-visible:border-primary/50 focus-visible:ring-0"
         />
         <div className="flex gap-2">
           <Button
@@ -120,16 +119,18 @@ export function SpendingHero({
     )
   }
 
-  // Firma visual: el resumen del mes como recibo (borde perforado abajo)
+  // Encabezado de extracto: sin superficie propia — la jerarquía la dan la
+  // escala tipográfica y los filetes, igual que el resto de las pantallas.
   return (
-    <div className="receipt-edge rounded-t-lg bg-card px-4 pt-5 pb-5 shadow-[0_14px_28px_-20px_var(--shadow)] sm:px-6 sm:pt-6 sm:pb-6">
-      <div className="space-y-3">
-        <div className="flex items-baseline justify-between gap-3">
-          <p className="stat-label">Gastado</p>
-          <p className="stat-label font-ledger text-muted-foreground/70">
-            Recibo · {String(month).padStart(2, '0')}/{year}
-          </p>
-        </div>
+    <section className="min-w-0">
+      <div className="flex items-baseline justify-between gap-3 border-b border-border/70 pb-2.5">
+        <p className="stat-label">Gastado</p>
+        <p className="stat-label font-ledger text-muted-foreground/70">
+          Recibo · {String(month).padStart(2, '0')}/{year}
+        </p>
+      </div>
+
+      <div className="space-y-3 pt-4">
         <motion.p
           key={spent}
           initial={reduceMotion ? false : { opacity: 0.4, y: 6 }}
@@ -150,7 +151,8 @@ export function SpendingHero({
         ) : null}
       </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-5 border-t border-dashed border-border pt-4 sm:grid-cols-4 sm:gap-6">
+      {/* Pie de extracto: en desktop las celdas se separan por filete vertical */}
+      <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-5 border-t border-dashed border-border pt-4 sm:grid-cols-4 sm:gap-x-0 sm:gap-y-0 sm:divide-x sm:divide-border/60 sm:[&>*]:px-5 sm:[&>*:first-child]:pl-0 sm:[&>*:last-child]:pr-0">
         <div className="metric-cell space-y-2">
           <p className="metric-cell-label">Promedio / día</p>
           <p className="metric-cell-value">{formatCurrency(dailyAvg)}</p>
@@ -174,6 +176,6 @@ export function SpendingHero({
       </div>
 
       <MonthlyCapAlert spent={spent} />
-    </div>
+    </section>
   )
 }

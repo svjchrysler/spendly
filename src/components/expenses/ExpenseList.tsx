@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -29,8 +29,8 @@ import {
   ExpenseActionSheet,
   ExpenseRowActions,
 } from '@/components/expenses/ExpenseActionSheet'
-import { ExpenseForm } from '@/components/expenses/ExpenseForm'
 import { ExpenseIcon } from '@/components/expenses/ExpenseIcon'
+import { ExpenseFormSkeleton } from '@/components/layout/skeletons'
 import { getExpenseLabel } from '@/lib/expense-display'
 import { formatCurrency, formatDayLabel } from '@/lib/format'
 import { useDeleteExpense } from '@/hooks/useExpenses'
@@ -39,6 +39,13 @@ import { useMonth } from '@/contexts/MonthContext'
 import type { ExpenseWithCategory } from '@/types/database'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+
+// react-hook-form + zod viven solo acá: fuera del chunk inicial de Resumen/Gastos.
+// Se precalienta al hover/press del FAB, así el sheet abre con el form ya listo.
+const importExpenseForm = () => import('@/components/expenses/ExpenseForm')
+const ExpenseForm = lazy(() =>
+  importExpenseForm().then((module) => ({ default: module.ExpenseForm })),
+)
 
 interface ExpenseListProps {
   expenses: ExpenseWithCategory[]
@@ -125,6 +132,19 @@ export function ExpenseList({
   const [actionExpense, setActionExpense] = useState<ExpenseWithCategory | null>(null)
   const isDesktop = useIsDesktop()
 
+  // Precarga el form en idle tras el primer paint: sale del critical path del
+  // Resumen pero llega antes del primer tap. `import()` cachea, repetir es gratis.
+  useEffect(() => {
+    if (typeof window.requestIdleCallback !== 'function') {
+      const timer = window.setTimeout(() => void importExpenseForm(), 1200)
+      return () => window.clearTimeout(timer)
+    }
+    const handle = window.requestIdleCallback(() => void importExpenseForm(), {
+      timeout: 3000,
+    })
+    return () => window.cancelIdleCallback(handle)
+  }, [])
+
   const grouped = useMemo(() => {
     const map = new Map<string, ExpenseWithCategory[]>()
     for (const expense of expenses) {
@@ -151,6 +171,15 @@ export function ExpenseList({
     }
   }
 
+  function warmForm() {
+    void importExpenseForm()
+  }
+
+  function openActions(expense: ExpenseWithCategory) {
+    warmForm()
+    setActionExpense(expense)
+  }
+
   function openEdit(expense: ExpenseWithCategory) {
     setActionExpense(null)
     setEditing(expense)
@@ -162,18 +191,19 @@ export function ExpenseList({
   }
 
   const addForm = (
-    <ExpenseForm
-      onSuccess={() => {
-        setOpenAdd(false)
-      }}
-    />
+    <Suspense fallback={<ExpenseFormSkeleton />}>
+      <ExpenseForm
+        onSuccess={() => {
+          setOpenAdd(false)
+        }}
+      />
+    </Suspense>
   )
 
   const editForm = editing ? (
-    <ExpenseForm
-      expense={editing}
-      onSuccess={() => setEditing(null)}
-    />
+    <Suspense fallback={<ExpenseFormSkeleton />}>
+      <ExpenseForm expense={editing} onSuccess={() => setEditing(null)} />
+    </Suspense>
   ) : null
 
   let addExpenseUi = null
@@ -184,6 +214,8 @@ export function ExpenseList({
         type="button"
         className="fab"
         onClick={() => setOpenAdd(true)}
+        onPointerEnter={warmForm}
+        onFocus={warmForm}
         aria-label="Agregar gasto"
       >
         <Plus className="size-6" />
@@ -237,7 +269,7 @@ export function ExpenseList({
               expense={expense}
               caption={`${formatDayLabel(expense.expense_date)}${expense.category?.name ? ` · ${expense.category.name}` : ''}`}
               isDesktop={isDesktop}
-              onOpenActions={() => setActionExpense(expense)}
+              onOpenActions={() => openActions(expense)}
               onEdit={() => openEdit(expense)}
               onDelete={() => openDelete(expense)}
             />
@@ -310,7 +342,7 @@ export function ExpenseList({
                     expense={expense}
                     caption={expense.category?.name ?? ''}
                     isDesktop={isDesktop}
-                    onOpenActions={() => setActionExpense(expense)}
+                    onOpenActions={() => openActions(expense)}
                     onEdit={() => openEdit(expense)}
                     onDelete={() => openDelete(expense)}
                   />

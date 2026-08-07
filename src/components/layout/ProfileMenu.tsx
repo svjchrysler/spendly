@@ -24,7 +24,7 @@ export function ProfileMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="inline-flex size-11 cursor-pointer items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Abrir menú de perfil"
       >
         <Avatar className="size-8 border border-border">

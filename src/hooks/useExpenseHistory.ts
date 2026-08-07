@@ -7,7 +7,10 @@ export function useExpenseHistory() {
   const { user } = useAuth()
 
   return useQuery({
-    queryKey: ['expenses', 'history'],
+    // ponytail: key propia (no ['expenses', …]) — bajo ese prefijo cada alta/baja
+    // de gasto invalidaba el historial y re-bajaba 1500 filas solo para predecir.
+    // El staleTime + refetchOnWindowFocus lo mantienen suficientemente fresco.
+    queryKey: ['expense-history'],
     enabled: Boolean(user),
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {

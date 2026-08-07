@@ -341,6 +341,11 @@
   .filter-scroll {
     scrollbar-width: none;
     -ms-overflow-style: none;
+    /* ponytail: pan-x explícito — con el teclado abierto iOS resuelve el gesto
+       ambiguo a favor del scroll vertical del sheet y el riel queda muerto */
+    touch-action: pan-x;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
     mask-image: linear-gradient(
       to right,
       transparent,
@@ -360,6 +365,7 @@
       mask-image: none;
       flex-wrap: wrap;
       overflow-x: visible;
+      touch-action: auto;
     }
   }
 

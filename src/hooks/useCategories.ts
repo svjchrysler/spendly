@@ -7,21 +7,21 @@ export const categoryKeys = {
   all: ['categories'] as const,
 }
 
+/** Fuente única del fetch de categorías — la comparte el prefetch de los tabs. */
+export async function fetchCategories() {
+  const { data, error } = await supabase.from('categories').select('*').order('name')
+
+  if (error) throw error
+  return data as Category[]
+}
+
 export function useCategories() {
   const { user } = useAuth()
 
   return useQuery({
     queryKey: categoryKeys.all,
     enabled: Boolean(user),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name')
-
-      if (error) throw error
-      return data as Category[]
-    },
+    queryFn: fetchCategories,
   })
 }
 
