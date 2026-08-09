@@ -388,6 +388,30 @@
     contain-intrinsic-size: auto 12rem;
   }
 
+  /* ponytail: opacity only — animar transform acá convierte al wrapper en
+     containing block y el FAB portaleado deja de ser fixed */
+  @keyframes page-enter {
+    from {
+      opacity: 0;
+    }
+  }
+
+  .page-enter {
+    animation: page-enter 200ms var(--ease-out-expo) both;
+  }
+
+  /* Reemplazo del monto: el número entra en vez de saltar */
+  @keyframes value-enter {
+    from {
+      opacity: 0.4;
+      transform: translateY(6px);
+    }
+  }
+
+  .value-enter {
+    animation: value-enter 350ms var(--ease-out-expo) both;
+  }
+
   .fab:hover {
     @apply bg-primary/90;
     transform: scale(1.04);

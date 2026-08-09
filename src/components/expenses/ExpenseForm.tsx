@@ -13,6 +13,7 @@ import { ExpenseFormSkeleton } from '@/components/layout/skeletons'
 import { useCategories } from '@/hooks/useCategories'
 import { useExpenseHistory } from '@/hooks/useExpenseHistory'
 import { useCreateExpense, useUpdateExpense } from '@/hooks/useExpenses'
+import { successFeedback } from '@/lib/haptics'
 import { useMonth } from '@/contexts/MonthContext'
 import {
   predictCategoryFromDescription,
@@ -129,6 +130,7 @@ export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) 
         await createExpense.mutateAsync(values)
         toast.success('Gasto guardado')
       }
+      successFeedback()
       onSuccess?.()
     } catch {
       toast.error('No se pudo guardar el gasto')

@@ -1,27 +1,18 @@
-import { motion, useReducedMotion } from 'framer-motion'
 import { useLocation } from 'react-router-dom'
 import type { ReactNode } from 'react'
 
 export function PageEnter({ children }: Readonly<{ children: ReactNode }>) {
   const { pathname } = useLocation()
-  const reduceMotion = useReducedMotion()
   const supportsViewTransition =
     typeof document !== 'undefined' && 'startViewTransition' in document
 
-  // Con View Transitions (NavLink viewTransition) no hace falta Framer.
-  // Sin soporte: fade opacity-only — transform rompe position:fixed del FAB.
-  if (supportsViewTransition || reduceMotion) {
-    return <div key={pathname}>{children}</div>
-  }
-
+  // Con View Transitions (NavLink viewTransition) el fade lo hace el browser.
+  // Sin soporte: keyframe CSS de opacity — Framer costaba ~40 kB gz en el
+  // arranque para esto, y `transform` rompería el position:fixed del FAB.
+  // El fallback de prefers-reduced-motion lo cubre la regla global de index.css.
   return (
-    <motion.div
-      key={pathname}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-    >
+    <div key={pathname} className={supportsViewTransition ? undefined : 'page-enter'}>
       {children}
-    </motion.div>
+    </div>
   )
 }

@@ -15,7 +15,10 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Spendly" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <!-- `default` (no black-translucent): translucent fuerza texto blanco en la
+       status bar, ilegible sobre el fondo claro. Así iOS la pinta con el
+       theme-color, que ThemeContext mantiene en sync con el tema activo. -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="format-detection" content="telephone=no" />
   <meta name="color-scheme" content="light dark" />
   <title>Spendly</title>

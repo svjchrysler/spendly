@@ -123,6 +123,8 @@ Nav: 4 tabs. Mobile = bottom bar. Desktop = header tabs.
 - Sticky headers de fecha: no `overflow-x-hidden` en ancestros (usar `overflow-x-clip`); no animar `y`/`transform` en el section sticky.
 - Safe areas: `env(safe-area-inset-*)` en header, tab bar, FAB, sheets.
 - PWA: `interactive-widget=resizes-content` en viewport; manifest/icons vía `vite-plugin-pwa`.
+- SW: `registerType: 'prompt'` + `skipWaiting: false`. La versión nueva se aplica sola al pasar la app a background y sin modales abiertos (`register-pwa.ts`). No volver a `autoUpdate`: recarga en caliente y tira el form a medio llenar.
+- Splash de iOS: `public/splash/*.png` + `scripts/ios-splash-links.html` los genera `scripts/generate-ios-splash.mjs` (necesita sharp temporal, igual que `generate-pwa-icons.mjs`). Si cambia la paleta, la marca o las métricas de `#app-splash`, re-correrlo — el layout está calibrado contra el DOM real.
 
 ## Pitfalls conocidos (no re-romper)
 
@@ -134,6 +136,8 @@ Nav: 4 tabs. Mobile = bottom bar. Desktop = header tabs.
 | Logout al reabrir offline | Ignorar `SIGNED_OUT` sin red; persist session |
 | Cache vieja post-cambio de keys | Subir `buster` en `queryPersistOptions` |
 | Desktop vacío abajo (Resumen) | No estirar con `justify-between`/`min-h` — empaquetar contenido arriba |
+| recharts/motion en el arranque | Un util compartido (`clsx`, `use-sync-external-store`) cae en el chunk de un grupo pesado y el entry lo importa estático. Los grupos `ui-vendor`/`react-vendor` de `vite.config.ts` van **antes** que `recharts` y llevan `/` final. Verificar con `grep -c recharts- dist/assets/index-*.js` → 0 |
+| Datos del usuario tras logout | `purgeLocalUserData()` (`lib/session-cleanup.ts`) borra query cache + CacheStorage. Si se agrega otro runtime cache con datos, sumarlo a `DATA_CACHES` |
 
 ## Schema (alto nivel)
 

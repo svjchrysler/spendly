@@ -1,4 +1,4 @@
-import { LogOut, Mail } from 'lucide-react'
+import { Download, LogOut, Mail } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -9,10 +9,12 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/contexts/AuthContext'
+import { useInstallPrompt } from '@/hooks/useInstallPrompt'
 import { isSupabaseConfigured } from '@/lib/supabase'
 
 export function ProfileMenu() {
   const { user, signOut } = useAuth()
+  const { canInstall, install } = useInstallPrompt()
   const navigate = useNavigate()
   const initials = user?.email?.charAt(0).toUpperCase() ?? 'S'
 
@@ -69,6 +71,16 @@ export function ProfileMenu() {
         </div>
         <Separator />
         <div className="p-2">
+          {canInstall ? (
+            <Button
+              variant="ghost"
+              className="w-full cursor-pointer justify-start gap-2"
+              onClick={() => void install()}
+            >
+              <Download className="size-4" />
+              Instalar app
+            </Button>
+          ) : null}
           <Button
             variant="ghost"
             className="w-full cursor-pointer justify-start gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive"

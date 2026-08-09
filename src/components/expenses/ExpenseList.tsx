@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useSearchParams } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -35,6 +36,7 @@ import { getExpenseLabel } from '@/lib/expense-display'
 import { formatCurrency, formatDayLabel } from '@/lib/format'
 import { useDeleteExpense } from '@/hooks/useExpenses'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
+import { tapFeedback, warnFeedback } from '@/lib/haptics'
 import { useMonth } from '@/contexts/MonthContext'
 import type { ExpenseWithCategory } from '@/types/database'
 import { toast } from 'sonner'
@@ -131,6 +133,18 @@ export function ExpenseList({
   const [deleting, setDeleting] = useState<ExpenseWithCategory | null>(null)
   const [actionExpense, setActionExpense] = useState<ExpenseWithCategory | null>(null)
   const isDesktop = useIsDesktop()
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // Atajo del manifest (long-press del icono → "Agregar gasto"): abre el form
+  // al arrancar y limpia el param para que un back no lo reabra.
+  useEffect(() => {
+    if (!showFab || !searchParams.has('nuevo')) return
+    void importExpenseForm()
+    setOpenAdd(true)
+    const next = new URLSearchParams(searchParams)
+    next.delete('nuevo')
+    setSearchParams(next, { replace: true })
+  }, [showFab, searchParams, setSearchParams])
 
   // Precarga el form en idle tras el primer paint: sale del critical path del
   // Resumen pero llega antes del primer tap. `import()` cachea, repetir es gratis.
@@ -164,6 +178,7 @@ export function ExpenseList({
     if (!deleting) return
     try {
       await deleteExpense.mutateAsync(deleting.id)
+      warnFeedback()
       toast.success('Gasto eliminado')
       setDeleting(null)
     } catch {
@@ -213,7 +228,10 @@ export function ExpenseList({
       <Button
         type="button"
         className="fab"
-        onClick={() => setOpenAdd(true)}
+        onClick={() => {
+          tapFeedback()
+          setOpenAdd(true)
+        }}
         onPointerEnter={warmForm}
         onFocus={warmForm}
         aria-label="Agregar gasto"

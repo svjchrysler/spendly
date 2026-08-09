@@ -1,5 +1,4 @@
 import { useState, type ReactNode } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { MonthlyCapAlert } from '@/components/dashboard/MonthlyCapAlert'
@@ -22,7 +21,6 @@ export function SpendingHero({
 }: Readonly<SpendingHeroProps>) {
   const { year, month } = useMonth()
   const upsertBudget = useUpsertBudget()
-  const reduceMotion = useReducedMotion()
   const [editingBudget, setEditingBudget] = useState(false)
   const [budgetValue, setBudgetValue] = useState(budget?.toString() ?? '')
 
@@ -131,15 +129,10 @@ export function SpendingHero({
       </div>
 
       <div className="space-y-3 pt-4">
-        <motion.p
-          key={spent}
-          initial={reduceMotion ? false : { opacity: 0.4, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          className="stat-value leading-none lg:text-[3.5rem]"
-        >
+        {/* key: remonta al cambiar el monto y vuelve a disparar el keyframe */}
+        <p key={spent} className="stat-value value-enter leading-none lg:text-[3.5rem]">
           {formatCurrency(spent)}
-        </motion.p>
+        </p>
         {budgetHint}
         {budget != null && budget > 0 && !editingBudget ? (
           <div className="bar-track mt-4 h-2 w-full">

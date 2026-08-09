@@ -6,10 +6,12 @@ import { BrandMark } from '@/components/layout/BrandMark'
 import { OfflineBanner } from '@/components/layout/OfflineBanner'
 import { PageEnter } from '@/components/layout/PageEnter'
 import { ProfileMenu } from '@/components/layout/ProfileMenu'
+import { PullToRefresh } from '@/components/layout/PullToRefresh'
 import { useMonth } from '@/contexts/MonthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useKeyboardInset } from '@/hooks/useKeyboardInset'
 import { useRealtimeExpenses } from '@/hooks/useRealtimeExpenses'
+import { useScrollRestoration } from '@/hooks/useScrollRestoration'
 import { prefetchMonthData } from '@/lib/prefetch-month'
 
 const navItems = [
@@ -46,6 +48,7 @@ const navItems = [
 export function AppShell() {
   useRealtimeExpenses()
   useKeyboardInset()
+  useScrollRestoration()
   const { theme, toggleTheme } = useTheme()
   const { year, month } = useMonth()
   const queryClient = useQueryClient()
@@ -117,6 +120,7 @@ export function AppShell() {
       </header>
 
       <OfflineBanner />
+      <PullToRefresh />
 
       {/* Ancho completo: el contenido aprovecha el viewport (PWA / desktop). */}
       <main className="mx-auto w-full px-4 pb-[calc(var(--app-tabbar-h)+2.75rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pt-5 md:pb-10 lg:px-8 xl:px-10 2xl:px-12">

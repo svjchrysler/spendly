@@ -9,6 +9,7 @@ import {
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { dismissSplash } from '@/lib/splash'
+import { purgeLocalUserData } from '@/lib/session-cleanup'
 
 interface AuthContextValue {
   user: User | null
@@ -54,6 +55,8 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
       if (event === 'SIGNED_OUT' && typeof navigator !== 'undefined' && !navigator.onLine) {
         return
       }
+      // Cubre logout en otra pestaña y refresh token expirado, no solo el botón
+      if (event === 'SIGNED_OUT') void purgeLocalUserData()
       setSession(nextSession)
       setLoading(false)
       dismissSplash()
@@ -76,6 +79,9 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
       },
       async signOut() {
         await supabase.auth.signOut()
+        // Await acá (y no solo en el listener) para que la navegación a /login
+        // no alcance a re-persistir la cache con datos de la sesión anterior
+        await purgeLocalUserData()
       },
       async resetPassword(email) {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
