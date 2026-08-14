@@ -1,12 +1,14 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { NavLink, Outlet } from 'react-router-dom'
-import { ChartColumn, LayoutDashboard, Moon, Receipt, Sun, Tags } from 'lucide-react'
+import { Moon, Sun } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BrandMark } from '@/components/layout/BrandMark'
 import { OfflineBanner } from '@/components/layout/OfflineBanner'
 import { PageEnter } from '@/components/layout/PageEnter'
 import { ProfileMenu } from '@/components/layout/ProfileMenu'
 import { PullToRefresh } from '@/components/layout/PullToRefresh'
+import { TabBar, type TabItem } from '@/components/layout/TabBar'
+import { ChartIcon, HouseIcon, ReceiptIcon, TagIcon } from '@/components/layout/TabIcons'
 import { useMonth } from '@/contexts/MonthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useKeyboardInset } from '@/hooks/useKeyboardInset'
@@ -14,36 +16,36 @@ import { useRealtimeExpenses } from '@/hooks/useRealtimeExpenses'
 import { useScrollRestoration } from '@/hooks/useScrollRestoration'
 import { prefetchMonthData } from '@/lib/prefetch-month'
 
-const navItems = [
+const navItems: readonly TabItem[] = [
   {
     to: '/',
     label: 'Resumen',
     end: true,
-    icon: LayoutDashboard,
+    icon: HouseIcon,
     prefetch: () => import('@/pages/DashboardPage'),
   },
   {
     to: '/analisis',
     label: 'Análisis',
     end: false,
-    icon: ChartColumn,
+    icon: ChartIcon,
     prefetch: () => import('@/pages/AnalisisPage'),
   },
   {
     to: '/gastos',
     label: 'Gastos',
     end: false,
-    icon: Receipt,
+    icon: ReceiptIcon,
     prefetch: () => import('@/pages/ExpensesPage'),
   },
   {
     to: '/categorias',
     label: 'Categorías',
     end: false,
-    icon: Tags,
+    icon: TagIcon,
     prefetch: () => import('@/pages/CategoriesPage'),
   },
-] as const
+]
 
 export function AppShell() {
   useRealtimeExpenses()
@@ -123,57 +125,13 @@ export function AppShell() {
       <PullToRefresh />
 
       {/* Ancho completo: el contenido aprovecha el viewport (PWA / desktop). */}
-      <main className="mx-auto w-full px-4 pb-[calc(var(--app-tabbar-h)+2.75rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pt-5 md:pb-10 lg:px-8 xl:px-10 2xl:px-12">
+      <main className="mx-auto w-full px-4 pb-[calc(var(--app-tabbar-space)+2rem)] pt-4 sm:px-6 sm:pt-5 md:pb-10 lg:px-8 xl:px-10 2xl:px-12">
         <PageEnter>
           <Outlet />
         </PageEnter>
       </main>
 
-      <nav
-        className="fixed inset-x-0 bottom-0 z-50 border-t border-border/50 bg-background/80 backdrop-blur-2xl supports-backdrop-filter:bg-background/70 md:hidden"
-        aria-label="Principal"
-      >
-        <div className="pb-[env(safe-area-inset-bottom)]">
-          <div className="mx-auto flex h-[var(--app-tabbar-h)] max-w-lg items-stretch justify-around px-1">
-            {navItems.map(({ to, label, end, icon: Icon, prefetch }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={end}
-                viewTransition
-                onPointerEnter={() => warmRoute(prefetch)}
-                onFocus={() => warmRoute(prefetch)}
-                className={({ isActive }) =>
-                  cn(
-                    'pressable flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 px-1 py-1 text-[10px] font-medium tracking-wide',
-                    isActive ? 'text-primary' : 'text-muted-foreground',
-                  )
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <span
-                      className={cn(
-                        'flex size-8 items-center justify-center rounded-full transition-[background-color,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                        isActive && 'bg-primary/15',
-                      )}
-                    >
-                      <Icon
-                        className="size-[1.2rem]"
-                        strokeWidth={isActive ? 2.4 : 1.75}
-                        aria-hidden
-                      />
-                    </span>
-                    <span className={cn('leading-none', isActive && 'text-primary')}>
-                      {label}
-                    </span>
-                  </>
-                )}
-              </NavLink>
-            ))}
-          </div>
-        </div>
-      </nav>
+      <TabBar items={navItems} onWarm={warmRoute} />
     </div>
   )
 }

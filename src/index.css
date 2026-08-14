@@ -128,7 +128,14 @@
   --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
   /* iOS-ish chrome metrics — keep sticky/FAB/main in sync */
   --app-header-h: 3.5rem;
+  /* Alto de la cápsula expandida; colapsada solo cambia el visual */
   --app-tabbar-h: 3.5rem;
+  /* Aire entre la cápsula flotante y el borde/home indicator */
+  --app-tabbar-inset: 0.5rem;
+  /* Espacio total que el tab bar le roba al viewport (main, FAB, sheets) */
+  --app-tabbar-space: calc(
+    var(--app-tabbar-h) + var(--app-tabbar-inset) + env(safe-area-inset-bottom)
+  );
   /* Espeja el padding horizontal del <main> para el full-bleed de listas */
   --list-bleed: 1rem;
 }
@@ -380,7 +387,226 @@
       background-color 200ms ease,
       box-shadow 220ms ease;
     right: max(1rem, env(safe-area-inset-right));
-    bottom: calc(var(--app-tabbar-h) + 1.25rem + env(safe-area-inset-bottom));
+    bottom: calc(var(--app-tabbar-space) + 0.85rem);
+  }
+
+  /* ─── Tab bar Liquid Glass (iOS 26) ─────────────────────────────────────
+     Cápsula flotante: material translúcido + specular highlight arriba,
+     píldora activa que desliza y colapso al scrollear. */
+
+  .tab-dock {
+    position: fixed;
+    inset-inline: 0;
+    bottom: calc(var(--app-tabbar-inset) + env(safe-area-inset-bottom));
+    z-index: 50;
+    /* El dock ocupa todo el ancho para centrar; solo la cápsula recibe eventos */
+    pointer-events: none;
+    padding-inline: max(1rem, env(safe-area-inset-left), env(safe-area-inset-right));
+  }
+
+  /*
+    El material tira a gris, no a blanco: es lo que deja que el lozenge blanco
+    del tab activo se despegue. Con `card` (blanco puro) los dos se funden.
+  */
+  .tab-glass {
+    pointer-events: auto;
+    position: relative;
+    isolation: isolate;
+    margin-inline: auto;
+    max-width: 26rem;
+    height: var(--app-tabbar-h);
+    border-radius: 999px;
+    background-color: color-mix(in oklab, var(--muted) 52%, transparent);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    backdrop-filter: blur(30px) saturate(180%);
+    box-shadow:
+      /* specular arriba + sombra interna abajo: la cápsula se lee como lente */
+      inset 0 1px 0 color-mix(in oklab, #fff 75%, transparent),
+      inset 0 -1px 0 color-mix(in oklab, var(--foreground) 6%, transparent),
+      inset 0 0 0 1px color-mix(in oklab, var(--foreground) 6%, transparent),
+      0 12px 32px -8px var(--shadow),
+      0 3px 10px -3px var(--shadow);
+    transition:
+      height 340ms var(--ease-spring),
+      background-color 300ms ease,
+      box-shadow 300ms ease;
+  }
+
+  /* Sin backdrop-filter el material transparente sería ilegible */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .tab-glass {
+      background-color: color-mix(in oklab, var(--muted) 96%, transparent);
+    }
+  }
+
+  /* Sheen del glass: luz que cae desde arriba, detrás del contenido */
+  .tab-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      color-mix(in oklab, #fff 32%, transparent),
+      color-mix(in oklab, #fff 6%, transparent) 40%,
+      transparent 68%
+    );
+  }
+
+  /* Sobre fondo negro no hay nada que "aclarar": el glass oscuro se construye
+     tintando con blanco, no bajando la opacidad de una superficie oscura. */
+  .dark .tab-glass {
+    background-color: color-mix(in oklab, #fff 8%, transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, #fff 16%, transparent),
+      inset 0 -1px 0 color-mix(in oklab, #000 35%, transparent),
+      inset 0 0 0 1px color-mix(in oklab, #fff 9%, transparent),
+      0 14px 38px -10px var(--shadow-elevated),
+      0 3px 12px -4px var(--shadow-elevated);
+  }
+
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .dark .tab-glass {
+      background-color: color-mix(in oklab, var(--secondary) 96%, transparent);
+    }
+  }
+
+  .dark .tab-glass::before {
+    background: linear-gradient(
+      to bottom,
+      color-mix(in oklab, #fff 10%, transparent),
+      transparent 55%
+    );
+  }
+
+  .tab-dock[data-collapsed='true'] .tab-glass {
+    height: 2.7rem;
+  }
+
+  .tab-track {
+    position: relative;
+    display: flex;
+    height: 100%;
+    align-items: stretch;
+    padding: 0.3rem;
+  }
+
+  .tab-pill {
+    position: absolute;
+    top: 0.3rem;
+    bottom: 0.3rem;
+    left: 0.3rem;
+    width: calc((100% - 0.6rem) / var(--tab-count));
+    /* % del propio ancho = exactamente un slot de tab */
+    transform: translate3d(calc(var(--tab-index) * 100%), 0, 0);
+    border-radius: 999px;
+    pointer-events: none;
+    /*
+      Lozenge neutro, no tintado: en iOS el color vive en el símbolo y el
+      indicador es vidrio elevado sobre el vidrio de la barra. Un fondo verde
+      lo tira a chip de Material.
+    */
+    background-color: color-mix(in oklab, #fff 92%, transparent);
+    box-shadow:
+      inset 0 1px 0 #fff,
+      inset 0 0 0 1px color-mix(in oklab, var(--foreground) 5%, transparent),
+      0 1px 2px color-mix(in oklab, var(--foreground) 10%, transparent),
+      0 4px 10px -3px color-mix(in oklab, var(--foreground) 12%, transparent);
+    transition:
+      transform 480ms var(--ease-spring),
+      opacity 220ms ease;
+  }
+
+  .dark .tab-pill {
+    background-color: color-mix(in oklab, #fff 15%, transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, #fff 22%, transparent),
+      inset 0 0 0 1px color-mix(in oklab, #fff 8%, transparent),
+      0 2px 8px -3px #000;
+  }
+
+  .tab-item {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    flex: 1 1 0;
+    cursor: pointer;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.125rem;
+    border-radius: 999px;
+    color: var(--muted-foreground);
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      color 220ms ease,
+      transform 200ms var(--ease-spring);
+  }
+
+  .tab-item[aria-current='page'] {
+    color: var(--primary);
+  }
+
+  .tab-item:active {
+    transform: scale(0.93);
+  }
+
+  .tab-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tab-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    transition:
+      width 280ms var(--ease-spring),
+      height 280ms var(--ease-spring);
+  }
+
+  .tab-dock[data-collapsed='true'] .tab-icon {
+    width: 1.3rem;
+    height: 1.3rem;
+  }
+
+  .tab-label {
+    font-size: 10px;
+    line-height: 1;
+    /* 590 ≈ el medium de SF Pro; Geist es variable, aprovechemos el eje */
+    font-weight: 590;
+    letter-spacing: 0.005em;
+    max-height: 1rem;
+    transition:
+      opacity 200ms ease,
+      max-height 300ms var(--ease-spring),
+      transform 300ms var(--ease-spring);
+  }
+
+  .tab-dock[data-collapsed='true'] .tab-label {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-0.25rem);
+    pointer-events: none;
+  }
+
+  /* Rebote del símbolo al seleccionar, como SF Symbols */
+  @keyframes tab-symbol-bounce {
+    0% {
+      transform: scale(1);
+    }
+    38% {
+      transform: scale(1.22);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .tab-item[aria-current='page'] .tab-icon-wrap {
+    animation: tab-symbol-bounce 420ms var(--ease-spring);
   }
 
   .list-section {

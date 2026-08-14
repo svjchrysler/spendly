@@ -18,7 +18,7 @@ No es un SaaS multi-tenant genérico: es una app chica, mobile-first, con shell 
 | Build | Vite 8 + React 19 + TypeScript |
 | Estilos | Tailwind v4 + tokens en `src/index.css` |
 | UI kit | shadcn / `@base-ui/react` en `src/components/ui/` |
-| Iconos | `lucide-react` (no emojis como iconos de sistema) |
+| Iconos | `lucide-react` (no emojis como iconos de sistema). Única excepción: `layout/TabIcons.tsx`, set propio outline/filled estilo SF Symbols para el tab bar |
 | Router | `react-router-dom` v7 |
 | Data | TanStack Query + persist (`src/lib/query-client.ts`) |
 | Backend | `@supabase/supabase-js` (`src/lib/supabase.ts`) |
