@@ -115,7 +115,7 @@ export function PullToRefresh() {
     <div
       className="pointer-events-none fixed inset-x-0 z-40 flex justify-center"
       style={{
-        top: 'calc(var(--app-header-h) + env(safe-area-inset-top))',
+        top: 'var(--sticky-top)',
         transform: `translate3d(0, ${offset - 44}px, 0)`,
         opacity: visible ? 1 : 0,
         transition: dragging

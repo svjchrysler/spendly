@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
+import { subscribeScroll } from '@/lib/scroll-store'
 
 /** Debajo de esto la barra siempre está entera (zona de "estoy arriba"). */
 const TOP_ZONE = 72
@@ -25,14 +26,11 @@ export function useTabBarCollapse() {
     setCollapsed(false)
 
     let last = window.scrollY
-    let frame = 0
     // El scrollTo de useScrollRestoration no es un gesto: hasta acá, solo
     // seguimos la posición sin decidir nada
     const armedAt = performance.now() + ARM_DELAY
 
-    const measure = () => {
-      frame = 0
-      const y = window.scrollY
+    return subscribeScroll(({ y }) => {
       const delta = y - last
 
       if (performance.now() < armedAt) {
@@ -52,18 +50,7 @@ export function useTabBarCollapse() {
 
       last = y
       setCollapsed(delta > 0)
-    }
-
-    const onScroll = () => {
-      if (frame) return
-      frame = requestAnimationFrame(measure)
-    }
-
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => {
-      window.removeEventListener('scroll', onScroll)
-      if (frame) cancelAnimationFrame(frame)
-    }
+    })
   }, [pathname])
 
   return collapsed

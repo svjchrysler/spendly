@@ -1,4 +1,6 @@
 import { formatCurrency } from '@/lib/format'
+import { useCategoryColor } from '@/hooks/useCategoryColor'
+import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 
 interface CategoryAllocationProps {
@@ -17,6 +19,7 @@ export function CategoryAllocation({
   className,
   fill = false,
 }: Readonly<CategoryAllocationProps>) {
+  const categoryColor = useCategoryColor()
   if (data.length === 0) {
     return (
       <div className={cn(fill ? 'flex h-full flex-col' : 'space-y-4', className)}>
@@ -58,7 +61,7 @@ export function CategoryAllocation({
                 <div className="flex min-w-0 items-center gap-2.5">
                   <span
                     className="size-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: item.color }}
+                    style={{ backgroundColor: categoryColor(item.color) }}
                     aria-hidden
                   />
                   <span className="truncate text-sm font-medium tracking-tight sm:text-[15px]">
@@ -74,15 +77,12 @@ export function CategoryAllocation({
                   </span>
                 </div>
               </div>
-              <div className={cn('bar-track', fill ? 'h-2' : 'h-1.5')}>
-                <div
-                  className="bar-fill"
-                  style={{
-                    width: `${Math.max(pct, 1)}%`,
-                    backgroundColor: item.color,
-                  }}
-                />
-              </div>
+              <Progress
+                value={Math.max(pct, 1) / 100}
+                size={fill ? 'md' : 'sm'}
+                tint={categoryColor(item.color)}
+                label={item.name}
+              />
             </div>
           )
         })}

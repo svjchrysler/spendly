@@ -1,5 +1,6 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { formatCurrency } from '@/lib/format'
+import { useCategoryColor } from '@/hooks/useCategoryColor'
 
 type Slice = {
   id: string
@@ -38,6 +39,7 @@ export function CategoryDonut({
   data: Slice[]
   total: number
 }>) {
+  const categoryColor = useCategoryColor()
   if (data.length === 0 || total <= 0) return null
 
   const sorted = [...data].sort((a, b) => b.total - a.total)
@@ -47,6 +49,9 @@ export function CategoryDonut({
   const slices = [
     ...top.map((item) => ({
       ...item,
+      // 'Otros' usa var(--chart-5), que ya es theme-aware: el resolver lo
+      // deja pasar intacto porque no parsea como hex.
+      color: categoryColor(item.color) ?? item.color,
       pct: (item.total / total) * 100,
     })),
     ...(restTotal > 0

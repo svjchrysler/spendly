@@ -1,9 +1,10 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
-import { Plus } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
+import { List, ListRow, ListSection } from '@/components/ui/list'
 import {
   Sheet,
   SheetContent,
@@ -36,6 +37,7 @@ import { getExpenseLabel } from '@/lib/expense-display'
 import { formatCurrency, formatDayLabel } from '@/lib/format'
 import { useDeleteExpense } from '@/hooks/useExpenses'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
+import { useSwipeActions } from '@/hooks/useSwipeActions'
 import { tapFeedback, warnFeedback } from '@/lib/haptics'
 import { useMonth } from '@/contexts/MonthContext'
 import type { ExpenseWithCategory } from '@/types/database'
@@ -62,6 +64,8 @@ function ExpenseRow({
   expense,
   caption,
   isDesktop,
+  swipeOpen,
+  onSwipeOpenChange,
   onOpenActions,
   onEdit,
   onDelete,
@@ -69,31 +73,22 @@ function ExpenseRow({
   expense: ExpenseWithCategory
   caption: string
   isDesktop: boolean
+  swipeOpen: boolean
+  onSwipeOpenChange: (open: boolean) => void
   onOpenActions: () => void
   onEdit: () => void
   onDelete: () => void
 }>) {
-  return (
-    <div
-      role={isDesktop ? undefined : 'button'}
-      tabIndex={isDesktop ? undefined : 0}
-      onClick={isDesktop ? undefined : onOpenActions}
-      onKeyDown={
-        isDesktop
-          ? undefined
-          : (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                onOpenActions()
-              }
-            }
-      }
-      className={cn(
-        'row-hover group flex min-h-12 min-w-0 items-center justify-between gap-3 py-3 sm:cursor-default',
-        !isDesktop && 'cursor-pointer',
-      )}
-    >
-      <div className="flex min-w-0 flex-1 items-center gap-3">
+  const { nodeRef, swipeHandlers } = useSwipeActions({
+    enabled: !isDesktop,
+    isOpen: swipeOpen,
+    onOpenChange: onSwipeOpenChange,
+    onCommit: onDelete,
+  })
+
+  const row = (
+    <ListRow
+      leading={
         <ExpenseIcon
           description={expense.description}
           categoryName={expense.category?.name}
@@ -101,20 +96,40 @@ function ExpenseRow({
           categoryColor={expense.category?.color}
           size="sm"
         />
-        <div className="min-w-0 space-y-0.5">
-          <p className="truncate text-[15px] font-medium leading-tight tracking-tight">
-            {getExpenseLabel(expense.description, expense.category?.name)}
-          </p>
-          <p className="truncate text-xs capitalize leading-tight text-muted-foreground">
-            {caption}
-          </p>
-        </div>
-      </div>
-      <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
-        <span className="font-ledger text-[15px] font-semibold whitespace-nowrap tabular-nums tracking-tight sm:text-base">
-          {formatCurrency(Number(expense.amount))}
+      }
+      title={getExpenseLabel(expense.description, expense.category?.name)}
+      subtitle={caption}
+      onPress={isDesktop ? undefined : onOpenActions}
+      trailing={
+        <span className="flex items-center gap-0.5 sm:gap-1">
+          <span className="font-ledger text-body font-semibold whitespace-nowrap tabular-nums">
+            {formatCurrency(Number(expense.amount))}
+          </span>
+          {isDesktop ? <ExpenseRowActions onEdit={onEdit} onDelete={onDelete} /> : null}
         </span>
-        {isDesktop ? <ExpenseRowActions onEdit={onEdit} onDelete={onDelete} /> : null}
+      }
+      className={cn(isDesktop && 'sm:cursor-default')}
+    />
+  )
+
+  if (isDesktop) return row
+
+  return (
+    <div className="swipe-row" {...swipeHandlers}>
+      {/* Botón real detrás: el swipe nunca es el único camino a la acción */}
+      <div className="swipe-row__actions" aria-hidden={!swipeOpen}>
+        <button
+          type="button"
+          className="swipe-row__action"
+          tabIndex={swipeOpen ? 0 : -1}
+          onClick={onDelete}
+        >
+          <Trash2 className="size-5" aria-hidden />
+          Eliminar
+        </button>
+      </div>
+      <div ref={nodeRef} className="swipe-row__content">
+        {row}
       </div>
     </div>
   )
@@ -132,6 +147,8 @@ export function ExpenseList({
   const [editing, setEditing] = useState<ExpenseWithCategory | null>(null)
   const [deleting, setDeleting] = useState<ExpenseWithCategory | null>(null)
   const [actionExpense, setActionExpense] = useState<ExpenseWithCategory | null>(null)
+  // Una sola fila abierta a la vez, como iOS
+  const [swipeOpenId, setSwipeOpenId] = useState<string | null>(null)
   const isDesktop = useIsDesktop()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -205,6 +222,30 @@ export function ExpenseList({
     setDeleting(expense)
   }
 
+  const emptyState =
+    expenses.length === 0 && emptyCta ? (
+      <div
+        className={cn(
+          'flex flex-col items-start gap-3 py-8',
+          compact && 'flex-1 justify-center',
+        )}
+      >
+        <p className="text-callout text-label-secondary">
+          Sin movimientos este mes. Tu recibo está en blanco.
+        </p>
+        <Button
+          type="button"
+          variant="tinted"
+          size="touch"
+          className="cursor-pointer rounded-full"
+          onClick={() => setOpenAdd(true)}
+        >
+          <Plus className="size-4" aria-hidden />
+          {emptyCta}
+        </Button>
+      </div>
+    ) : null
+
   const addForm = (
     <Suspense fallback={<ExpenseFormSkeleton />}>
       <ExpenseForm
@@ -262,6 +303,7 @@ export function ExpenseList({
           <Sheet open={openAdd} onOpenChange={setOpenAdd}>
             <SheetContent
               side="bottom"
+              onOpenChange={setOpenAdd}
               className="gap-0 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-1"
             >
               <SheetHeader className="pb-3">
@@ -279,98 +321,72 @@ export function ExpenseList({
     <>
       {addExpenseUi}
 
-      {compact ? (
-        <div className="flex flex-1 flex-col justify-evenly divide-y divide-border/25">
+      {emptyState}
+
+      {compact && expenses.length > 0 ? (
+        <div className="list-group">
           {expenses.map((expense) => (
             <ExpenseRow
               key={expense.id}
               expense={expense}
               caption={`${formatDayLabel(expense.expense_date)}${expense.category?.name ? ` · ${expense.category.name}` : ''}`}
               isDesktop={isDesktop}
+              swipeOpen={swipeOpenId === expense.id}
+              onSwipeOpenChange={(open) => setSwipeOpenId(open ? expense.id : null)}
               onOpenActions={() => openActions(expense)}
               onEdit={() => openEdit(expense)}
               onDelete={() => openDelete(expense)}
             />
           ))}
-          {expenses.length === 0 && emptyCta ? (
-            <div className="flex flex-1 flex-col items-start justify-center gap-3 py-8">
-              <p className="text-sm text-muted-foreground">
-                Sin movimientos este mes. Tu recibo está en blanco.
-              </p>
-              <Button
-                type="button"
-                size="sm"
-                className="cursor-pointer"
-                onClick={() => setOpenAdd(true)}
-              >
-                <Plus className="size-4" aria-hidden />
-                {emptyCta}
-              </Button>
-            </div>
-          ) : null}
         </div>
-      ) : (
-      <div className="space-y-1">
-        {expenses.length === 0 && emptyCta ? (
-          <div className="flex flex-col items-start gap-3 py-8">
-            <p className="text-sm text-muted-foreground">
-              Sin movimientos este mes. Tu recibo está en blanco.
-            </p>
-            <Button
-              type="button"
-              size="sm"
-              className="cursor-pointer"
-              onClick={() => setOpenAdd(true)}
-            >
-              <Plus className="size-4" aria-hidden />
-              {emptyCta}
-            </Button>
-          </div>
-        ) : null}
-        <AnimatePresence mode="popLayout">
-          {grouped.map(({ date, items, subtotal }) => (
-            <motion.section
-              key={date}
-              // ponytail: opacity only — y/transform makes sticky date headers fail
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{
-                duration: 0.18,
-                ease: [0.16, 1, 0.3, 1],
-              }}
-              className="list-section"
-            >
-              {/* Sticky date: sticks under app header until next group pushes it */}
-              <div
-                className="list-bleed sticky z-20 mb-0.5 flex items-center justify-between gap-3 border-b border-border/70 bg-background/90 py-2.5 backdrop-blur-xl"
-                style={{
-                  top: 'calc(var(--app-header-h) + env(safe-area-inset-top, 0px))',
-                }}
+      ) : null}
+
+      {!compact && expenses.length > 0 ? (
+        <List>
+          <AnimatePresence mode="popLayout">
+            {grouped.map(({ date, items, subtotal }) => (
+              <motion.div
+                key={date}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                className="list-section"
               >
-                <h3 className="stat-label capitalize">{formatDayLabel(date)}</h3>
-                <span className="font-ledger text-sm font-semibold tabular-nums tracking-tight text-foreground/90">
-                  {formatCurrency(subtotal)}
-                </span>
-              </div>
-              <div className="divide-y divide-border/25">
-                {items.map((expense) => (
-                  <ExpenseRow
-                    key={expense.id}
-                    expense={expense}
-                    caption={expense.category?.name ?? ''}
-                    isDesktop={isDesktop}
-                    onOpenActions={() => openActions(expense)}
-                    onEdit={() => openEdit(expense)}
-                    onDelete={() => openDelete(expense)}
-                  />
-                ))}
-              </div>
-            </motion.section>
-          ))}
-        </AnimatePresence>
-      </div>
-      )}
+                {/*
+                  El header ya no es sticky: las listas agrupadas de iOS no
+                  pegan sus headers, eso es de las listas `plain`. Eso libera
+                  el transform del swipe, que antes rompía el sticky.
+                */}
+                <ListSection
+                  header={formatDayLabel(date)}
+                  headerTrailing={
+                    <span className="font-ledger text-footnote font-semibold tabular-nums text-label-secondary">
+                      {formatCurrency(subtotal)}
+                    </span>
+                  }
+                >
+                  {items.map((expense) => (
+                    <ExpenseRow
+                      key={expense.id}
+                      expense={expense}
+                      caption={expense.category?.name ?? ''}
+                      isDesktop={isDesktop}
+                      swipeOpen={swipeOpenId === expense.id}
+                      onSwipeOpenChange={(open) =>
+                        setSwipeOpenId(open ? expense.id : null)
+                      }
+                      onOpenActions={() => openActions(expense)}
+                      onEdit={() => openEdit(expense)}
+                      onDelete={() => openDelete(expense)}
+                    />
+                  ))}
+                </ListSection>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </List>
+      ) : null}
 
       <Sheet
         open={Boolean(actionExpense)}
@@ -379,6 +395,7 @@ export function ExpenseList({
         <SheetContent
           side="bottom"
           showCloseButton={false}
+          onOpenChange={() => setActionExpense(null)}
           className="gap-0 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-1"
         >
           <SheetHeader className="sr-only">
@@ -407,6 +424,7 @@ export function ExpenseList({
         <Sheet open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
           <SheetContent
             side="bottom"
+            onOpenChange={() => setEditing(null)}
             className="gap-0 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-1"
           >
             <SheetHeader className="pb-3">

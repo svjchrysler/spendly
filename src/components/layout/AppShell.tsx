@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { BrandMark } from '@/components/layout/BrandMark'
 import { OfflineBanner } from '@/components/layout/OfflineBanner'
 import { PageEnter } from '@/components/layout/PageEnter'
+import { NavTitleProvider, useNavTitle } from '@/components/layout/NavBar'
 import { ProfileMenu } from '@/components/layout/ProfileMenu'
 import { PullToRefresh } from '@/components/layout/PullToRefresh'
 import { TabBar, type TabItem } from '@/components/layout/TabBar'
@@ -48,12 +49,21 @@ const navItems: readonly TabItem[] = [
 ]
 
 export function AppShell() {
+  return (
+    <NavTitleProvider>
+      <AppShellInner />
+    </NavTitleProvider>
+  )
+}
+
+function AppShellInner() {
   useRealtimeExpenses()
   useKeyboardInset()
   useScrollRestoration()
   const { theme, toggleTheme } = useTheme()
   const { year, month } = useMonth()
   const queryClient = useQueryClient()
+  const navTitle = useNavTitle()
 
   function warmRoute(prefetch: () => Promise<unknown>) {
     void prefetch()
@@ -62,14 +72,28 @@ export function AppShell() {
 
   return (
     <div className="min-h-dvh overflow-x-clip bg-background">
-      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/75 pt-[env(safe-area-inset-top)] backdrop-blur-2xl supports-backdrop-filter:bg-background/65">
-        <div className="mx-auto flex h-[var(--app-header-h)] w-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="flex min-w-0 items-center gap-2.5">
+      {/* Sin material en reposo: con la status bar en estilo `default` iOS pinta
+          esa franja con theme-color y una barra tintada dejaría una costura. */}
+      <header
+        className="nav-bar material-glass--bar sticky top-0 z-50 pt-[env(safe-area-inset-top)]"
+        data-materialized="true"
+      >
+        <div className="relative mx-auto flex h-[var(--app-header-h)] w-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+          <div className="nav-brand flex min-w-0 items-center gap-2.5">
             <BrandMark />
             <span className="font-display truncate text-sm font-semibold tracking-tight sm:text-[15px]">
               Spendly
             </span>
           </div>
+
+          {/* Título inline: entra cuando el large title de la página se va */}
+          {navTitle ? (
+            <div className="nav-inline-title pointer-events-none absolute inset-x-0 flex justify-center px-20 md:hidden">
+              <span className="truncate text-headline capitalize text-label">
+                {navTitle.title}
+              </span>
+            </div>
+          ) : null}
 
           <nav
             className="hidden h-full flex-1 items-stretch justify-center gap-1 md:flex"

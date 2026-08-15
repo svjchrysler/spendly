@@ -1,87 +1,49 @@
-import { Progress as ProgressPrimitive } from "@base-ui/react/progress"
+import { cn } from '@/lib/utils'
 
-import { cn } from "@/lib/utils"
-
-type ProgressProps = Readonly<ProgressPrimitive.Root.Props>
-type ProgressTrackProps = Readonly<ProgressPrimitive.Track.Props>
-type ProgressIndicatorProps = Readonly<ProgressPrimitive.Indicator.Props>
-type ProgressLabelProps = Readonly<ProgressPrimitive.Label.Props>
-type ProgressValueProps = Readonly<ProgressPrimitive.Value.Props>
-
-function Progress({
-  className,
-  children,
+/**
+ * Barra de progreso. Reemplaza las utilidades `.bar-track` / `.bar-fill`.
+ *
+ * `tint` existe porque la asignación por categoría pinta cada barra con el
+ * color de su categoría, que no es un token del tema.
+ */
+export function Progress({
   value,
-  ...props
-}: ProgressProps) {
-  return (
-    <ProgressPrimitive.Root
-      value={value}
-      data-slot="progress"
-      className={cn("flex flex-wrap gap-3", className)}
-      {...props}
-    >
-      {children}
-      <ProgressTrack>
-        <ProgressIndicator />
-      </ProgressTrack>
-    </ProgressPrimitive.Root>
-  )
-}
+  tone = 'default',
+  tint,
+  size = 'md',
+  className,
+  label,
+}: Readonly<{
+  /** 0..1 */
+  value: number
+  tone?: 'default' | 'destructive'
+  tint?: string
+  size?: 'sm' | 'md'
+  className?: string
+  label?: string
+}>) {
+  const pct = Math.min(Math.max(value, 0), 1) * 100
 
-function ProgressTrack({ className, ...props }: ProgressTrackProps) {
   return (
-    <ProgressPrimitive.Track
+    <div
+      role="progressbar"
+      aria-valuenow={Math.round(pct)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={label}
       className={cn(
-        "relative flex h-2 w-full items-center overflow-x-hidden rounded-full bg-muted",
-        className
-      )}
-      data-slot="progress-track"
-      {...props}
-    />
-  )
-}
-
-function ProgressIndicator({ className, ...props }: ProgressIndicatorProps) {
-  return (
-    <ProgressPrimitive.Indicator
-      data-slot="progress-indicator"
-      className={cn(
-        "h-full rounded-full bg-primary transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
+        'w-full overflow-hidden rounded-full bg-fill-quaternary',
+        size === 'sm' ? 'h-1.5' : 'h-2',
         className,
       )}
-      {...props}
-    />
+    >
+      <div
+        className={cn(
+          'h-full rounded-full transition-[width] duration-700 ease-out-expo',
+          !tint && (tone === 'destructive' ? 'bg-destructive' : 'bg-primary'),
+        )}
+        style={{ width: `${pct}%`, backgroundColor: tint }}
+      />
+    </div>
   )
-}
-
-function ProgressLabel({ className, ...props }: ProgressLabelProps) {
-  return (
-    <ProgressPrimitive.Label
-      className={cn("text-sm font-medium", className)}
-      data-slot="progress-label"
-      {...props}
-    />
-  )
-}
-
-function ProgressValue({ className, ...props }: ProgressValueProps) {
-  return (
-    <ProgressPrimitive.Value
-      className={cn(
-        "ml-auto text-sm text-muted-foreground tabular-nums",
-        className
-      )}
-      data-slot="progress-value"
-      {...props}
-    />
-  )
-}
-
-export {
-  Progress,
-  ProgressTrack,
-  ProgressIndicator,
-  ProgressLabel,
-  ProgressValue,
 }

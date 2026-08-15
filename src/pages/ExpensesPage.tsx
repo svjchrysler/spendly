@@ -156,12 +156,12 @@ export function ExpensesPage() {
 
       <div className="grid gap-5 pt-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] xl:gap-10">
         {/* Riel sticky: resumen + filtros siempre a mano mientras scrolleas la lista */}
-        <aside className="ledger-aside order-1 min-w-0 space-y-4 lg:order-2 lg:sticky lg:top-[calc(var(--app-header-h)_+_env(safe-area-inset-top))]">
+        <aside className="ledger-aside order-1 min-w-0 space-y-4 lg:order-2 lg:sticky lg:top-[var(--sticky-top)]">
           {summary}
           <section className="min-w-0 border-t border-border/70 pt-4">{filters}</section>
         </aside>
 
-        <div className="order-2 min-w-0 lg:order-1 lg:[--list-bleed:0px]">{list}</div>
+        <div className="order-2 min-w-0 lg:order-1">{list}</div>
       </div>
     </div>
   )

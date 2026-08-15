@@ -19,6 +19,7 @@ No es un SaaS multi-tenant genérico: es una app chica, mobile-first, con shell 
 | Estilos | Tailwind v4 + tokens en `src/index.css` |
 | UI kit | shadcn / `@base-ui/react` en `src/components/ui/` |
 | Iconos | `lucide-react` (no emojis como iconos de sistema). Única excepción: `layout/TabIcons.tsx`, set propio outline/filled estilo SF Symbols para el tab bar |
+| Lenguaje visual | **iOS 26 / Apple HIG** — ver sección "Lenguaje visual" |
 | Router | `react-router-dom` v7 |
 | Data | TanStack Query + persist (`src/lib/query-client.ts`) |
 | Backend | `@supabase/supabase-js` (`src/lib/supabase.ts`) |
@@ -114,13 +115,25 @@ Nav: 4 tabs. Mobile = bottom bar. Desktop = header tabs.
 11. **No** commits ni push salvo que el usuario lo pida.
 12. **Supabase:** cualquier cambio de schema → migración en `supabase/migrations/` + RLS. Seguir skill en `.agents/skills/supabase/`.
 
+## Lenguaje visual (iOS 26 / HIG)
+
+La app sigue la guía de iOS 26. Lo nativo lo aportan estructura, materiales, motion y controles; la marca (Bricolage en títulos, Spline Sans Mono en montos, verde mint, borde de recibo) se conserva **dentro** de esa estructura.
+
+- **Dos capas.** Contenido opaco que scrollea; navegación flotante con Liquid Glass. El glass va **solo** en la capa de navegación (`.material-glass`) y **nunca glass sobre glass**. Tarjetas y filas son opacas.
+- **Listas `insetGrouped`.** Usar `List` / `ListSection` / `ListRow` de `@/components/ui/list`. Separador indentado al borde del label vía `--row-inset` — no reemplazar por `divide-y`, que no puede indentar.
+- **Nav bar.** `NavBar` de `@/components/layout/NavBar` con large title que colapsa. La barra **no tiene material en reposo**: con la status bar en estilo `default` iOS pinta esa franja con `theme-color` y una barra tintada dejaría costura.
+- **Tipografía.** Escala de iOS (`text-large-title` … `text-caption-2`). Cuerpo 17px. Bricolage arriba de 20px, Geist de 20px para abajo, Spline Mono en montos.
+- **Color semántico.** Labels (`text-label`, `-secondary`, `-tertiary`, `-quaternary`), fills (`bg-fill-*`) y fondos agrupados (`--group-surface`). `--muted-foreground` y `--border` están re-apuntados a la jerarquía nueva: el código viejo migró solo.
+- **Tap targets** de 44pt en mobile: `size="touch"` / `size="icon-touch"` en `Button`.
+- Status bar: se mantiene `apple-mobile-web-app-status-bar-style: default`. **No** cambiar a `black-translucent`: fuerza texto blanco e ilegible en modo claro. Consecuencia: `env(safe-area-inset-top)` vale 0 en standalone.
+
 ## UI / layout (reglas del producto)
 
 - Mobile-first; desktop aprovecha espacio (Resumen/Análisis: grid 2 cols en `lg+`, stretch vertical).
 - Tokens semánticos (`bg-background`, `text-muted-foreground`, `border-border`, `primary`…). Evitar hex sueltos salvo colores de categoría.
 - Tema: `ThemeContext` + clase `.dark` en `<html>`; FOUC script en `index.html`.
 - Bottom sheets: usan `--keyboard-inset` (`useKeyboardInset` + `visualViewport`). No poner `bottom-0` fijo que ignore el teclado.
-- Sticky headers de fecha: no `overflow-x-hidden` en ancestros (usar `overflow-x-clip`); no animar `y`/`transform` en el section sticky.
+- Los headers de fecha **ya no son sticky**: las listas agrupadas de iOS no pegan sus headers (eso es de las listas `plain`). Por eso el swipe puede transformar la fila. Si se reintroduce algo sticky, el transform va en la fila, nunca en la `section`.
 - Safe areas: `env(safe-area-inset-*)` en header, tab bar, FAB, sheets.
 - PWA: `interactive-widget=resizes-content` en viewport; manifest/icons vía `vite-plugin-pwa`.
 - SW: `registerType: 'prompt'` + `skipWaiting: false`. La versión nueva se aplica sola al pasar la app a background y sin modales abiertos (`register-pwa.ts`). No volver a `autoUpdate`: recarga en caliente y tira el form a medio llenar.
@@ -131,7 +144,6 @@ Nav: 4 tabs. Mobile = bottom bar. Desktop = header tabs.
 | Síntoma | Causa / fix |
 |---------|-------------|
 | FAB no fixed / “se mueve” | Ancestro con `transform`/`filter` → portal + PageEnter solo opacity |
-| Sticky date no pega | `overflow-x-hidden` o `transform` en padre |
 | Teclado tapa el form mobile | Sheet bottom debe usar `--keyboard-inset` |
 | Logout al reabrir offline | Ignorar `SIGNED_OUT` sin red; persist session |
 | Cache vieja post-cambio de keys | Subir `buster` en `queryPersistOptions` |
@@ -162,7 +174,7 @@ Variables `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, opcionales `VITE_CURREN
 ## Qué no hacer
 
 - No usar Inter/Roboto como “rediseño” ni temas purple-on-white genéricos si tocás look & feel — respetar tokens actuales.
-- No cards decorativas de más; el lenguaje visual es denso, tipográfico, con rules/borders sutiles.
+- No volver a filas planas a sangre completa con hairlines: el lenguaje es `insetGrouped` de iOS. Tampoco cards decorativas fuera de ese sistema.
 - No barrels innecesarios; imports directos `@/components/...`.
 - No `service_role` ni secretos en el front.
 - No `git commit` / `push` / `--no-verify` sin pedido explícito.
@@ -174,7 +186,6 @@ Variables `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, opcionales `VITE_CURREN
 - Frontend expert + product designer + PWA/performance: subagente `.cursor/agents/frontend-expert.md` + skill `.cursor/skills/frontend-expert/` — define UX, arquitectura de información y dirección visual según dominio, audiencia, objetivo, plataforma y marca; implementa con React/Vite/CSS; owns installability, service worker/offline y performance mobile standalone (LCP/INP, precache, runtime cache). Orquesta ponytail, **frontend-design**, **web-design-guidelines**, ui-ux-pro-max y skills Vercel. En tareas visuales, audit `web-design-guidelines` al terminar.
 - Design (proyecto): `.agents/skills/frontend-design/` (Anthropic) — dirección visual; respetar tokens Spendly.
 - Audit UI (proyecto): `.agents/skills/web-design-guidelines/` (Vercel) — a11y/UX checklist.
-- Design system legacy: `design-system/spendly/MASTER.md` (puede estar desfasado vs tokens reales en `index.css`; priorizar CSS/código).
 
 ## Checklist rápido antes de terminar
 

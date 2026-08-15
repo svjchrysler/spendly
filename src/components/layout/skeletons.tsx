@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton'
+import { List, ListRow, ListSection } from '@/components/ui/list'
 import { cn } from '@/lib/utils'
 
 function Bone({
@@ -8,36 +9,30 @@ function Bone({
   return <Skeleton className={className} style={style} />
 }
 
+/*
+  Los skeletons se componen sobre los mismos primitivos que las pantallas
+  (`ListRow loading`), así la geometría no puede divergir: era el riesgo de
+  deriva más caro del rediseño.
+*/
 export function ExpenseRowSkeleton() {
-  return (
-    <div className="flex items-center gap-3 py-3">
-      <Bone className="size-10 shrink-0 rounded-full" />
-      <div className="min-w-0 flex-1 space-y-2">
-        <Bone className="h-3.5 w-[42%]" />
-        <Bone className="h-3 w-[28%]" />
-      </div>
-      <Bone className="h-4 w-16 shrink-0" />
-    </div>
-  )
+  return <ListRow loading leading={<Bone className="size-8 shrink-0 rounded-full" />} subtitle trailing />
 }
 
 export function ExpenseListSkeleton({ rows = 5 }: Readonly<{ rows?: number }>) {
   return (
-    <div className="space-y-5" aria-hidden>
+    <List aria-hidden>
       {Array.from({ length: Math.ceil(rows / 3) }, (_, group) => (
-        <section key={group}>
-          <div className="mb-1 flex items-center justify-between pb-2">
-            <Bone className="h-2.5 w-24" />
-            <Bone className="h-3.5 w-14" />
-          </div>
-          <div className="divide-y divide-border/25">
-            {Array.from({ length: 3 }, (_, i) =>
-              group * 3 + i < rows ? <ExpenseRowSkeleton key={i} /> : null,
-            )}
-          </div>
-        </section>
+        <ListSection
+          key={group}
+          header={<Bone className="h-2.5 w-24" />}
+          headerTrailing={<Bone className="h-3 w-14" />}
+        >
+          {Array.from({ length: 3 }, (_, i) =>
+            group * 3 + i < rows ? <ExpenseRowSkeleton key={i} /> : null,
+          )}
+        </ListSection>
       ))}
-    </div>
+    </List>
   )
 }
 
@@ -146,7 +141,7 @@ export function MastheadSkeleton() {
 export function DashboardSkeleton() {
   return (
     <div
-      className="flex min-h-[calc(100dvh-var(--app-header-h)-env(safe-area-inset-top)-5.5rem)] flex-col gap-4 pb-2 md:min-h-[calc(100dvh-var(--app-header-h)-env(safe-area-inset-top)-3.5rem)] lg:gap-5"
+      className="flex min-h-[calc(100dvh-var(--sticky-top)-5.5rem)] flex-col gap-4 pb-2 md:min-h-[calc(100dvh-var(--sticky-top)-3.5rem)] lg:gap-5"
       aria-busy="true"
       aria-label="Cargando resumen"
     >
@@ -237,23 +232,18 @@ export function ExpensesPageSkeleton() {
 
 export function CategoryListSkeleton({ rows = 8 }: Readonly<{ rows?: number }>) {
   return (
-    <div className="grid pt-1 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3 xl:grid-cols-4" aria-hidden>
-      {Array.from({ length: rows }, (_, i) => (
-        <div
-          key={i}
-          className="flex min-h-14 items-center justify-between gap-2 border-b border-border/60 py-2.5"
-        >
-          <div className="flex items-center gap-3">
-            <Bone className="size-9 rounded-lg" />
-            <Bone className={`h-4 ${i % 2 === 0 ? 'w-28' : 'w-20'}`} />
-          </div>
-          <div className="flex gap-1">
-            <Bone className="size-8 rounded-md" />
-            <Bone className="size-8 rounded-md" />
-          </div>
-        </div>
-      ))}
-    </div>
+    <List aria-hidden>
+      <ListSection header={<Bone className="h-2.5 w-16" />}>
+        {Array.from({ length: rows }, (_, i) => (
+          <ListRow
+            key={i}
+            loading
+            separatorInset="4rem"
+            leading={<Bone className="size-9 rounded-lg" />}
+          />
+        ))}
+      </ListSection>
+    </List>
   )
 }
 

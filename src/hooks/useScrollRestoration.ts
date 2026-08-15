@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useLocation, useNavigationType } from 'react-router-dom'
+import { subscribeScroll } from '@/lib/scroll-store'
 
 /** scrollY por pathname. Vive en memoria: se pierde al recargar, como en nativo. */
 const positions = new Map<string, number>()
@@ -33,13 +34,12 @@ export function useScrollRestoration() {
       window.scrollTo(0, 0)
     }
 
-    const save = () => {
-      positions.set(pathname, window.scrollY)
-    }
-    window.addEventListener('scroll', save, { passive: true })
+    const unsubscribe = subscribeScroll(({ y }) => {
+      positions.set(pathname, y)
+    })
     return () => {
-      save()
-      window.removeEventListener('scroll', save)
+      positions.set(pathname, window.scrollY)
+      unsubscribe()
     }
   }, [pathname, navigationType])
 }

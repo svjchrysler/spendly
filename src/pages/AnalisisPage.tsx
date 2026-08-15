@@ -5,6 +5,8 @@ import {
   ChartSkeleton,
 } from '@/components/layout/skeletons'
 import { CategoryAllocation } from '@/components/charts/CategoryAllocation'
+import { SegmentedControl } from '@/components/ui/segmented-control'
+import { List, ListRow, ListSection } from '@/components/ui/list'
 import { MonthMasthead } from '@/components/layout/MonthPicker'
 import { useMonth } from '@/contexts/MonthContext'
 import { useExpenses } from '@/hooks/useExpenses'
@@ -200,84 +202,42 @@ function PanelSwitch({
   onChange,
 }: Readonly<{ value: AnalysisPanel; onChange: (panel: AnalysisPanel) => void }>) {
   return (
-    // Tabs editoriales: mismo subrayado que la nav de desktop, sin chip elevado
-    <div
-      role="tablist"
-      aria-label="Vista de análisis"
-      className="flex w-full items-center gap-6 border-b border-border/70"
-      onKeyDown={(e) => {
-        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
-        e.preventDefault()
-        onChange(value === 'historial' ? 'ritmo' : 'historial')
-      }}
-    >
-      {panelOptions.map((option) => (
-        <button
-          key={option.id}
-          type="button"
-          role="tab"
-          id={`tab-${option.id}`}
-          aria-selected={value === option.id}
-          aria-controls={`panel-${option.id}`}
-          tabIndex={value === option.id ? 0 : -1}
-          onClick={() => onChange(option.id)}
-          className={cn(
-            'pressable relative -mb-px min-h-10 cursor-pointer rounded-sm px-0.5 pb-2.5 text-sm font-medium transition-colors',
-            'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
-            value === option.id
-              ? 'text-foreground'
-              : 'text-muted-foreground hover:text-foreground/80',
-          )}
-        >
-          {option.label}
-          <span
-            className={cn(
-              'absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-primary transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
-              value === option.id ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0',
-            )}
-            aria-hidden
-          />
-        </button>
-      ))}
-    </div>
+    <SegmentedControl
+      asTabs
+      ariaLabel="Vista de análisis"
+      value={value}
+      onValueChange={onChange}
+      items={panelOptions.map((option) => ({ value: option.id, label: option.label }))}
+    />
   )
 }
 
 function TopExpensesList({ report }: Readonly<{ report: MonthReport }>) {
   if (report.top.length === 0) {
     return (
-      <section className="border-t border-border/70 pt-5">
-        <p className="stat-label pb-2">Mayores gastos</p>
-        <p className="py-4 text-sm text-muted-foreground">Sin movimientos este mes</p>
-      </section>
+      <ListSection header="Mayores gastos">
+        <p className="list-row text-callout text-label-secondary">
+          Sin movimientos este mes
+        </p>
+      </ListSection>
     )
   }
 
   return (
-    <section className="border-t border-border/70 pt-5">
-      <p className="stat-label pb-2">Mayores gastos</p>
-      <div className="divide-y divide-border/25">
-        {report.top.map((expense, index) => (
-          <div
-            key={`${expense.expense_date}-${expense.amount}-${index}`}
-            className="flex items-baseline justify-between gap-3 py-2.5"
-          >
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium tracking-tight">
-                {getExpenseLabel(expense.description, expense.category?.name)}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {formatDayLabel(expense.expense_date)}
-                {expense.category?.name ? ` · ${expense.category.name}` : ''}
-              </p>
-            </div>
-            <p className="shrink-0 font-ledger text-sm font-semibold tabular-nums tracking-tight">
+    <ListSection header="Mayores gastos">
+      {report.top.map((expense, index) => (
+        <ListRow
+          key={`${expense.expense_date}-${expense.amount}-${index}`}
+          title={getExpenseLabel(expense.description, expense.category?.name)}
+          subtitle={`${formatDayLabel(expense.expense_date)}${expense.category?.name ? ` · ${expense.category.name}` : ''}`}
+          trailing={
+            <span className="font-ledger text-callout font-semibold tabular-nums">
               {formatCurrency(Number(expense.amount))}
-            </p>
-          </div>
-        ))}
-      </div>
-    </section>
+            </span>
+          }
+        />
+      ))}
+    </ListSection>
   )
 }
 
@@ -287,46 +247,41 @@ function MonthDetail({
   const rows = [...history].reverse()
 
   return (
-    <section className="border-t border-border/70 pt-5">
-      <p className="stat-label pb-2">Detalle por mes</p>
-      <div className="divide-y divide-border/25">
-        {rows.map((item, index) => {
-          const previous = rows[index + 1]
-          let delta: ReactNode = null
-          if (previous && previous.total > 0) {
-            const pct = ((item.total - previous.total) / previous.total) * 100
-            const rising = pct > 0
-            delta = (
-              <span
-                className={cn(
-                  'w-12 text-right font-ledger text-xs tabular-nums',
-                  rising ? 'text-destructive' : 'text-primary',
-                )}
-              >
-                {rising ? '+' : ''}
-                {Math.round(pct)}%
-              </span>
-            )
-          }
-          return (
-            <div
-              key={item.label}
-              className="flex items-baseline justify-between gap-3 py-2.5"
+    <ListSection header="Detalle por mes">
+      {rows.map((item, index) => {
+        const previous = rows[index + 1]
+        let delta: ReactNode = null
+        if (previous && previous.total > 0) {
+          const pct = ((item.total - previous.total) / previous.total) * 100
+          const rising = pct > 0
+          delta = (
+            <span
+              className={cn(
+                'w-12 text-right font-ledger text-caption-1 tabular-nums',
+                rising ? 'text-destructive' : 'text-primary',
+              )}
             >
-              <span className="min-w-0 truncate text-sm font-medium tracking-tight">
-                {capitalize(item.label)}
-              </span>
-              <span className="flex shrink-0 items-baseline gap-2.5">
-                <span className="font-ledger text-sm font-semibold tabular-nums tracking-tight">
+              {rising ? '+' : ''}
+              {Math.round(pct)}%
+            </span>
+          )
+        }
+        return (
+          <ListRow
+            key={item.label}
+            title={capitalize(item.label)}
+            trailing={
+              <span className="flex items-baseline gap-2.5">
+                <span className="font-ledger text-callout font-semibold tabular-nums">
                   {formatCurrency(item.total)}
                 </span>
                 {delta ?? <span className="w-12" aria-hidden />}
               </span>
-            </div>
-          )
-        })}
-      </div>
-    </section>
+            }
+          />
+        )
+      })}
+    </ListSection>
   )
 }
 
@@ -396,7 +351,11 @@ export function AnalisisPage() {
             >
               {history && history.length > 1 ? <TrendStrip history={history} /> : null}
               <section className="min-w-0">{historyPanel}</section>
-              {history && history.length > 0 ? <MonthDetail history={history} /> : null}
+              {history && history.length > 0 ? (
+                <List>
+                  <MonthDetail history={history} />
+                </List>
+              ) : null}
             </div>
           ) : (
             <div
@@ -420,7 +379,7 @@ export function AnalisisPage() {
           )}
         </div>
 
-        <section className="ledger-aside min-w-0 space-y-5 border-t border-border/70 pt-4 lg:sticky lg:top-[calc(var(--app-header-h)_+_env(safe-area-inset-top))] lg:border-t-0 lg:pt-0">
+        <section className="ledger-aside min-w-0 space-y-5 border-t border-border/70 pt-4 lg:sticky lg:top-[var(--sticky-top)] lg:border-t-0 lg:pt-0">
           {statsLoading ? (
             <CategoryAllocationSkeleton />
           ) : (
@@ -438,7 +397,9 @@ export function AnalisisPage() {
                   del mes · {formatCurrency(spent)} en total
                 </p>
               ) : null}
-              <TopExpensesList report={report} />
+              <List>
+                <TopExpensesList report={report} />
+              </List>
             </>
           )}
         </section>

@@ -69,7 +69,7 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="flex min-h-[calc(100dvh-var(--app-header-h)-env(safe-area-inset-top)-5.5rem)] flex-col gap-4 pb-2 md:min-h-[calc(100dvh-var(--app-header-h)-env(safe-area-inset-top)-3.5rem)] lg:gap-5">
+    <div className="flex min-h-[calc(100dvh-var(--sticky-top)-5.5rem)] flex-col gap-4 pb-2 md:min-h-[calc(100dvh-var(--sticky-top)-3.5rem)] lg:gap-5">
       <MonthMasthead eyebrow="Resumen" />
 
       <div className="grid min-h-0 flex-1 gap-6 pt-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-stretch lg:gap-8 xl:gap-10">

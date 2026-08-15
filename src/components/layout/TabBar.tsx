@@ -33,7 +33,7 @@ export function TabBar({ items, onWarm }: TabBarProps) {
   return (
     <div className="tab-dock md:hidden" data-collapsed={collapsed}>
       <nav
-        className="tab-glass"
+        className="material-glass tab-glass"
         aria-label="Principal"
         style={{ '--tab-count': items.length } as CSSProperties}
       >

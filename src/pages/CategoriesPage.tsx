@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { List, ListRow, ListSection } from '@/components/ui/list'
+import { NavBar } from '@/components/layout/NavBar'
 import {
   Dialog,
   DialogContent,
@@ -38,7 +40,8 @@ import {
   categoryEmojiOptions,
   resolveCategoryEmoji,
 } from '@/lib/category-emojis'
-import { categoryColorOptions, defaultCategoryColor } from '@/lib/category-icons'
+import { categoryColorOptions, defaultCategoryColor } from '@/lib/category-colors'
+import { useCategoryColor } from '@/hooks/useCategoryColor'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
 import { cn } from '@/lib/utils'
 import type { Category } from '@/types/database'
@@ -56,6 +59,8 @@ function CategoryForm({ category, onSuccess }: CategoryFormProps) {
     resolveCategoryEmoji(category?.icon, category?.name) ?? '📦',
   )
   const [color, setColor] = useState(category?.color ?? defaultCategoryColor)
+  // El swatch muestra el color del tema activo: lo que elegís es lo que ves
+  const categoryColor = useCategoryColor()
   const isEditing = Boolean(category)
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
@@ -123,7 +128,7 @@ function CategoryForm({ category, onSuccess }: CategoryFormProps) {
                 'size-8 cursor-pointer rounded-full border-2 transition-transform duration-200 hover:scale-110',
                 color === optionColor ? 'border-background' : 'border-transparent',
               )}
-              style={{ backgroundColor: optionColor }}
+              style={{ backgroundColor: categoryColor(optionColor) }}
               onClick={() => setColor(optionColor)}
               aria-label={`Color ${optionColor}`}
               aria-pressed={color === optionColor}
@@ -168,65 +173,73 @@ export function CategoriesPage() {
 
   return (
     <div className="flex flex-col gap-4 pb-4 lg:gap-5 lg:pb-8">
-      <header className="flex items-end justify-between gap-3 border-b border-border/70 pb-4">
-        <div className="min-w-0 space-y-1.5">
-          <p className="stat-label">Organiza tus gastos</p>
-          <h1 className="page-title">Categorías</h1>
-        </div>
-        <Button
-          className="pressable min-h-11 cursor-pointer gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-          onClick={() => setOpenCreate(true)}
-        >
-          <Plus className="size-4" />
-          <span className="hidden sm:inline">Nueva categoría</span>
-          <span className="sm:hidden">Nueva</span>
-        </Button>
-      </header>
+      <NavBar
+        eyebrow="Organiza tus gastos"
+        title="Categorías"
+        trailing={
+          <Button
+            variant="tinted"
+            size="icon-touch"
+            className="cursor-pointer rounded-full"
+            onClick={() => setOpenCreate(true)}
+            aria-label="Nueva categoría"
+          >
+            <Plus className="size-5" />
+          </Button>
+        }
+      />
 
       {isLoading ? (
         <CategoryListSkeleton />
       ) : (
-        // Índice ruleado: filas planas separadas por filete, sin cajas
-        <div className="grid pt-1 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3 xl:grid-cols-4">
-          {categories.map((category) => {
-            return (
-              <div
+        <List>
+          <ListSection
+            header="Todas"
+            footer="Solo se pueden eliminar categorías sin gastos asociados."
+          >
+            {categories.map((category) => (
+              <ListRow
                 key={category.id}
-                className="row-hover group flex min-h-14 items-center justify-between gap-2 border-b border-border/60 py-2.5"
-              >
-                <div className="flex min-w-0 flex-1 items-center gap-3">
+                separatorInset="4rem"
+                leading={
                   <CategoryIcon
                     icon={category.icon}
                     color={category.color}
                     name={category.name}
                     size="md"
                   />
-                  <p className="truncate font-medium tracking-tight">{category.name}</p>
-                </div>
-                <div className="flex shrink-0 gap-0.5 opacity-60 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-10 cursor-pointer"
-                    onClick={() => setEditing(category)}
-                    aria-label="Editar categoría"
-                  >
-                    <Pencil className="size-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-10 cursor-pointer text-destructive"
-                    onClick={() => setDeleting(category)}
-                    aria-label="Eliminar categoría"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+                }
+                title={category.name}
+                onPress={isDesktop ? undefined : () => setEditing(category)}
+                chevron={!isDesktop}
+                trailing={
+                  isDesktop ? (
+                    <span className="flex shrink-0 gap-0.5">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="cursor-pointer text-label-secondary"
+                        onClick={() => setEditing(category)}
+                        aria-label="Editar categoría"
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="cursor-pointer text-destructive"
+                        onClick={() => setDeleting(category)}
+                        aria-label="Eliminar categoría"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </span>
+                  ) : undefined
+                }
+              />
+            ))}
+          </ListSection>
+        </List>
       )}
 
       {isDesktop ? (
@@ -253,6 +266,7 @@ export function CategoriesPage() {
           <Sheet open={openCreate} onOpenChange={setOpenCreate}>
             <SheetContent
               side="bottom"
+              onOpenChange={setOpenCreate}
               className="gap-0 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-1"
             >
               <SheetHeader className="pb-3">
@@ -264,6 +278,7 @@ export function CategoriesPage() {
           <Sheet open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
             <SheetContent
               side="bottom"
+              onOpenChange={() => setEditing(null)}
               className="gap-0 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-1"
             >
               <SheetHeader className="pb-3">

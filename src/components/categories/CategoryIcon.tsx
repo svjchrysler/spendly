@@ -1,5 +1,6 @@
 import { resolveCategoryEmoji } from '@/lib/category-emojis'
 import { getCategoryIcon } from '@/lib/category-icons'
+import { useCategoryColor } from '@/hooks/useCategoryColor'
 import { cn } from '@/lib/utils'
 
 const sizeMap = {
@@ -21,12 +22,13 @@ interface CategoryIconProps {
 
 export function CategoryIcon({
   icon,
-  color,
+  color: rawColor,
   name,
   emoji: emojiProp,
   size = 'md',
   className,
 }: Readonly<CategoryIconProps>) {
+  const color = useCategoryColor()(rawColor)
   const emoji = emojiProp ?? resolveCategoryEmoji(icon, name)
   const sizes = sizeMap[size]
   const Icon = getCategoryIcon(icon && !emoji ? icon : 'receipt')
@@ -42,7 +44,7 @@ export function CategoryIcon({
     return (
       <Icon
         className={cn(sizes.icon, 'shrink-0', className)}
-        style={{ color: color ?? undefined }}
+        style={{ color }}
       />
     )
   }

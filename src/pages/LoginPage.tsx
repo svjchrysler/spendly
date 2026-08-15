@@ -87,7 +87,7 @@ export function LoginPage() {
                 readOnly={Boolean(ownerEmail)}
                 required
                 className={cn(
-                  'h-12 w-full rounded-xl border border-border/60 bg-card/60 px-4 text-base outline-none transition-colors duration-200',
+                  'h-12 w-full rounded-xl bg-fill-quaternary px-4 text-base text-label outline-none transition-colors duration-200 placeholder:text-label-tertiary focus-visible:bg-fill-tertiary',
                   'focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/20',
                   ownerEmail && 'text-muted-foreground',
                 )}
@@ -122,7 +122,7 @@ export function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="h-12 w-full rounded-xl border border-border/60 bg-card/60 px-4 text-base outline-none transition-colors duration-200 focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/20"
+                className="h-12 w-full rounded-xl bg-fill-quaternary px-4 text-base text-label outline-none transition-colors duration-200 placeholder:text-label-tertiary focus-visible:bg-fill-tertiary focus-visible:ring-2 focus-visible:ring-primary/25"
               />
             </div>
 

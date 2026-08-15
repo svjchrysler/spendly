@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
 import { MonthlyCapAlert } from '@/components/dashboard/MonthlyCapAlert'
 import { useUpsertBudget } from '@/hooks/useMonthlyStats'
@@ -135,12 +136,12 @@ export function SpendingHero({
         </p>
         {budgetHint}
         {budget != null && budget > 0 && !editingBudget ? (
-          <div className="bar-track mt-4 h-2 w-full">
-            <div
-              className={cn('bar-fill', overBudget ? 'bg-destructive' : 'bg-primary')}
-              style={{ width: `${Math.max(percentage, 2)}%` }}
-            />
-          </div>
+          <Progress
+            className="mt-4"
+            value={Math.max(percentage, 2) / 100}
+            tone={overBudget ? 'destructive' : 'default'}
+            label="Presupuesto usado"
+          />
         ) : null}
       </div>
 
