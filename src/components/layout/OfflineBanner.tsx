@@ -23,7 +23,9 @@ export function OfflineBanner() {
   return (
     <output
       aria-live="polite"
-      className="flex w-full items-center justify-center gap-2 border-b border-border/70 bg-muted/85 px-4 py-2 text-center text-[12px] font-medium text-muted-foreground backdrop-blur-md"
+      // `notice-in`: la franja baja desde el header, así se entiende que la
+      // empujó el estado de la red y no que el layout saltó solo
+      className="notice-in flex w-full items-center justify-center gap-2 border-b border-border/70 bg-muted/85 px-4 py-2 text-center text-[12px] font-medium text-muted-foreground backdrop-blur-md"
     >
       <WifiOff className="size-3.5 shrink-0" aria-hidden />
       Sin conexión · mostrando la última información

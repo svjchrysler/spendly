@@ -1,6 +1,8 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
+import { AnimatedAmount } from '@/components/ui/animated-amount'
 import { formatCurrency } from '@/lib/format'
 import { useCategoryColor } from '@/hooks/useCategoryColor'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 type Slice = {
   id: string
@@ -40,6 +42,7 @@ export function CategoryDonut({
   total: number
 }>) {
   const categoryColor = useCategoryColor()
+  const reducedMotion = useReducedMotion()
   if (data.length === 0 || total <= 0) return null
 
   const sorted = [...data].sort((a, b) => b.total - a.total)
@@ -83,7 +86,10 @@ export function CategoryDonut({
                 paddingAngle={2}
                 stroke="var(--background)"
                 strokeWidth={2}
-                isAnimationActive={false}
+                // El anillo se barre: la torta se lee como reparto de un total
+                isAnimationActive={!reducedMotion}
+                animationDuration={700}
+                animationEasing="ease-out"
               >
                 {slices.map((slice) => (
                   <Cell key={slice.id} fill={slice.color} />
@@ -96,8 +102,10 @@ export function CategoryDonut({
             <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
               Total
             </p>
+            {/* El centro cuenta mientras el anillo barre: las dos lecturas del
+                mismo dato llegan juntas */}
             <p className="max-w-[5.5rem] truncate text-center text-sm font-semibold tabular-nums tracking-tight">
-              {formatCurrency(total)}
+              <AnimatedAmount value={total} duration={700} />
             </p>
           </div>
         </div>

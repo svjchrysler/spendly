@@ -10,6 +10,7 @@ import {
 } from 'recharts'
 import { formatCurrency, formatCurrencyCompact } from '@/lib/format'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 type PacePoint = {
   day: string
@@ -55,6 +56,7 @@ export function DailyPaceChart({
   budget: number | null
 }>) {
   const isDesktop = useIsDesktop()
+  const reducedMotion = useReducedMotion()
   const hasBudget = budget != null && budget > 0
   const series = hasBudget
     ? data.map((point) => ({ ...point, budget: budget }))
@@ -109,7 +111,9 @@ export function DailyPaceChart({
               stroke="var(--chart-1)"
               strokeWidth={1.5}
               name="Del día"
-              isAnimationActive={false}
+              isAnimationActive={!reducedMotion}
+              animationDuration={800}
+              animationEasing="ease-out"
             />
             <Line
               type="monotone"
@@ -118,7 +122,9 @@ export function DailyPaceChart({
               strokeWidth={2}
               dot={false}
               name="Acumulado"
-              isAnimationActive={false}
+              isAnimationActive={!reducedMotion}
+              animationDuration={800}
+              animationEasing="ease-out"
             />
             {hasBudget ? (
               <Line
@@ -129,6 +135,8 @@ export function DailyPaceChart({
                 strokeDasharray="5 4"
                 dot={false}
                 name="Presupuesto"
+                // Sin animar a propósito: el presupuesto es la referencia fija
+                // contra la que se dibuja el acumulado, no un dato que llega
                 isAnimationActive={false}
               />
             ) : null}

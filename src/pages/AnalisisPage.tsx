@@ -79,7 +79,7 @@ function TrendStrip({
   }
 
   return (
-    <section className="grid grid-cols-2 gap-x-4 gap-y-4 border-b border-border/70 pb-5 sm:grid-cols-4 sm:gap-x-0 sm:divide-x sm:divide-border/60 sm:[&>*]:px-5 sm:[&>*:first-child]:pl-0 sm:[&>*:last-child]:pr-0">
+    <section className="stagger grid grid-cols-2 gap-x-4 gap-y-4 border-b border-border/70 pb-5 sm:grid-cols-4 sm:gap-x-0 sm:divide-x sm:divide-border/60 sm:[&>*]:px-5 sm:[&>*:first-child]:pl-0 sm:[&>*:last-child]:pr-0">
       <div className="metric-cell space-y-1.5">
         <p className="metric-cell-label">Promedio mensual</p>
         <p className="metric-cell-value">{formatCurrency(average)}</p>
@@ -115,7 +115,7 @@ function MonthPulse({ report }: Readonly<{ report: MonthReport }>) {
     report.remaining != null && report.remaining < 0
 
   return (
-    <section className="grid grid-cols-2 gap-x-4 gap-y-4 border-b border-border/70 pb-5 sm:grid-cols-3 lg:grid-cols-6 lg:gap-x-0 lg:divide-x lg:divide-border/60 lg:[&>*]:px-4 lg:[&>*:first-child]:pl-0 lg:[&>*:last-child]:pr-0">
+    <section className="stagger grid grid-cols-2 gap-x-4 gap-y-4 border-b border-border/70 pb-5 sm:grid-cols-3 lg:grid-cols-6 lg:gap-x-0 lg:divide-x lg:divide-border/60 lg:[&>*]:px-4 lg:[&>*:first-child]:pl-0 lg:[&>*:last-child]:pr-0">
       <div className="metric-cell space-y-1.5">
         <p className="metric-cell-label">Movimientos</p>
         <p className="metric-cell-value">{report.count}</p>
@@ -224,7 +224,7 @@ function TopExpensesList({ report }: Readonly<{ report: MonthReport }>) {
   }
 
   return (
-    <ListSection header="Mayores gastos">
+    <ListSection header="Mayores gastos" stagger>
       {report.top.map((expense, index) => (
         <ListRow
           key={`${expense.expense_date}-${expense.amount}-${index}`}
@@ -247,7 +247,7 @@ function MonthDetail({
   const rows = [...history].reverse()
 
   return (
-    <ListSection header="Detalle por mes">
+    <ListSection header="Detalle por mes" stagger>
       {rows.map((item, index) => {
         const previous = rows[index + 1]
         let delta: ReactNode = null
@@ -287,6 +287,9 @@ function MonthDetail({
 
 export function AnalisisPage() {
   const [panel, setPanel] = useState<AnalysisPanel>('historial')
+  // El panel entra desde el lado del segmento que tocaste: el control y el
+  // contenido quedan atados, en vez de ser un botón y una zona que parpadea
+  const [panelDir, setPanelDir] = useState<'next' | 'prev'>('next')
   const { year, month } = useMonth()
   const { data: stats, isLoading: statsLoading } = useMonthlyStats(year, month)
   const { data: history, isLoading: historyLoading } = useMonthlyHistory()
@@ -340,14 +343,24 @@ export function AnalisisPage() {
 
       <div className="grid gap-6 pt-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-start lg:gap-8 xl:gap-10">
         <div className="flex min-w-0 flex-col gap-5">
-          <PanelSwitch value={panel} onChange={setPanel} />
+          <PanelSwitch
+            value={panel}
+            onChange={(next) => {
+              const from = panelOptions.findIndex((option) => option.id === panel)
+              const to = panelOptions.findIndex((option) => option.id === next)
+              setPanelDir(to > from ? 'next' : 'prev')
+              setPanel(next)
+            }}
+          />
 
           {panel === 'historial' ? (
             <div
+              key="historial"
+              data-dir={panelDir}
               role="tabpanel"
               id="panel-historial"
               aria-labelledby="tab-historial"
-              className="flex min-w-0 flex-col gap-5"
+              className="swap flex min-w-0 flex-col gap-5"
             >
               {history && history.length > 1 ? <TrendStrip history={history} /> : null}
               <section className="min-w-0">{historyPanel}</section>
@@ -359,10 +372,12 @@ export function AnalisisPage() {
             </div>
           ) : (
             <div
+              key="ritmo"
+              data-dir={panelDir}
               role="tabpanel"
               id="panel-ritmo"
               aria-labelledby="tab-ritmo"
-              className="flex min-w-0 flex-col gap-5"
+              className="swap flex min-w-0 flex-col gap-5"
             >
               {report.spent > 0 ? (
                 <Suspense fallback={<ChartSkeleton />}>

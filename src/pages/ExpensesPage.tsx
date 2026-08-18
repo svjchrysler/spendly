@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { MonthMasthead } from '@/components/layout/MonthPicker'
+import { AnimatedAmount } from '@/components/ui/animated-amount'
 import { Button } from '@/components/ui/button'
 import { ExpenseFilters } from '@/components/expenses/ExpenseFilters'
 import { ExpenseList } from '@/components/expenses/ExpenseList'
@@ -66,7 +67,9 @@ export function ExpensesPage() {
           <Skeleton className="h-10 w-44" />
         ) : (
           <p className="stat-value text-[2.4rem] sm:text-[2.6rem] lg:text-[2.8rem]">
-            {formatCurrency(total)}
+            {/* Corto: acá el total se recalcula tecla a tecla al filtrar y el
+                conteo tiene que alcanzar a asentarse entre pulsaciones */}
+            <AnimatedAmount value={total} duration={450} />
           </p>
         )}
         <p className="text-sm text-muted-foreground">
@@ -82,7 +85,7 @@ export function ExpensesPage() {
       </div>
 
       {!isLoading && expenses.length > 0 ? (
-        <div className="grid grid-cols-3 divide-x divide-border/60 border-t border-border/70 pt-3 [&>*]:px-4 [&>*:first-child]:pl-0 [&>*:last-child]:pr-0">
+        <div className="stagger grid grid-cols-3 divide-x divide-border/60 border-t border-border/70 pt-3 [&>*]:px-4 [&>*:first-child]:pl-0 [&>*:last-child]:pr-0">
           <div className="metric-cell space-y-1">
             <p className="metric-cell-label">Ticket medio</p>
             <p className="font-ledger text-sm font-semibold tabular-nums">
@@ -123,7 +126,7 @@ export function ExpensesPage() {
     list = (
       <>
         {expenses.length === 0 && filtered ? (
-          <div className="flex flex-col items-start gap-3 py-8">
+          <div className="reveal flex flex-col items-start gap-3 py-8">
             <p className="text-sm text-muted-foreground">
               No hay gastos que coincidan con la búsqueda.
             </p>

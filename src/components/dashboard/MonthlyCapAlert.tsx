@@ -17,8 +17,11 @@ export function MonthlyCapAlert({ spent }: Readonly<MonthlyCapAlertProps>) {
   // Línea de aviso dentro del recibo: sin caja propia, separada por hairline punteada
   return (
     <output
+      // key por nivel: cruzar el umbral vuelve a disparar la entrada, así el
+      // cambio de "vas justo" a "te pasaste" se nota aunque ya hubiera aviso
+      key={level}
       className={cn(
-        'mt-4 flex items-start gap-2.5 border-t border-dashed border-border pt-3.5 text-sm leading-snug',
+        'notice-in mt-4 flex items-start gap-2.5 border-t border-dashed border-border pt-3.5 text-sm leading-snug',
         level === 'over' ? 'text-destructive' : 'text-warning',
       )}
     >

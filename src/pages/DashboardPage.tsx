@@ -22,7 +22,7 @@ function RecentMovements({
   const recent = expenses.slice(0, 5)
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col border-t border-border/70 pt-5">
+    <section className="reveal flex min-h-0 flex-1 flex-col border-t border-border/70 pt-5">
       <div className="flex shrink-0 items-baseline justify-between gap-3 pb-1">
         <p className="stat-label">Movimientos recientes</p>
         <Link

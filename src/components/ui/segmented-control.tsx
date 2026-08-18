@@ -1,4 +1,5 @@
 import { useRef, type CSSProperties } from 'react'
+import { tapFeedback } from '@/lib/haptics'
 import { cn } from '@/lib/utils'
 
 /**
@@ -75,10 +76,17 @@ export function SegmentedControl<T extends string>({
             }}
             type="button"
             role={asTabs ? 'tab' : 'radio'}
+            // Los paneles ya venían con `aria-labelledby="tab-<valor>"`, pero
+            // el id nunca se emitía: la relación tab↔panel estaba rota
+            id={asTabs ? `tab-${item.value}` : undefined}
+            aria-controls={asTabs ? `panel-${item.value}` : undefined}
             aria-selected={asTabs ? selected : undefined}
             aria-checked={asTabs ? undefined : selected}
             tabIndex={selected ? 0 : -1}
-            onClick={() => onValueChange(item.value)}
+            onClick={() => {
+              if (!selected) tapFeedback()
+              onValueChange(item.value)
+            }}
             className={cn(
               'relative z-10 min-w-0 flex-1 cursor-pointer rounded-full px-3 py-1.5 text-subhead font-medium transition-colors duration-200',
               'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',

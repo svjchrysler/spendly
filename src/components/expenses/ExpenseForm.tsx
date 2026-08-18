@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, type FieldErrors } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Sparkles } from 'lucide-react'
+import { Loader2, Sparkles } from 'lucide-react'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -19,6 +19,7 @@ import {
   predictCategoryFromDescription,
   type CategoryPrediction,
 } from '@/lib/predict-category'
+import { cn } from '@/lib/utils'
 import type { ExpenseWithCategory } from '@/types/database'
 
 const schema = z.object({
@@ -48,7 +49,14 @@ export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) 
   const originalDescription = expense?.description ?? ''
   const [categoryManual, setCategoryManual] = useState(isEditing)
   const [prediction, setPrediction] = useState<CategoryPrediction | null>(null)
+  const [shaking, setShaking] = useState(false)
   const skipNextPredictionRef = useRef(isEditing)
+
+  useEffect(() => {
+    if (!shaking) return
+    const timer = window.setTimeout(() => setShaking(false), 450)
+    return () => window.clearTimeout(timer)
+  }, [shaking])
 
   const {
     register,
@@ -137,6 +145,18 @@ export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) 
     }
   }
 
+  /*
+    Sacudida del bloque del monto cuando el envío falla por ahí — señala qué
+    campo mirar antes de leer el texto. El apagado + rAF vuelve a montar la
+    clase: sin eso el segundo intento no anima, porque la clase ya estaba
+    puesta y el keyframe no se reinicia solo.
+  */
+  function handleInvalid(invalid: FieldErrors<FormValues>) {
+    if (!invalid.amount) return
+    setShaking(false)
+    requestAnimationFrame(() => setShaking(true))
+  }
+
   function handleCategoryChange(id: string) {
     setCategoryManual(true)
     setPrediction(null)
@@ -160,10 +180,15 @@ export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) 
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(onSubmit, handleInvalid)}
+      // La validación la manda Zod, en español. Sin esto el navegador dispara
+      // primero su propio globo ("Please fill out this field.", en el idioma
+      // del browser) y tapa el mensaje y la sacudida del campo. Los `required`
+      // se quedan: siguen exponiendo aria-required.
+      noValidate
       className="flex w-full min-w-0 max-w-full flex-col gap-5 overflow-x-hidden"
     >
-      <div className="min-w-0 space-y-1.5">
+      <div className={cn('min-w-0 space-y-1.5', shaking && 'shake')}>
         <ExpenseAmountInput
           id="amount"
           hasError={Boolean(errors.amount)}
@@ -179,7 +204,7 @@ export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) 
           }}
         />
         {errors.amount ? (
-          <p role="alert" className="text-center text-xs text-destructive">
+          <p role="alert" className="notice-in text-center text-xs text-destructive">
             {errors.amount.message}
           </p>
         ) : null}
@@ -198,7 +223,7 @@ export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) 
             {...register('description')}
           />
           {errors.description ? (
-            <p role="alert" className="text-xs text-destructive">
+            <p role="alert" className="notice-in text-xs text-destructive">
               {errors.description.message}
             </p>
           ) : null}
@@ -207,8 +232,13 @@ export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) 
         <div className="min-w-0 space-y-2">
           <div className="flex items-center justify-between gap-2">
             <p className="stat-label">Categoría</p>
+            {/* La categoría se autodetecta sola: si el aviso entra animado, el
+                salto del riel de chips se lee como consecuencia y no como bug */}
             {showPredictionHint ? (
-              <p className="flex items-center gap-1 text-[11px] text-primary/90">
+              <p
+                key={prediction.categoryId}
+                className="notice-in flex items-center gap-1 text-[11px] text-primary/90"
+              >
                 <Sparkles className="size-3 shrink-0" aria-hidden />
                 Sugerido
               </p>
@@ -220,7 +250,7 @@ export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) 
             onChange={handleCategoryChange}
           />
           {errors.category_id ? (
-            <p role="alert" className="text-xs text-destructive">
+            <p role="alert" className="notice-in text-xs text-destructive">
               {errors.category_id.message}
             </p>
           ) : null}
@@ -233,7 +263,7 @@ export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) 
             onChange={(date) => setValue('expense_date', date)}
           />
           {errors.expense_date ? (
-            <p role="alert" className="text-xs text-destructive">
+            <p role="alert" className="notice-in text-xs text-destructive">
               {errors.expense_date.message}
             </p>
           ) : null}
@@ -246,7 +276,16 @@ export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) 
         className="h-11 w-full max-w-full shrink cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90"
         disabled={isSaving}
       >
-        {isSaving ? 'Guardando...' : isEditing ? 'Actualizar' : 'Guardar gasto'}
+        {isSaving ? (
+          <>
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+            Guardando…
+          </>
+        ) : isEditing ? (
+          'Actualizar'
+        ) : (
+          'Guardar gasto'
+        )}
       </Button>
     </form>
   )

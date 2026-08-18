@@ -31,12 +31,19 @@ export function ListSection({
   header,
   headerTrailing,
   footer,
+  stagger = false,
   className,
   children,
 }: Readonly<{
   header?: ReactNode
   headerTrailing?: ReactNode
   footer?: ReactNode
+  /**
+   * Cascada de entrada de las filas. Solo para listas cortas y cerradas
+   * (un top de 5, los meses del historial): en un listado largo la última
+   * fila llegaría tarde y en uno con swipe pelea con el gesto.
+   */
+  stagger?: boolean
   className?: string
   children: ReactNode
 }>) {
@@ -48,7 +55,7 @@ export function ListSection({
           {headerTrailing}
         </div>
       ) : null}
-      <div className="list-group">{children}</div>
+      <div className={cn('list-group', stagger && 'stagger')}>{children}</div>
       {footer ? (
         <p className="px-4 pt-1.5 text-footnote text-label-secondary">{footer}</p>
       ) : null}

@@ -138,7 +138,13 @@ function AppShellInner() {
               className="pressable inline-flex size-11 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
               aria-label={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
             >
-              {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
+              {/* El ícono gira al entrar: el toggle se lee como un cambio de
+                  estado y no como dos botones distintos */}
+              {theme === 'dark' ? (
+                <Sun className="icon-swap size-4" />
+              ) : (
+                <Moon className="icon-swap size-4" />
+              )}
             </button>
             <ProfileMenu />
           </div>

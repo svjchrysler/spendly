@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Pencil, Plus, Trash2 } from 'lucide-react'
+import { Loader2, Pencil, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { List, ListRow, ListSection } from '@/components/ui/list'
@@ -62,6 +62,7 @@ function CategoryForm({ category, onSuccess }: CategoryFormProps) {
   // El swatch muestra el color del tema activo: lo que elegís es lo que ves
   const categoryColor = useCategoryColor()
   const isEditing = Boolean(category)
+  const saving = createCategory.isPending || updateCategory.isPending
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -104,9 +105,9 @@ function CategoryForm({ category, onSuccess }: CategoryFormProps) {
               type="button"
               onClick={() => setIcon(emoji)}
               className={cn(
-                'flex size-9 cursor-pointer items-center justify-center rounded-lg border text-lg transition-colors',
+                'pressable flex size-9 cursor-pointer items-center justify-center rounded-lg border text-lg',
                 icon === emoji
-                  ? 'border-primary/50 bg-primary/10'
+                  ? 'scale-105 border-primary/50 bg-primary/10'
                   : 'border-border/60 bg-muted/20 hover:bg-muted/40',
               )}
               aria-label={`Icono ${emoji}`}
@@ -125,8 +126,12 @@ function CategoryForm({ category, onSuccess }: CategoryFormProps) {
               key={optionColor}
               type="button"
               className={cn(
-                'size-8 cursor-pointer rounded-full border-2 transition-transform duration-200 hover:scale-110',
-                color === optionColor ? 'border-background' : 'border-transparent',
+                'size-8 cursor-pointer rounded-full border-2 transition-transform duration-200 hover:scale-110 active:scale-95',
+                // El elegido se agranda: sobre un swatch redondo el borde solo
+                // no alcanza para leer cuál está activo
+                color === optionColor
+                  ? 'scale-110 border-background ring-2 ring-primary/60'
+                  : 'border-transparent',
               )}
               style={{ backgroundColor: categoryColor(optionColor) }}
               onClick={() => setColor(optionColor)}
@@ -139,9 +144,18 @@ function CategoryForm({ category, onSuccess }: CategoryFormProps) {
       <Button
         type="submit"
         className="w-full cursor-pointer"
-        disabled={createCategory.isPending || updateCategory.isPending}
+        disabled={saving}
       >
-        {isEditing ? 'Actualizar' : 'Crear categoría'}
+        {saving ? (
+          <>
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+            Guardando…
+          </>
+        ) : isEditing ? (
+          'Actualizar'
+        ) : (
+          'Crear categoría'
+        )}
       </Button>
     </form>
   )
@@ -196,6 +210,7 @@ export function CategoriesPage() {
           <ListSection
             header="Todas"
             footer="Solo se pueden eliminar categorías sin gastos asociados."
+            stagger
           >
             {categories.map((category) => (
               <ListRow

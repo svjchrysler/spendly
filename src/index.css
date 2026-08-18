@@ -237,6 +237,12 @@
   --radius: 0.5rem;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Escala de duración del motion coreografiado — ver "Motion didáctico" */
+  --dur-1: 180ms;
+  --dur-2: 320ms;
+  --dur-3: 460ms;
+  /* Paso entre hermanos de una cascada: se lee en orden sin hacer esperar */
+  --stagger-step: 55ms;
   /* iOS-ish chrome metrics — keep sticky/FAB/main in sync */
   --app-header-h: 3.5rem;
   /* Alto de la cápsula expandida; colapsada solo cambia el visual */
@@ -544,8 +550,13 @@
     El separador se indenta hasta el borde del label, no del contenedor: es
     de los detalles que más delatan una app web cuando falta. `divide-y` no
     puede hacerlo, y por eso la fila tiene que ser un primitivo.
+
+    Las filas con swipe viven dentro de un wrapper, así que la adyacencia hay
+    que pedirla desde el wrapper o el listado mobile de gastos queda sin
+    separadores (era el caso).
   */
-  .list-row + .list-row::before {
+  .list-row + .list-row::before,
+  .swipe-row + .swipe-row .list-row::before {
     content: '';
     position: absolute;
     inset-block-start: 0;
@@ -1050,16 +1061,193 @@
     animation: page-enter 200ms var(--ease-out-expo) both;
   }
 
-  /* Reemplazo del monto: el número entra en vez de saltar */
-  @keyframes value-enter {
+  /* ─── Motion didáctico ────────────────────────────────────────────────────
+     Tres escalones de duración para todo lo coreografiado. Los gestos (swipe,
+     sheet, pull) siguen con los suyos: esos son físicos y responden al dedo,
+     no a un guion. La regla global de `prefers-reduced-motion` en @layer base
+     colapsa cualquiera de estas animaciones a su estado final.
+
+     Todos los keyframes se escriben `from → estado real` y el fill es
+     **`backwards`, nunca `both`**: con `both` el navegador deja aplicado el
+     `transform: translateY(0)` final para siempre, y un transform (aunque sea
+     la identidad) convierte al elemento en containing block de cualquier
+     `position: fixed` de adentro — el pitfall del FAB, ahora repartido por
+     media app. Con `backwards` solo se pinta el estado inicial durante el
+     delay y al terminar el elemento vuelve a sus propios estilos.
+
+     Regla de lectura: nada acá adorna. Cada animación contesta una pregunta
+     — de dónde salió esto, hacia dónde fui, cuánto cambió, qué se puede tocar.
+     Las duraciones (`--dur-*`) y el paso de cascada viven con los demás tokens
+     de `:root`. */
+
+  /* Entrada base: el bloque sube a su lugar en vez de aparecer */
+  @keyframes reveal-up {
     from {
-      opacity: 0.4;
-      transform: translateY(6px);
+      opacity: 0;
+      transform: translateY(10px);
     }
   }
 
-  .value-enter {
-    animation: value-enter 350ms var(--ease-out-expo) both;
+  .reveal {
+    animation: reveal-up var(--dur-3) var(--ease-out-expo) backwards;
+  }
+
+  /*
+    Cascada: el ojo recorre las celdas en orden de lectura y entiende que son
+    una serie, no cuatro cosas sueltas. Los delays van por `nth-child` para
+    que el JSX no tenga que llevar índices.
+  */
+  .stagger > * {
+    animation: reveal-up var(--dur-3) var(--ease-out-expo) backwards;
+  }
+
+  .stagger > *:nth-child(1) {
+    animation-delay: 0ms;
+  }
+  .stagger > *:nth-child(2) {
+    animation-delay: calc(var(--stagger-step));
+  }
+  .stagger > *:nth-child(3) {
+    animation-delay: calc(var(--stagger-step) * 2);
+  }
+  .stagger > *:nth-child(4) {
+    animation-delay: calc(var(--stagger-step) * 3);
+  }
+  .stagger > *:nth-child(5) {
+    animation-delay: calc(var(--stagger-step) * 4);
+  }
+  .stagger > *:nth-child(6) {
+    animation-delay: calc(var(--stagger-step) * 5);
+  }
+  .stagger > *:nth-child(7) {
+    animation-delay: calc(var(--stagger-step) * 6);
+  }
+  /* Tope: a partir de la octava el delay ya no aporta y solo hace esperar */
+  .stagger > *:nth-child(n + 8) {
+    animation-delay: calc(var(--stagger-step) * 7);
+  }
+
+  /*
+    Swap direccional. El contenido entra desde el lado hacia el que fuiste:
+    "siguiente" viene de la derecha, "anterior" de la izquierda. Es lo que
+    enseña que los meses son una cinta y no una lista de opciones.
+  */
+  @keyframes swap-from-end {
+    from {
+      opacity: 0;
+      transform: translateX(16px);
+    }
+  }
+
+  @keyframes swap-from-start {
+    from {
+      opacity: 0;
+      transform: translateX(-16px);
+    }
+  }
+
+  .swap[data-dir='next'] {
+    animation: swap-from-end var(--dur-2) var(--ease-out-expo) backwards;
+  }
+
+  .swap[data-dir='prev'] {
+    animation: swap-from-start var(--dur-2) var(--ease-out-expo) backwards;
+  }
+
+  .swap[data-dir='none'] {
+    animation: reveal-up var(--dur-2) var(--ease-out-expo) backwards;
+  }
+
+  /*
+    Fila recién llegada: el tinte marca dónde aterrizó lo que acabás de
+    guardar (o lo que entró por realtime desde otro dispositivo). Sin esto el
+    gasto nuevo se pierde entre veinte filas iguales.
+  */
+  @keyframes row-landed {
+    from {
+      background-color: color-mix(in oklab, var(--primary) 20%, transparent);
+    }
+    60% {
+      background-color: color-mix(in oklab, var(--primary) 12%, transparent);
+    }
+    to {
+      background-color: transparent;
+    }
+  }
+
+  .row-landed {
+    animation: row-landed 1200ms var(--ease-out-expo) backwards;
+  }
+
+  /* Error de validación: el campo se sacude hacia donde está el problema */
+  @keyframes shake-x {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    18% {
+      transform: translateX(-6px);
+    }
+    38% {
+      transform: translateX(5px);
+    }
+    58% {
+      transform: translateX(-3px);
+    }
+    78% {
+      transform: translateX(2px);
+    }
+  }
+
+  .shake {
+    animation: shake-x 420ms var(--ease-spring) backwards;
+  }
+
+  /*
+    Pista de swipe: una sola vez en la vida de la instalación, la primera fila
+    se asoma y vuelve mostrando la acción que hay debajo. Es la única forma de
+    enseñar un gesto que no tiene affordance visual.
+  */
+  @keyframes swipe-hint {
+    0%,
+    10% {
+      transform: translate3d(0, 0, 0);
+    }
+    42%,
+    62% {
+      transform: translate3d(-72px, 0, 0);
+    }
+    100% {
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  .swipe-row__content[data-hint='true'] {
+    animation: swipe-hint 1800ms var(--ease-sheet) backwards;
+  }
+
+  /* Íconos que se reemplazan (tema claro/oscuro): giran al entrar */
+  @keyframes icon-swap {
+    from {
+      opacity: 0;
+      transform: rotate(-90deg) scale(0.6);
+    }
+  }
+
+  .icon-swap {
+    animation: icon-swap var(--dur-2) var(--ease-spring) backwards;
+  }
+
+  /* Aviso que aparece: baja desde el borde del bloque al que pertenece */
+  @keyframes notice-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+  }
+
+  .notice-in {
+    animation: notice-in var(--dur-2) var(--ease-out-expo) backwards;
   }
 
   .fab:hover {

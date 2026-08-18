@@ -10,6 +10,7 @@ import {
 } from 'recharts'
 import { formatCurrency, formatCurrencyCompact } from '@/lib/format'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 type WeekPoint = {
   label: string
@@ -44,6 +45,7 @@ export function WeekOfMonthChart({
   data: WeekPoint[]
 }>) {
   const isDesktop = useIsDesktop()
+  const reducedMotion = useReducedMotion()
   const peak = Math.max(...data.map((item) => item.total), 0)
 
   return (
@@ -80,7 +82,13 @@ export function WeekOfMonthChart({
               />
             ) : null}
             <Tooltip content={<WeekTooltip />} cursor={{ fill: 'color-mix(in oklab, var(--foreground) 6%, transparent)' }} />
-            <Bar dataKey="total" radius={[4, 4, 0, 0]}>
+            <Bar
+              dataKey="total"
+              radius={[4, 4, 0, 0]}
+              isAnimationActive={!reducedMotion}
+              animationDuration={700}
+              animationEasing="ease-out"
+            >
               {data.map((entry) => (
                 <Cell
                   key={entry.label}

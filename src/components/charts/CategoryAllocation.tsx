@@ -22,7 +22,7 @@ export function CategoryAllocation({
   const categoryColor = useCategoryColor()
   if (data.length === 0) {
     return (
-      <div className={cn(fill ? 'flex h-full flex-col' : 'space-y-4', className)}>
+      <div className={cn('reveal', fill ? 'flex h-full flex-col' : 'space-y-4', className)}>
         <p className="stat-label">Asignación</p>
         <p className={cn('text-sm text-muted-foreground', fill && 'flex flex-1 items-center')}>
           Sin gastos este mes
@@ -38,25 +38,24 @@ export function CategoryAllocation({
 
   return (
     <section
-      className={cn(fill ? 'flex h-full min-h-0 flex-col' : 'space-y-4', className)}
+      className={cn('reveal', fill ? 'flex h-full min-h-0 flex-col' : 'space-y-4', className)}
     >
       <p className="stat-label shrink-0">Asignación</p>
 
+      {/* `stagger`: el ranking se construye de arriba hacia abajo y se lee como
+          orden, no como seis barras que aparecieron juntas */}
       <div
         className={cn(
+          'stagger',
           fill
             ? 'mt-4 flex min-h-0 flex-1 flex-col justify-evenly gap-5'
             : 'space-y-4',
         )}
       >
-        {visible.map((item, index) => {
+        {visible.map((item) => {
           const pct = total > 0 ? (item.total / total) * 100 : 0
           return (
-            <div
-              key={item.id}
-              className={cn('space-y-2', fill && 'py-0.5')}
-              style={fill ? undefined : { animationDelay: `${index * 40}ms` }}
-            >
+            <div key={item.id} className={cn('space-y-2', fill && 'py-0.5')}>
               <div className="flex items-baseline justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2.5">
                   <span

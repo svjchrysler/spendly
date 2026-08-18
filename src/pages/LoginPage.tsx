@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowUpRight, Eye, EyeOff, Moon, Sun } from 'lucide-react'
+import { ArrowUpRight, Eye, EyeOff, Loader2, Moon, Sun } from 'lucide-react'
 import { toast } from 'sonner'
 import { BrandMark } from '@/components/layout/BrandMark'
 import { useAuth } from '@/contexts/AuthContext'
@@ -58,12 +58,19 @@ export function LoginPage() {
           className="pressable inline-flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
           aria-label={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
         >
-          {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
+          {theme === 'dark' ? (
+            <Sun key="sun" className="icon-swap size-4" />
+          ) : (
+            <Moon key="moon" className="icon-swap size-4" />
+          )}
         </button>
       </header>
 
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-8 sm:px-6 sm:py-10">
-        <section className="flex flex-col justify-center">
+        {/* Cascada de entrada: marca → título → bajada → formulario. Es la
+            primera pantalla de la app y el orden en que se arma es el orden en
+            que hay que leerla. */}
+        <section className="stagger flex flex-col justify-center">
           <BrandMark size="lg" />
           <h1 className="font-display mt-5 text-[2.6rem] leading-none font-semibold tracking-[-0.02em] sm:text-5xl">
             Spendly
@@ -144,7 +151,11 @@ export function LoginPage() {
             >
               <span>{loading ? 'Entrando…' : 'Iniciar sesión'}</span>
               <span className="flex size-8 items-center justify-center rounded-lg bg-primary-foreground/10">
-                <ArrowUpRight className="size-4" />
+                {loading ? (
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                ) : (
+                  <ArrowUpRight className="size-4" />
+                )}
               </span>
             </button>
           </form>

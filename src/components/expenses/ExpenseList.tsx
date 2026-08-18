@@ -36,7 +36,9 @@ import { ExpenseFormSkeleton } from '@/components/layout/skeletons'
 import { getExpenseLabel } from '@/lib/expense-display'
 import { formatCurrency, formatDayLabel } from '@/lib/format'
 import { useDeleteExpense } from '@/hooks/useExpenses'
+import { useFreshItems } from '@/hooks/useFreshItems'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { useSwipeActions } from '@/hooks/useSwipeActions'
 import { tapFeedback, warnFeedback } from '@/lib/haptics'
 import { useMonth } from '@/contexts/MonthContext'
@@ -50,6 +52,11 @@ const importExpenseForm = () => import('@/components/expenses/ExpenseForm')
 const ExpenseForm = lazy(() =>
   importExpenseForm().then((module) => ({ default: module.ExpenseForm })),
 )
+
+/** Una sola vez por instalación — ver el efecto de la pista de swipe */
+const SWIPE_HINT_KEY = 'spendly-swipe-hint'
+/** Igual que el keyframe `swipe-hint` de index.css */
+const SWIPE_HINT_MS = 1800
 
 interface ExpenseListProps {
   expenses: ExpenseWithCategory[]
@@ -65,6 +72,8 @@ function ExpenseRow({
   caption,
   isDesktop,
   swipeOpen,
+  fresh = false,
+  hint = false,
   onSwipeOpenChange,
   onOpenActions,
   onEdit,
@@ -74,6 +83,10 @@ function ExpenseRow({
   caption: string
   isDesktop: boolean
   swipeOpen: boolean
+  /** Llegó después del primer render: se tinta un momento para ubicarlo */
+  fresh?: boolean
+  /** Pista única de swipe: la fila se asoma y vuelve */
+  hint?: boolean
   onSwipeOpenChange: (open: boolean) => void
   onOpenActions: () => void
   onEdit: () => void
@@ -108,7 +121,7 @@ function ExpenseRow({
           {isDesktop ? <ExpenseRowActions onEdit={onEdit} onDelete={onDelete} /> : null}
         </span>
       }
-      className={cn(isDesktop && 'sm:cursor-default')}
+      className={cn(isDesktop && 'sm:cursor-default', fresh && 'row-landed')}
     />
   )
 
@@ -128,7 +141,7 @@ function ExpenseRow({
           Eliminar
         </button>
       </div>
-      <div ref={nodeRef} className="swipe-row__content">
+      <div ref={nodeRef} className="swipe-row__content" data-hint={hint ? 'true' : undefined}>
         {row}
       </div>
     </div>
@@ -141,7 +154,7 @@ export function ExpenseList({
   compact = false,
   emptyCta,
 }: Readonly<ExpenseListProps>) {
-  const { year, month } = useMonth()
+  const { year, month, monthKey } = useMonth()
   const deleteExpense = useDeleteExpense(year, month)
   const [openAdd, setOpenAdd] = useState(false)
   const [editing, setEditing] = useState<ExpenseWithCategory | null>(null)
@@ -150,7 +163,38 @@ export function ExpenseList({
   // Una sola fila abierta a la vez, como iOS
   const [swipeOpenId, setSwipeOpenId] = useState<string | null>(null)
   const isDesktop = useIsDesktop()
+  const reducedMotion = useReducedMotion()
   const [searchParams, setSearchParams] = useSearchParams()
+  // Filas que aparecieron después del primer render: el gasto que acabás de
+  // guardar, o el que entró por realtime desde el otro dispositivo. `resetKey`
+  // por mes — cambiar de mes trae otra lista entera, no llegadas.
+  const freshIds = useFreshItems(
+    expenses.map((expense) => expense.id),
+    { resetKey: monthKey },
+  )
+  const [hintRowId, setHintRowId] = useState<string | null>(null)
+  const firstExpenseId = expenses[0]?.id
+
+  /*
+    El swipe-to-delete no tiene affordance visual: o se enseña o no existe.
+    Una vez por instalación la primera fila se asoma y vuelve, mostrando la
+    acción que hay debajo. Después nunca más — una pista que se repite es un
+    tic, no una ayuda.
+  */
+  useEffect(() => {
+    if (isDesktop || reducedMotion || !firstExpenseId) return
+    if (localStorage.getItem(SWIPE_HINT_KEY)) return
+
+    const show = window.setTimeout(() => {
+      localStorage.setItem(SWIPE_HINT_KEY, '1')
+      setHintRowId(firstExpenseId)
+    }, 900)
+    const hide = window.setTimeout(() => setHintRowId(null), 900 + SWIPE_HINT_MS)
+    return () => {
+      window.clearTimeout(show)
+      window.clearTimeout(hide)
+    }
+  }, [isDesktop, reducedMotion, firstExpenseId])
 
   // Atajo del manifest (long-press del icono → "Agregar gasto"): abre el form
   // al arrancar y limpia el param para que un back no lo reabra.
@@ -226,7 +270,7 @@ export function ExpenseList({
     expenses.length === 0 && emptyCta ? (
       <div
         className={cn(
-          'flex flex-col items-start gap-3 py-8',
+          'reveal flex flex-col items-start gap-3 py-8',
           compact && 'flex-1 justify-center',
         )}
       >
@@ -331,6 +375,8 @@ export function ExpenseList({
               expense={expense}
               caption={`${formatDayLabel(expense.expense_date)}${expense.category?.name ? ` · ${expense.category.name}` : ''}`}
               isDesktop={isDesktop}
+              fresh={freshIds.has(expense.id)}
+              hint={hintRowId === expense.id}
               swipeOpen={swipeOpenId === expense.id}
               onSwipeOpenChange={(open) => setSwipeOpenId(open ? expense.id : null)}
               onOpenActions={() => openActions(expense)}
@@ -347,10 +393,12 @@ export function ExpenseList({
             {grouped.map(({ date, items, subtotal }) => (
               <motion.div
                 key={date}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                // El primer gasto de un día crea la sección entera: que suba a
+                // su lugar explica de dónde salió ese bloque nuevo
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
                 className="list-section"
               >
                 {/*
@@ -372,6 +420,8 @@ export function ExpenseList({
                       expense={expense}
                       caption={expense.category?.name ?? ''}
                       isDesktop={isDesktop}
+                      fresh={freshIds.has(expense.id)}
+                      hint={hintRowId === expense.id}
                       swipeOpen={swipeOpenId === expense.id}
                       onSwipeOpenChange={(open) =>
                         setSwipeOpenId(open ? expense.id : null)

@@ -125,6 +125,7 @@ La app sigue la guía de iOS 26. Lo nativo lo aportan estructura, materiales, mo
 - **Tipografía.** Escala de iOS (`text-large-title` … `text-caption-2`). Cuerpo 17px. Bricolage arriba de 20px, Geist de 20px para abajo, Spline Mono en montos.
 - **Color semántico.** Labels (`text-label`, `-secondary`, `-tertiary`, `-quaternary`), fills (`bg-fill-*`) y fondos agrupados (`--group-surface`). `--muted-foreground` y `--border` están re-apuntados a la jerarquía nueva: el código viejo migró solo.
 - **Tap targets** de 44pt en mobile: `size="touch"` / `size="icon-touch"` en `Button`.
+- **Motion.** Sistema en `index.css` → "Motion didáctico". Nada decora: cada animación contesta de dónde salió algo, hacia dónde navegaste, cuánto cambió un número o qué se puede tocar. Duraciones `--dur-1/2/3` + `--stagger-step`; utilidades `.reveal`, `.stagger`, `.swap[data-dir]`, `.row-landed`, `.shake`, `.notice-in`, `.icon-swap`. Los montos grandes usan `AnimatedAmount` (count-up); las barras crecen desde cero; el mes entra desde el lado hacia el que navegaste (`MonthContext.direction`). Los gestos (swipe, sheet, pull) conservan su propio timing físico. `useReducedMotion` para lo que anima JS (count-up, recharts, la pista de swipe); el CSS ya lo cubre la regla global.
 - Status bar: se mantiene `apple-mobile-web-app-status-bar-style: default`. **No** cambiar a `black-translucent`: fuerza texto blanco e ilegible en modo claro. Consecuencia: `env(safe-area-inset-top)` vale 0 en standalone.
 
 ## UI / layout (reglas del producto)
@@ -150,6 +151,8 @@ La app sigue la guía de iOS 26. Lo nativo lo aportan estructura, materiales, mo
 | Desktop vacío abajo (Resumen) | No estirar con `justify-between`/`min-h` — empaquetar contenido arriba |
 | recharts/motion en el arranque | Un util compartido (`clsx`, `use-sync-external-store`) cae en el chunk de un grupo pesado y el entry lo importa estático. Los grupos `ui-vendor`/`react-vendor` de `vite.config.ts` van **antes** que `recharts` y llevan `/` final. Verificar con `grep -c recharts- dist/assets/index-*.js` → 0 |
 | Datos del usuario tras logout | `purgeLocalUserData()` (`lib/session-cleanup.ts`) borra query cache + CacheStorage. Si se agrega otro runtime cache con datos, sumarlo a `DATA_CACHES` |
+| Animación de entrada que rompe un `position: fixed` | `animation-fill-mode: both` deja aplicado el `transform: translateY(0)` final y eso ya crea containing block. Las entradas van con **`backwards`** |
+| Globo de validación del navegador en inglés | El `<form>` con validación Zod necesita `noValidate`, o el browser dispara su propio mensaje antes y tapa el de la app |
 
 ## Schema (alto nivel)
 

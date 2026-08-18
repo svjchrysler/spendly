@@ -11,6 +11,7 @@ import {
 } from 'recharts'
 import { formatCurrency, formatCurrencyCompact } from '@/lib/format'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 type WeekdayPoint = {
   label: string
@@ -53,6 +54,7 @@ export function WeekdayBarChart({
   data: WeekdayPoint[]
 }>) {
   const isDesktop = useIsDesktop()
+  const reducedMotion = useReducedMotion()
   const peak = Math.max(...data.map((item) => item.total), 0)
   const chartData = data.map((item) => ({
     ...item,
@@ -90,7 +92,14 @@ export function WeekdayBarChart({
               width={36}
             />
             <Tooltip content={<WeekdayTooltip />} cursor={{ fill: 'color-mix(in oklab, var(--foreground) 6%, transparent)' }} />
-            <Bar dataKey="total" radius={[0, 4, 4, 0]} shape={WeekdayBarShape} />
+            <Bar
+              dataKey="total"
+              radius={[0, 4, 4, 0]}
+              shape={WeekdayBarShape}
+              isAnimationActive={!reducedMotion}
+              animationDuration={700}
+              animationEasing="ease-out"
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>

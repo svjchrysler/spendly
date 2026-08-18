@@ -10,6 +10,7 @@ import {
 } from 'recharts'
 import { formatCurrency, formatCurrencyCompact } from '@/lib/format'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 interface MonthlyBarProps {
   data: { label: string; total: number }[]
@@ -35,6 +36,7 @@ function CustomTooltip({
 
 export function MonthlyBar({ data }: Readonly<MonthlyBarProps>) {
   const isDesktop = useIsDesktop()
+  const reducedMotion = useReducedMotion()
   const maxTotal = Math.max(...data.map((item) => item.total), 1)
   const currentIndex = data.length - 1
 
@@ -76,7 +78,15 @@ export function MonthlyBar({ data }: Readonly<MonthlyBarProps>) {
               />
             ) : null}
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'color-mix(in oklab, var(--foreground) 6%, transparent)' }} />
-            <Bar dataKey="total" radius={[4, 4, 0, 0]}>
+            {/* Las barras crecen desde el eje: se lee la comparación entre
+                meses armándose, no seis rectángulos ya puestos */}
+            <Bar
+              dataKey="total"
+              radius={[4, 4, 0, 0]}
+              isAnimationActive={!reducedMotion}
+              animationDuration={700}
+              animationEasing="ease-out"
+            >
               {data.map((entry, index) => (
                 <Cell
                   key={entry.label}

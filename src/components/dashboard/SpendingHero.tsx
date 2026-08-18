@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { AnimatedAmount } from '@/components/ui/animated-amount'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
@@ -20,7 +21,7 @@ export function SpendingHero({
   transactionCount,
   budget,
 }: Readonly<SpendingHeroProps>) {
-  const { year, month } = useMonth()
+  const { year, month, monthKey } = useMonth()
   const upsertBudget = useUpsertBudget()
   const [editingBudget, setEditingBudget] = useState(false)
   const [budgetValue, setBudgetValue] = useState(budget?.toString() ?? '')
@@ -49,6 +50,10 @@ export function SpendingHero({
       toast.error('No se pudo guardar el presupuesto')
     }
   }
+
+  let budgetState: 'empty' | 'editing' | 'set' = 'empty'
+  if (editingBudget) budgetState = 'editing'
+  else if (budget != null) budgetState = 'set'
 
   // Afordancia de texto, no chip: la columna del monto se lee de corrido
   let budgetHint: ReactNode = (
@@ -121,7 +126,9 @@ export function SpendingHero({
   // Encabezado de extracto: sin superficie propia — la jerarquía la dan la
   // escala tipográfica y los filetes, igual que el resto de las pantallas.
   return (
-    <section className="min-w-0">
+    // `reveal`: el recibo sube a su lugar cuando reemplaza al skeleton, así se
+    // lee como "llegaron los datos" y no como un parpadeo de layout
+    <section className="reveal min-w-0">
       <div className="flex items-baseline justify-between gap-3 border-b border-border/70 pb-2.5">
         <p className="stat-label">Gastado</p>
         <p className="stat-label font-ledger text-muted-foreground/70">
@@ -130,11 +137,18 @@ export function SpendingHero({
       </div>
 
       <div className="space-y-3 pt-4">
-        {/* key: remonta al cambiar el monto y vuelve a disparar el keyframe */}
-        <p key={spent} className="stat-value value-enter leading-none lg:text-[3.5rem]">
-          {formatCurrency(spent)}
+        {/*
+          El total viaja hasta su valor: al guardar un gasto o al saltar de
+          mes se ve cuánto se movió, no solo que quedó otra cifra.
+        */}
+        <p className="stat-value leading-none lg:text-[3.5rem]">
+          <AnimatedAmount value={spent} />
         </p>
-        {budgetHint}
+        {/* key por estado: al pasar de "definir" a editor y de vuelta al dato,
+            el bloque entra en vez de reemplazarse en seco */}
+        <div key={budgetState} className="reveal">
+          {budgetHint}
+        </div>
         {budget != null && budget > 0 && !editingBudget ? (
           <Progress
             className="mt-4"
@@ -145,8 +159,13 @@ export function SpendingHero({
         ) : null}
       </div>
 
-      {/* Pie de extracto: en desktop las celdas se separan por filete vertical */}
-      <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-5 border-t border-dashed border-border pt-4 sm:grid-cols-4 sm:gap-x-0 sm:gap-y-0 sm:divide-x sm:divide-border/60 sm:[&>*]:px-5 sm:[&>*:first-child]:pl-0 sm:[&>*:last-child]:pr-0">
+      {/* Pie de extracto: en desktop las celdas se separan por filete vertical.
+          `key` por mes: la cascada se repite al cambiar de mes y deja claro que
+          las cuatro celdas son la lectura de ese mes, no números fijos. */}
+      <div
+        key={monthKey}
+        className="stagger mt-5 grid grid-cols-2 gap-x-5 gap-y-5 border-t border-dashed border-border pt-4 sm:grid-cols-4 sm:gap-x-0 sm:gap-y-0 sm:divide-x sm:divide-border/60 sm:[&>*]:px-5 sm:[&>*:first-child]:pl-0 sm:[&>*:last-child]:pr-0"
+      >
         <div className="metric-cell space-y-2">
           <p className="metric-cell-label">Promedio / día</p>
           <p className="metric-cell-value">{formatCurrency(dailyAvg)}</p>
