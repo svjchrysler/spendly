@@ -7,14 +7,62 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const out = join(root, 'public')
 
 // ponytail: pnpm add -D sharp && node scripts/generate-pwa-icons.mjs && pnpm remove sharp
-const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
-  <rect width="512" height="512" rx="112" fill="#000000"/>
-  <circle cx="256" cy="256" r="144" fill="#6fb38a" fill-opacity="0.22"/>
-  <path fill="#6fb38a" d="M156 192.8c0-45.6 38.4-78.4 100-78.4 51.2 0 88.8 24.8 102.4 61.6l-43.2 19.2c-8-19.2-27.2-32-58.4-32-31.2 0-50.4 15.2-50.4 36 0 20 14.4 31.2 50.4 40.8l24 6.4c51.2 13.6 77.6 38.4 77.6 78.4 0 51.2-40.8 84-100.8 84-56.8 0-98.4-26.4-112-68.8l44-20c8.8 24.8 32 40 68 40 34.4 0 56-16 56-39.2 0-20-14.4-31.2-51.2-41.6l-24.8-6.4c-51.2-13.6-76.8-38.4-76.8-78.4Z"/>
+
+/**
+ * Marca de Spendly: un recibo con el borde inferior dentado.
+ *
+ * Mismo dibujo y mismas proporciones que `public/favicon.svg`, escalado x16
+ * (viewBox 32 -> 512). El dentado replica `.receipt-edge` de `index.css`:
+ * dientes a 45 grados, el doble de anchos que altos.
+ *
+ * Acá la paleta es fija en oscuro. Un icono instalado no sigue al tema del
+ * sistema —iOS no lo recolorea— y el negro es el que casa con el splash y con
+ * `theme-color`. El favicon del navegador sí adapta, porque vive dentro de un
+ * chrome que cambia.
+ *
+ * `bleed` extiende el lienzo para el maskable. El fondo se dibuja sobre el
+ * viewBox completo, no sobre los 512 originales: antes se expandía el viewBox
+ * dejando el rect en 512x512, y el anillo exterior del maskable salía
+ * transparente — justo lo que un maskable no puede tener.
+ */
+function icon({ bleed = 0 } = {}) {
+  const origin = -bleed
+  const span = 512 + bleed * 2
+  // Un maskable ya lo recorta el sistema: la esquina redonda propia sobra
+  const radius = bleed > 0 ? 0 : 112
+
+  const slip =
+    'M160 96h192a24 24 0 0 1 24 24v240l-40 40-40-40-40 40-40-40-40 40-40-40V120A24 24 0 0 1 160 96Z'
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${span}" height="${span}" viewBox="${origin} ${origin} ${span} ${span}" fill="none" role="img" aria-label="Spendly">
+  <defs>
+    <linearGradient id="sheen" x1="256" y1="${origin}" x2="256" y2="240" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".07"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="slip" x1="256" y1="96" x2="256" y2="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".14"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="slipClip"><path d="${slip}"/></clipPath>
+  </defs>
+
+  <rect x="${origin}" y="${origin}" width="${span}" height="${span}" rx="${radius}" fill="#000000"/>
+  <rect x="${origin}" y="${origin}" width="${span}" height="${span}" rx="${radius}" fill="url(#sheen)"/>
+
+  <path d="${slip}" fill="#4ade80"/>
+  <rect x="${origin}" y="${origin}" width="${span}" height="${span}" fill="url(#slip)" clip-path="url(#slipClip)"/>
+
+  <rect x="176" y="176" width="160" height="35" rx="17.5" fill="#000000"/>
+  <rect x="176" y="248" width="104" height="35" rx="17.5" fill="#000000"/>
 </svg>`
+}
 
 const sizes = [
+  // Estaba suelto en public/ y nadie lo regeneraba: se quedó con la marca
+  // vieja. Va acá para que no vuelva a desincronizarse.
+  { name: 'favicon-32.png', size: 32 },
   { name: 'apple-touch-icon.png', size: 180 },
   { name: 'pwa-192.png', size: 192 },
   { name: 'pwa-512.png', size: 512 },
@@ -22,14 +70,8 @@ const sizes = [
 ]
 
 for (const { name, size, pad } of sizes) {
-  const input = pad
-    ? Buffer.from(
-        svg.replace(
-          'viewBox="0 0 512 512"',
-          'viewBox="-64 -64 640 640"',
-        ).replace('rx="112"', 'rx="0"'),
-      )
-    : Buffer.from(svg)
+  // 64/512 = 12.5% por lado → la marca queda dentro del 80% seguro
+  const input = Buffer.from(icon({ bleed: pad ? 64 : 0 }))
 
   await sharp(input)
     .resize(size, size)
@@ -38,5 +80,5 @@ for (const { name, size, pad } of sizes) {
   console.log('wrote', name)
 }
 
-writeFileSync(join(out, 'pwa-icon.svg'), svg)
+writeFileSync(join(out, 'pwa-icon.svg'), icon())
 console.log('done')

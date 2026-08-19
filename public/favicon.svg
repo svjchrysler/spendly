@@ -1,10 +1,59 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" rx="8" fill="#000000"/>
-  <!-- Soft mint glow behind S -->
-  <circle cx="16" cy="16" r="9" fill="#6fb38a" fill-opacity="0.22"/>
-  <!-- S monogram -->
-  <path
-    fill="#6fb38a"
-    d="M9.75 12.05c0-2.85 2.4-4.9 6.25-4.9 3.2 0 5.55 1.55 6.4 3.85l-2.7 1.2c-.5-1.2-1.7-2-3.65-2-1.95 0-3.15.95-3.15 2.25 0 1.25.9 1.95 3.15 2.55l1.5.4c3.2.85 4.85 2.4 4.85 4.9 0 3.2-2.55 5.25-6.3 5.25-3.55 0-6.15-1.65-7-4.3l2.75-1.25c.55 1.55 2 2.5 4.25 2.5 2.15 0 3.5-1 3.5-2.45 0-1.25-.9-1.95-3.2-2.6l-1.55-.4c-3.2-.85-4.8-2.4-4.8-4.9Z"
-  />
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none" role="img" aria-label="Spendly">
+  <!--
+    Marca de Spendly: un recibo con el borde inferior dentado.
+
+    La app entera está construida sobre la metáfora del extracto en papel
+    (`.receipt-edge`, "Recibo · 08/2026", `font-ledger`, los filetes
+    punteados), y ese era el único activo visual que el ícono no usaba. El
+    dentado de acá es el mismo de `.receipt-edge`: dientes a 45°, el doble de
+    anchos que altos.
+
+    Legibilidad a 16px: la silueta dentada se reconoce por forma antes que por
+    detalle, y las dos líneas de extracto miden 2.2/32 (≈2px físicos en
+    pantalla retina, que renderiza el favicon a 32). Nada más entra: a ese
+    tamaño un tercer renglón se cierra contra los otros.
+
+    Light y dark siguen a `src/lib/palette.ts`, igual que el token `primary`.
+    En oscuro se suma un aro hairline al 20%, el mismo `ring-foreground/20`
+    que ya usa `BrandMark.tsx`, para que el campo negro no se disuelva contra
+    una barra de pestañas oscura.
+  -->
+  <style>
+    .field { fill: #09090b }
+    .edge  { stroke: none }
+    .paper { fill: #16a34a }
+    .cut   { fill: #09090b }
+    @media (prefers-color-scheme: dark) {
+      .field { fill: #000000 }
+      .edge  { stroke: #ffffff; stroke-opacity: .2 }
+      .paper { fill: #4ade80 }
+      .cut   { fill: #000000 }
+    }
+  </style>
+
+  <defs>
+    <linearGradient id="sheen" x1="16" y1="0" x2="16" y2="15" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".07"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="slip" x1="16" y1="6" x2="16" y2="25" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".14"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="slipClip">
+      <path d="M10 6h12a1.5 1.5 0 0 1 1.5 1.5v15l-2.5 2.5-2.5-2.5-2.5 2.5-2.5-2.5-2.5 2.5-2.5-2.5V7.5A1.5 1.5 0 0 1 10 6Z"/>
+    </clipPath>
+  </defs>
+
+  <rect class="field" width="32" height="32" rx="7"/>
+  <rect width="32" height="32" rx="7" fill="url(#sheen)"/>
+
+  <path class="paper" d="M10 6h12a1.5 1.5 0 0 1 1.5 1.5v15l-2.5 2.5-2.5-2.5-2.5 2.5-2.5-2.5-2.5 2.5-2.5-2.5V7.5A1.5 1.5 0 0 1 10 6Z"/>
+  <rect width="32" height="32" fill="url(#slip)" clip-path="url(#slipClip)"/>
+
+  <!-- Renglones del extracto: calados del campo, no trazos encima -->
+  <rect class="cut" x="11" y="11" width="10" height="2.2" rx="1.1"/>
+  <rect class="cut" x="11" y="15.5" width="6.5" height="2.2" rx="1.1"/>
+
+  <rect class="edge" x=".5" y=".5" width="31" height="31" rx="6.5" fill="none"/>
 </svg>
