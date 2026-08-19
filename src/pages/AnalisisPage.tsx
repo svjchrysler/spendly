@@ -224,7 +224,7 @@ function TopExpensesList({ report }: Readonly<{ report: MonthReport }>) {
   }
 
   return (
-    <ListSection header="Mayores gastos" stagger>
+    <ListSection header="Mayores gastos" stagger="on-enter">
       {report.top.map((expense, index) => (
         <ListRow
           key={`${expense.expense_date}-${expense.amount}-${index}`}
@@ -247,7 +247,7 @@ function MonthDetail({
   const rows = [...history].reverse()
 
   return (
-    <ListSection header="Detalle por mes" stagger>
+    <ListSection header="Detalle por mes" stagger="on-enter">
       {rows.map((item, index) => {
         const previous = rows[index + 1]
         let delta: ReactNode = null

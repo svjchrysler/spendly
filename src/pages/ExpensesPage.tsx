@@ -66,7 +66,7 @@ export function ExpensesPage() {
         {isLoading ? (
           <Skeleton className="h-10 w-44" />
         ) : (
-          <p className="stat-value text-[2.4rem] sm:text-[2.6rem] lg:text-[2.8rem]">
+          <p className="stat-value vt-month-total text-[2.4rem] sm:text-[2.6rem] lg:text-[2.8rem]">
             {/* Corto: acá el total se recalcula tecla a tecla al filtrar y el
                 conteo tiene que alcanzar a asentarse entre pulsaciones */}
             <AnimatedAmount value={total} duration={450} />

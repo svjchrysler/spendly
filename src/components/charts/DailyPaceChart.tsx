@@ -3,6 +3,7 @@ import {
   CartesianGrid,
   ComposedChart,
   Line,
+  ReferenceDot,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -11,6 +12,7 @@ import {
 import { formatCurrency, formatCurrencyCompact } from '@/lib/format'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { useRevealOnEnter } from '@/hooks/useRevealOnEnter'
 
 type PacePoint = {
   day: string
@@ -57,10 +59,19 @@ export function DailyPaceChart({
 }>) {
   const isDesktop = useIsDesktop()
   const reducedMotion = useReducedMotion()
+  // El chart vive bajo el fold: la entrada espera a que se lo mire
+  const revealRef = useRevealOnEnter<HTMLElement>()
   const hasBudget = budget != null && budget > 0
   const series = hasBudget
     ? data.map((point) => ({ ...point, budget: budget }))
     : data
+
+  // El punteado ya dice "este es el techo"; el punto dice "acá lo cruzaste",
+  // que es el único dato accionable del chart. Sin presupuesto no hay nada
+  // que marcar y no se renderiza.
+  const crossing = hasBudget
+    ? data.find((point) => point.cumulative > budget)
+    : undefined
 
   const chartMargins = {
     top: 8,
@@ -70,13 +81,14 @@ export function DailyPaceChart({
   }
 
   return (
-    <section className="space-y-4 border-t border-border/70 pt-5">
+    <section ref={revealRef} className="space-y-4 border-t border-border/70 pt-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="stat-label">Ritmo del mes</p>
           <p className="mt-1 text-xs text-muted-foreground">
             Barras = gasto del día · línea = acumulado
             {hasBudget ? ' · punteado = presupuesto' : ''}
+            {crossing ? ' · el punto marca dónde lo cruzaste' : ''}
           </p>
         </div>
       </div>
@@ -138,6 +150,22 @@ export function DailyPaceChart({
                 // Sin animar a propósito: el presupuesto es la referencia fija
                 // contra la que se dibuja el acumulado, no un dato que llega
                 isAnimationActive={false}
+              />
+            ) : null}
+            {crossing ? (
+              <ReferenceDot
+                x={crossing.day}
+                y={crossing.cumulative}
+                r={4}
+                fill="var(--chart-4)"
+                stroke="var(--background)"
+                strokeWidth={2}
+                label={{
+                  value: `día ${crossing.day}`,
+                  position: 'top',
+                  fontSize: 10,
+                  fill: 'var(--chart-4)',
+                }}
               />
             ) : null}
           </ComposedChart>

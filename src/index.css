@@ -243,6 +243,45 @@
   --dur-3: 460ms;
   /* Paso entre hermanos de una cascada: se lee en orden sin hacer esperar */
   --stagger-step: 55ms;
+
+  /* Micro-feedback (tinte, press) y recorridos largos (montos, barras) */
+  --dur-0: 120ms;
+  --dur-4: 640ms;
+
+  /*
+    Resorte real. Un cubic-bezier no puede pasarse del objetivo y volver: sus
+    puntos de control lo dejan encerrado entre 0 y 1. `linear()` sí, porque son
+    muestras de la curva de un oscilador amortiguado (ζ=0.68, 2.6 Hz, 550ms) y
+    sobrepasa ~5% antes de asentarse.
+
+    Va donde algo *aterriza en un lugar*: la píldora del tab bar, el thumb del
+    segmented. Lo coreografiado (entradas, cascadas) sigue con --ease-out-expo:
+    un texto que aparece no tiene inercia, un objeto que se mueve sí.
+  */
+  --spring-land: linear(
+    0 0%,
+    0.075 4.8%,
+    0.2433 9.5%,
+    0.4408 14.3%,
+    0.6277 19%,
+    0.7829 23.8%,
+    0.8994 28.6%,
+    0.9782 33.3%,
+    1.0253 38.1%,
+    1.0481 42.9%,
+    1.0543 47.6%,
+    1.0503 52.4%,
+    1.0412 57.1%,
+    1.0305 61.9%,
+    1.0203 66.7%,
+    1.0119 71.4%,
+    1.0055 76.2%,
+    1.0012 81%,
+    0.9987 85.7%,
+    0.9974 90.5%,
+    0.9971 95.2%,
+    1 100%
+  );
   /* iOS-ish chrome metrics — keep sticky/FAB/main in sync */
   --app-header-h: 3.5rem;
   /* Alto de la cápsula expandida; colapsada solo cambia el visual */
@@ -446,6 +485,22 @@
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
+    }
+
+    /* El selector universal no alcanza a `scroll-behavior` */
+    html {
+      scroll-behavior: auto;
+    }
+
+    /*
+      Ni a los pseudos de view transition, que no son elementos del documento.
+      Sin esto la navegación entre tabs sigue deslizándose con el movimiento
+      reducido activado.
+    */
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+      animation: none !important;
     }
   }
 }
@@ -950,8 +1005,31 @@
       0 1px 2px color-mix(in oklab, var(--foreground) 10%, transparent),
       0 4px 10px -3px color-mix(in oklab, var(--foreground) 12%, transparent);
     transition:
-      transform 480ms var(--ease-spring),
+      transform 520ms var(--spring-land),
       opacity 220ms ease;
+  }
+
+  /*
+    La píldora se estira hacia donde va y se asienta. La deformación es
+    proporcional a los slots que recorre (`--tab-travel`), así que un salto de
+    Resumen a Categorías se lee más "pesado" que uno al tab de al lado: es la
+    distancia recorrida, no un adorno.
+
+    Va en la propiedad `scale`, no en `transform`, para no pisar el
+    `translate3d` que posiciona la píldora.
+  */
+  @keyframes pill-travel {
+    0%,
+    100% {
+      scale: 1 1;
+    }
+    40% {
+      scale: calc(1 + var(--tab-travel, 1) * 0.05) 0.93;
+    }
+  }
+
+  .tab-pill[data-moving='true'] {
+    animation: pill-travel 520ms var(--ease-out-expo);
   }
 
   .dark .tab-pill {
@@ -1128,6 +1206,25 @@
   }
 
   /*
+    ─── Entradas que esperan a que las mires ───────────────────────────────
+    `.reveal` y `.stagger` disparan al montar. En una página larga (Análisis
+    apila seis bloques) eso significa que la mitad de las entradas se juegan
+    fuera de pantalla: cuando el usuario llega, ya terminaron. La animación
+    dejó de contestar "de dónde salió esto".
+
+    `useRevealOnEnter` agrega la clase recién cuando el bloque entra al
+    viewport. Es a propósito **aditivo**: el contenido es visible por defecto y
+    la animación se suma después.
+
+    Se evaluó atarlo a `animation-timeline: view()`, que sería puro CSS, y se
+    descartó: un bloque cuyo rango de scroll no llega a completarse —el último
+    de una página corta, o cualquiera si el viewport cambia con el teclado
+    abierto— se congela a media opacidad. En una app de plata, contenido a
+    medio pintar no es un modo de falla aceptable. Además `view()` recién
+    existe desde Safari 26 y esto anda desde iOS 12.
+  */
+
+  /*
     Swap direccional. El contenido entra desde el lado hacia el que fuiste:
     "siguiente" viene de la derecha, "anterior" de la izquierda. Es lo que
     enseña que los meses son una cinta y no una lista de opciones.
@@ -1238,6 +1335,32 @@
     animation: icon-swap var(--dur-2) var(--ease-spring) backwards;
   }
 
+  /*
+    Tinte direccional del monto. El count-up ya dice cuánto se movió; el color
+    dice para qué lado sin agregar una flecha ni un signo. En una app de gastos
+    subir es la mala noticia, así que reusa el par semántico de siempre
+    (destructive / primary) y no un verde-rojo suelto.
+
+    Solo color: un transform acá convertiría al monto en containing block.
+  */
+  @keyframes amount-trend {
+    from {
+      color: var(--trend-tint);
+    }
+  }
+
+  .amount-trend[data-trend='up'] {
+    --trend-tint: var(--destructive);
+  }
+
+  .amount-trend[data-trend='down'] {
+    --trend-tint: var(--primary);
+  }
+
+  .amount-trend[data-trend] {
+    animation: amount-trend var(--dur-4) var(--ease-out-expo) backwards;
+  }
+
   /* Aviso que aparece: baja desde el borde del bloque al que pertenece */
   @keyframes notice-in {
     from {
@@ -1315,10 +1438,141 @@
     }
   }
 
+  /*
+    ─── Navegación entre pantallas ─────────────────────────────────────────
+    El mes ya entra desde el lado hacia el que fuiste (`.swap`). Las pantallas
+    no: hasta acá las cuatro tabs fundían igual en las dos direcciones, que es
+    la gramática de "cuatro destinos sueltos" y no la de una cinta.
+
+    `data-vt-dir` lo escribe `nav-direction.ts` con el orden de los tabs, justo
+    antes de que React Router abra la view transition.
+
+    El chrome no viaja. Nav bar, dock y FAB llevan `view-transition-name`
+    propio, así que quedan fuera del snapshot de `root` y se quedan quietos
+    mientras el contenido se desliza por debajo — que es lo que hace iOS y lo
+    que un cross-fade de página entera rompe.
+  */
+  .nav-bar {
+    view-transition-name: nav-bar;
+  }
+
+  .tab-dock {
+    view-transition-name: tab-dock;
+  }
+
+  .fab {
+    view-transition-name: fab;
+  }
+
+  /*
+    Elementos que existen en más de una pantalla. Con nombre propio el browser
+    los reconoce como el mismo objeto y los muda en vez de fundirlos: el mes
+    se queda en la barra y el total del mes se encoge de Resumen a Gastos.
+    Hay uno solo montado a la vez —`<Routes>` renderiza una ruta y el navigate
+    va dentro de `flushSync`— así que no hay colisión de nombres posible.
+  */
+  .vt-page-title {
+    view-transition-name: page-title;
+  }
+
+  .vt-month-total {
+    view-transition-name: month-total;
+  }
+
+  @keyframes vt-exit-start {
+    to {
+      opacity: 0;
+      transform: translateX(-24px);
+    }
+  }
+
+  @keyframes vt-enter-end {
+    from {
+      opacity: 0;
+      transform: translateX(24px);
+    }
+  }
+
+  @keyframes vt-exit-end {
+    to {
+      opacity: 0;
+      transform: translateX(24px);
+    }
+  }
+
+  @keyframes vt-enter-start {
+    from {
+      opacity: 0;
+      transform: translateX(-24px);
+    }
+  }
+
   @media (prefers-reduced-motion: no-preference) {
+    /* Sin dirección (tema, primera carga) sigue siendo el fundido de antes */
     ::view-transition-old(root),
     ::view-transition-new(root) {
       animation-duration: 180ms;
+    }
+
+    :root[data-vt-dir='next']::view-transition-old(root) {
+      animation: vt-exit-start var(--dur-2) var(--ease-out-expo) both;
+    }
+    :root[data-vt-dir='next']::view-transition-new(root) {
+      animation: vt-enter-end var(--dur-2) var(--ease-out-expo) both;
+    }
+    :root[data-vt-dir='prev']::view-transition-old(root) {
+      animation: vt-exit-end var(--dur-2) var(--ease-out-expo) both;
+    }
+    :root[data-vt-dir='prev']::view-transition-new(root) {
+      animation: vt-enter-start var(--dur-2) var(--ease-out-expo) both;
+    }
+
+    /*
+      El chrome se queda quieto y vivo. El snapshot viejo se descarta entero:
+      si se fundiera encima dejaría un fantasma de la píldora en el tab
+      anterior mientras la real viaja al nuevo.
+    */
+    ::view-transition-old(nav-bar),
+    ::view-transition-old(tab-dock) {
+      display: none;
+    }
+
+    ::view-transition-new(nav-bar),
+    ::view-transition-new(tab-dock) {
+      animation: none;
+    }
+
+    /*
+      El FAB sí entra y sale: existe en Resumen y Gastos, no en Análisis ni
+      Categorías. Que aparezca escalando contesta "acá se puede agregar algo".
+    */
+    @keyframes fab-vt-out {
+      to {
+        opacity: 0;
+        transform: scale(0.82);
+      }
+    }
+
+    @keyframes fab-vt-in {
+      from {
+        opacity: 0;
+        transform: scale(0.82);
+      }
+    }
+
+    ::view-transition-old(fab) {
+      animation: fab-vt-out var(--dur-1) var(--ease-out-expo) both;
+    }
+
+    ::view-transition-new(fab) {
+      animation: fab-vt-in var(--dur-2) var(--spring-land) both;
+    }
+
+    /* El título y el total se mudan con la misma curva que el contenido */
+    ::view-transition-group(page-title),
+    ::view-transition-group(month-total) {
+      animation-duration: var(--dur-2);
+      animation-timing-function: var(--ease-out-expo);
     }
   }
 

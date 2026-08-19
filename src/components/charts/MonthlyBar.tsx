@@ -11,6 +11,7 @@ import {
 import { formatCurrency, formatCurrencyCompact } from '@/lib/format'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { useRevealOnEnter } from '@/hooks/useRevealOnEnter'
 
 interface MonthlyBarProps {
   data: { label: string; total: number }[]
@@ -37,6 +38,8 @@ function CustomTooltip({
 export function MonthlyBar({ data }: Readonly<MonthlyBarProps>) {
   const isDesktop = useIsDesktop()
   const reducedMotion = useReducedMotion()
+  // El chart vive bajo el fold: la entrada espera a que se lo mire
+  const revealRef = useRevealOnEnter<HTMLElement>()
   const maxTotal = Math.max(...data.map((item) => item.total), 1)
   const currentIndex = data.length - 1
 
@@ -48,7 +51,7 @@ export function MonthlyBar({ data }: Readonly<MonthlyBarProps>) {
   }
 
   return (
-    <section className="space-y-4">
+    <section ref={revealRef} className="space-y-4">
       <div className="flex items-end justify-between gap-3">
         <p className="stat-label">Últimos 6 meses</p>
         <p className="text-xs text-muted-foreground">

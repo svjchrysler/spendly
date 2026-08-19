@@ -3,6 +3,7 @@ import { AnimatedAmount } from '@/components/ui/animated-amount'
 import { formatCurrency } from '@/lib/format'
 import { useCategoryColor } from '@/hooks/useCategoryColor'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { useRevealOnEnter } from '@/hooks/useRevealOnEnter'
 
 type Slice = {
   id: string
@@ -43,6 +44,8 @@ export function CategoryDonut({
 }>) {
   const categoryColor = useCategoryColor()
   const reducedMotion = useReducedMotion()
+  // El chart vive bajo el fold: la entrada espera a que se lo mire
+  const revealRef = useRevealOnEnter<HTMLElement>()
   if (data.length === 0 || total <= 0) return null
 
   const sorted = [...data].sort((a, b) => b.total - a.total)
@@ -71,7 +74,7 @@ export function CategoryDonut({
   ]
 
   return (
-    <section className="space-y-3">
+    <section ref={revealRef} className="space-y-3">
       <p className="stat-label">Mix de categorías</p>
       <div className="flex items-center gap-4">
         <div className="relative size-36 shrink-0 sm:size-40">

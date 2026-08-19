@@ -41,8 +41,17 @@ export function useCountUp(value: number, { duration = 700, from = 0 }: CountUpO
     const delta = safeValue - origin
     let frame = 0
 
+    /*
+      Un cambio de 3 Bs y uno de 3.000 no pueden tardar lo mismo: la duración
+      es parte de la lectura de "cuánto se movió". Se escala sobre el `duration`
+      que llega por prop, así que quien lo baja a propósito (el total filtrado,
+      que se recalcula tecla a tecla) conserva su techo.
+    */
+    const ratio = Math.min(Math.abs(delta) / Math.max(Math.abs(origin), 1), 1)
+    const span = Math.round(duration * (0.45 + 0.85 * ratio))
+
     const tick = (now: number) => {
-      const progress = Math.min((now - start) / duration, 1)
+      const progress = Math.min((now - start) / span, 1)
       const next = progress === 1 ? safeValue : origin + delta * easeOutExpo(progress)
       currentRef.current = next
       setDisplay(next)

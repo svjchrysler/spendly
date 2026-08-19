@@ -1,6 +1,7 @@
 import type { ComponentProps, CSSProperties, ReactNode } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useRevealOnEnter } from '@/hooks/useRevealOnEnter'
 import { cn } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -42,11 +43,17 @@ export function ListSection({
    * Cascada de entrada de las filas. Solo para listas cortas y cerradas
    * (un top de 5, los meses del historial): en un listado largo la última
    * fila llegaría tarde y en uno con swipe pelea con el gesto.
+   *
+   * `'on-enter'` la difiere hasta que la lista se ve — para las que viven
+   * bajo el fold, donde `true` gastaría la entrada fuera de pantalla.
    */
-  stagger?: boolean
+  stagger?: boolean | 'on-enter'
   className?: string
   children: ReactNode
 }>) {
+  // Inerte salvo que `stagger` sea 'on-enter': sin nodo el hook no hace nada
+  const deferredStagger = useRevealOnEnter<HTMLDivElement>('stagger')
+
   return (
     <section className={cn('min-w-0', className)}>
       {header ? (
@@ -55,7 +62,12 @@ export function ListSection({
           {headerTrailing}
         </div>
       ) : null}
-      <div className={cn('list-group', stagger && 'stagger')}>{children}</div>
+      <div
+        ref={stagger === 'on-enter' ? deferredStagger : undefined}
+        className={cn('list-group', stagger === true && 'stagger')}
+      >
+        {children}
+      </div>
       {footer ? (
         <p className="px-4 pt-1.5 text-footnote text-label-secondary">{footer}</p>
       ) : null}

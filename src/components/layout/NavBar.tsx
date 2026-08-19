@@ -68,10 +68,14 @@ export function NavBar({ eyebrow, title, trailing, swapKey, direction = 'none' }
     <div ref={ref} className="flex items-end justify-between gap-3 pb-4">
       <div className="nav-large-title min-w-0 space-y-1">
         {eyebrow ? <p className="stat-label">{eyebrow}</p> : null}
+        {/* `vt-page-title`: el large title es el mismo objeto en las cuatro
+            pantallas, así que entre tabs se queda y lo que viaja es el
+            contenido de abajo — la lectura de iOS, donde el título pertenece
+            a la barra y no a la página. */}
         <h1
           key={swapKey}
           data-dir={swapKey ? direction : undefined}
-          className={cn('page-title capitalize', swapKey && 'swap')}
+          className={cn('page-title vt-page-title capitalize', swapKey && 'swap')}
         >
           {title}
         </h1>

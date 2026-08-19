@@ -1,5 +1,6 @@
+import { useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Moon, Sun } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BrandMark } from '@/components/layout/BrandMark'
@@ -14,7 +15,9 @@ import { useMonth } from '@/contexts/MonthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useKeyboardInset } from '@/hooks/useKeyboardInset'
 import { useRealtimeExpenses } from '@/hooks/useRealtimeExpenses'
+import { useRouteTransition } from '@/hooks/useRouteTransition'
 import { useScrollRestoration } from '@/hooks/useScrollRestoration'
+import { tapFeedback } from '@/lib/haptics'
 import { prefetchMonthData } from '@/lib/prefetch-month'
 
 const navItems: readonly TabItem[] = [
@@ -48,6 +51,13 @@ const navItems: readonly TabItem[] = [
   },
 ]
 
+/** Índice del tab que corresponde a un path — el orden manda la dirección. */
+function tabIndexOf(pathname: string) {
+  return navItems.findIndex((item) =>
+    item.end ? pathname === item.to : pathname.startsWith(item.to),
+  )
+}
+
 export function AppShell() {
   return (
     <NavTitleProvider>
@@ -64,6 +74,24 @@ function AppShellInner() {
   const { year, month } = useMonth()
   const queryClient = useQueryClient()
   const navTitle = useNavTitle()
+  const { pathname } = useLocation()
+  const navigateToRoute = useRouteTransition()
+  const activeIndex = tabIndexOf(pathname)
+
+  /*
+    La dirección sale del orden de los tabs, no del path: es el mismo
+    vocabulario que `.swap` usa para los meses, un escalón más arriba. El
+    `prefetch` de la ruta se pasa como `load` — la transición no puede
+    arrancar antes de que el chunk esté, o fotografía el skeleton.
+  */
+  const goToTab = useCallback(
+    (item: TabItem, index: number) => {
+      if (index === activeIndex) return
+      tapFeedback()
+      void navigateToRoute(item.to, index > activeIndex ? 'next' : 'prev', item.prefetch)
+    },
+    [activeIndex, navigateToRoute],
+  )
 
   function warmRoute(prefetch: () => Promise<unknown>) {
     void prefetch()
@@ -99,14 +127,27 @@ function AppShellInner() {
             className="hidden h-full flex-1 items-stretch justify-center gap-1 md:flex"
             aria-label="Principal"
           >
-            {navItems.map(({ to, label, end, prefetch }) => (
+            {navItems.map((item, index) => (
               <NavLink
-                key={to}
-                to={to}
-                end={end}
-                viewTransition
-                onPointerEnter={() => warmRoute(prefetch)}
-                onFocus={() => warmRoute(prefetch)}
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                onPointerEnter={() => warmRoute(item.prefetch)}
+                onFocus={() => warmRoute(item.prefetch)}
+                onClick={(event) => {
+                  if (
+                    event.defaultPrevented ||
+                    event.metaKey ||
+                    event.ctrlKey ||
+                    event.shiftKey ||
+                    event.altKey ||
+                    event.button !== 0
+                  ) {
+                    return
+                  }
+                  event.preventDefault()
+                  goToTab(item, index)
+                }}
                 className={({ isActive }) =>
                   cn(
                     'pressable relative inline-flex min-h-11 cursor-pointer items-center rounded-full px-4 text-sm font-medium transition-colors duration-200',
@@ -118,7 +159,7 @@ function AppShellInner() {
               >
                 {({ isActive }) => (
                   <>
-                    {label}
+                    {item.label}
                     <span
                       className={cn(
                         'absolute inset-x-3 bottom-1.5 h-0.5 rounded-full bg-primary transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
@@ -161,7 +202,7 @@ function AppShellInner() {
         </PageEnter>
       </main>
 
-      <TabBar items={navItems} onWarm={warmRoute} />
+      <TabBar items={navItems} onWarm={warmRoute} onSelect={goToTab} />
     </div>
   )
 }

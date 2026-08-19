@@ -12,6 +12,7 @@ import {
 import { formatCurrency, formatCurrencyCompact } from '@/lib/format'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { useRevealOnEnter } from '@/hooks/useRevealOnEnter'
 
 type WeekdayPoint = {
   label: string
@@ -55,6 +56,8 @@ export function WeekdayBarChart({
 }>) {
   const isDesktop = useIsDesktop()
   const reducedMotion = useReducedMotion()
+  // El chart vive bajo el fold: la entrada espera a que se lo mire
+  const revealRef = useRevealOnEnter<HTMLElement>()
   const peak = Math.max(...data.map((item) => item.total), 0)
   const chartData = data.map((item) => ({
     ...item,
@@ -62,7 +65,7 @@ export function WeekdayBarChart({
   }))
 
   return (
-    <section className="space-y-4 border-t border-border/70 pt-5">
+    <section ref={revealRef} className="space-y-4 border-t border-border/70 pt-5">
       <p className="stat-label">Por día de la semana</p>
       <div className="h-48 sm:h-52">
         <ResponsiveContainer width="100%" height="100%">

@@ -210,7 +210,7 @@ export function CategoriesPage() {
           <ListSection
             header="Todas"
             footer="Solo se pueden eliminar categorías sin gastos asociados."
-            stagger
+            stagger="on-enter"
           >
             {categories.map((category) => (
               <ListRow

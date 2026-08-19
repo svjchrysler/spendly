@@ -141,7 +141,9 @@ export function SpendingHero({
           El total viaja hasta su valor: al guardar un gasto o al saltar de
           mes se ve cuánto se movió, no solo que quedó otra cifra.
         */}
-        <p className="stat-value leading-none lg:text-[3.5rem]">
+        {/* `vt-month-total`: en Gastos el mismo número vive en otro tamaño y
+            otro lugar. Con el nombre compartido no se funde: se muda. */}
+        <p className="stat-value vt-month-total leading-none lg:text-[3.5rem]">
           <AnimatedAmount value={spent} />
         </p>
         {/* key por estado: al pasar de "definir" a editor y de vuelta al dato,
