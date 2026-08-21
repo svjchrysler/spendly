@@ -1,11 +1,15 @@
 import { useState, type ReactNode } from 'react'
+import { Receipt, TrendingUp } from 'lucide-react'
 import { AnimatedAmount } from '@/components/ui/animated-amount'
 import { Button } from '@/components/ui/button'
+import { FlipCard } from '@/components/ui/flip-card'
 import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
 import { MonthlyCapAlert } from '@/components/dashboard/MonthlyCapAlert'
 import { useUpsertBudget } from '@/hooks/useMonthlyStats'
+import { isNavigating } from '@/hooks/useRouteTransition'
 import { useMonth } from '@/contexts/MonthContext'
+import { dailyBudgetRemaining, projectedMonthSpend } from '@/lib/month-insights'
 import { formatCurrency } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -25,6 +29,7 @@ export function SpendingHero({
   const upsertBudget = useUpsertBudget()
   const [editingBudget, setEditingBudget] = useState(false)
   const [budgetValue, setBudgetValue] = useState(budget?.toString() ?? '')
+  const [showProjection, setShowProjection] = useState(false)
 
   const remaining = budget != null ? budget - spent : null
   const overBudget = remaining != null && remaining < 0
@@ -35,6 +40,12 @@ export function SpendingHero({
     now.getFullYear() === year && now.getMonth() + 1 === month
   const dayOfMonth = isCurrentMonth ? now.getDate() : daysInMonth
   const dailyAvg = dayOfMonth > 0 ? spent / dayOfMonth : 0
+
+  // Reverso del recibo: a dónde va el mes si el ritmo no cambia
+  const projected = projectedMonthSpend(spent, dayOfMonth, daysInMonth)
+  const perDayLeft = dailyBudgetRemaining(budget, spent, dayOfMonth, daysInMonth)
+  const daysLeft = Math.max(daysInMonth - dayOfMonth, 0)
+  const projectedGap = budget != null ? projected - budget : null
 
   async function handleSaveBudget() {
     const amount = Number.parseFloat(budgetValue)
@@ -123,17 +134,43 @@ export function SpendingHero({
     )
   }
 
-  // Encabezado de extracto: sin superficie propia — la jerarquía la dan la
-  // escala tipográfica y los filetes, igual que el resto de las pantallas.
-  return (
-    // `reveal`: el recibo sube a su lugar cuando reemplaza al skeleton, así se
-    // lee como "llegaron los datos" y no como un parpadeo de layout
-    <section className="reveal min-w-0">
+  const monthTag = `${String(month).padStart(2, '0')}/${year}`
+
+  /*
+    La esquina del recibo da vuelta la tarjeta. Es la afordancia de la tarjeta
+    de dos caras de iOS (Clima, Bolsa): el tag de la esquina es el que gira.
+
+    Bloqueada mientras se edita el presupuesto — la cara oculta queda `inert` y
+    dejaría el input a medio llenar fuera de alcance — y durante una navegación,
+    porque el monto viene morfeando por view transition (`vt-month-total`) y no
+    puede estar girando al mismo tiempo que lo fotografían.
+  */
+  const flipTag = (label: string, Icon: typeof Receipt) => (
+    <button
+      type="button"
+      className="pressable stat-label inline-flex cursor-pointer items-center gap-1.5 font-ledger text-muted-foreground/70 hover:text-foreground"
+      aria-expanded={showProjection}
+      onClick={() => {
+        if (isNavigating()) return
+        setShowProjection((value) => !value)
+      }}
+    >
+      <Icon className="size-3.5" aria-hidden />
+      {label} · {monthTag}
+    </button>
+  )
+
+  const front = (
+    <div className="min-w-0">
       <div className="flex items-baseline justify-between gap-3 border-b border-border/70 pb-2.5">
         <p className="stat-label">Gastado</p>
-        <p className="stat-label font-ledger text-muted-foreground/70">
-          Recibo · {String(month).padStart(2, '0')}/{year}
-        </p>
+        {editingBudget ? (
+          <p className="stat-label font-ledger text-muted-foreground/70">
+            Recibo · {monthTag}
+          </p>
+        ) : (
+          flipTag('Recibo', TrendingUp)
+        )}
       </div>
 
       <div className="space-y-3 pt-4">
@@ -189,7 +226,69 @@ export function SpendingHero({
           </p>
         </div>
       </div>
+    </div>
+  )
 
+  // Mismo esqueleto que la cara de adelante: es la misma tarjeta dada vuelta,
+  // no otra pantalla. Sin `AnimatedAmount` — contaría al montar, escondida.
+  const back = (
+    <div className="min-w-0">
+      <div className="flex items-baseline justify-between gap-3 border-b border-border/70 pb-2.5">
+        <p className="stat-label">Al ritmo actual</p>
+        {flipTag('Proyección', Receipt)}
+      </div>
+
+      <div className="space-y-3 pt-4">
+        <p className="stat-value leading-none lg:text-[3.5rem]">
+          {formatCurrency(projected)}
+        </p>
+        <p
+          className={cn(
+            'text-sm font-medium tabular-nums',
+            projectedGap != null && projectedGap > 0 ? 'text-destructive' : 'text-primary',
+          )}
+        >
+          {projectedGap == null
+            ? `Proyectado a fin de ${monthTag} · sin presupuesto definido`
+            : projectedGap > 0
+              ? `${formatCurrency(projectedGap)} sobre presupuesto a fin de mes`
+              : `${formatCurrency(Math.abs(projectedGap))} bajo presupuesto a fin de mes`}
+        </p>
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-5 border-t border-dashed border-border pt-4 sm:grid-cols-4 sm:gap-x-0 sm:gap-y-0 sm:divide-x sm:divide-border/60 sm:[&>*]:px-5 sm:[&>*:first-child]:pl-0 sm:[&>*:last-child]:pr-0">
+        <div className="metric-cell space-y-2">
+          <p className="metric-cell-label">Días restantes</p>
+          <p className="metric-cell-value">{daysLeft}</p>
+        </div>
+        <div className="metric-cell space-y-2">
+          <p className="metric-cell-label">Disponible / día</p>
+          <p className="metric-cell-value">
+            {perDayLeft == null ? '—' : formatCurrency(Math.max(perDayLeft, 0))}
+          </p>
+        </div>
+        <div className="metric-cell space-y-2">
+          <p className="metric-cell-label">Promedio / día</p>
+          <p className="metric-cell-value">{formatCurrency(dailyAvg)}</p>
+        </div>
+        <div className="metric-cell space-y-2">
+          <p className="metric-cell-label">Presupuesto</p>
+          <p className="metric-cell-value">
+            {budget == null ? '—' : formatCurrency(budget)}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+
+  // Encabezado de extracto: sin superficie propia — la jerarquía la dan la
+  // escala tipográfica y los filetes, igual que el resto de las pantallas.
+  return (
+    // `reveal`: el recibo sube a su lugar cuando reemplaza al skeleton, así se
+    // lee como "llegaron los datos" y no como un parpadeo de layout
+    <section className="reveal min-w-0">
+      <FlipCard flipped={showProjection} front={front} back={back} />
+      {/* Fuera de la tarjeta: una alerta de tope no se puede esconder girando */}
       <MonthlyCapAlert spent={spent} />
     </section>
   )

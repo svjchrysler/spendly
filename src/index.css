@@ -652,12 +652,44 @@
 
   /* ─── Sheet arrastrable ───────────────────────────────────────────────── */
 
+  /*
+    El sheet no sube plano: se despliega sobre su borde inferior, como una
+    tarjeta que se acuesta contra la pantalla. La bisagra abajo es lo que
+    contesta "esto salió de ahí" en vez de "esto apareció".
+
+    El `rotateX` va en la misma cadena que el arrastre — son un solo
+    `transform` — mientras el `translate` de entrada/salida de Base UI sigue
+    componiendo aparte. `--sheet-tilt` no necesita `@property`: lo que
+    transiciona es `transform` (declarado en `sheet.tsx`), que se recomputa
+    cuando la variable cambia.
+  */
   .sheet-draggable[data-side='bottom'] {
-    transform: translateY(var(--sheet-y, 0px));
+    transform: translateY(var(--sheet-y, 0px)) perspective(1000px)
+      rotateX(var(--sheet-tilt, 0deg));
+    transform-origin: 50% 100%;
+    backface-visibility: hidden;
+  }
+
+  .sheet-draggable[data-side='bottom'][data-starting-style],
+  .sheet-draggable[data-side='bottom'][data-ending-style] {
+    --sheet-tilt: 6deg;
   }
 
   .sheet-draggable[data-dragging='true'] {
     transition: none;
+  }
+
+  /* Arrastrando manda el dedo: el pliegue ya se resolvió al abrir */
+  .sheet-draggable[data-dragging='true'][data-side='bottom'] {
+    --sheet-tilt: 0deg;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sheet-draggable[data-side='bottom'],
+    .sheet-draggable[data-side='bottom'][data-starting-style],
+    .sheet-draggable[data-side='bottom'][data-ending-style] {
+      --sheet-tilt: 0deg;
+    }
   }
 
   /* ─── Swipe actions ───────────────────────────────────────────────────── */
@@ -670,12 +702,21 @@
     touch-action: pan-y;
   }
 
+  /*
+    La acción no estaba escondida detrás de la fila: estaba ahí, quieta, y la
+    fila la tapaba. Con bisagra en el borde derecho se abre como una puerta a
+    medida que el dedo arrastra, y el gesto pasa a tener un solo objeto.
+
+    `perspective` acá es seguro: `.swipe-row` ya es `relative` y no hay nada
+    `fixed` adentro de una fila.
+  */
   .swipe-row__actions {
     position: absolute;
     inset-block: 0;
     inset-inline-end: 0;
     display: flex;
     align-items: stretch;
+    perspective: 600px;
   }
 
   .swipe-row__content {
@@ -702,6 +743,22 @@
     color: var(--destructive-foreground);
     font-size: var(--text-caption-1);
     font-weight: 500;
+    /* `--swipe-progress` lo escribe `useSwipeActions` en `.swipe-row`, sin
+       estado de React: la puerta sigue al dedo, no a un render. */
+    transform-origin: 100% 50%;
+    transform: rotateY(calc((1 - var(--swipe-progress, 0)) * -62deg));
+    backface-visibility: hidden;
+  }
+
+  /* Soltando, la puerta acompaña a la fila con la misma curva */
+  .swipe-row:not([data-dragging='true']) .swipe-row__action {
+    transition: transform 320ms var(--ease-sheet);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .swipe-row__action {
+      transform: none;
+    }
   }
 
   /*
@@ -1105,21 +1162,33 @@
     pointer-events: none;
   }
 
-  /* Rebote del símbolo al seleccionar, como SF Symbols */
+  /*
+    Rebote del símbolo al seleccionar, como SF Symbols, ahora sobre su propio
+    eje: el set de iconos es de dos caras (outline / filled) y el wrap ya se
+    remonta al activarse, así que el cambio se lee como el símbolo dándose
+    vuelta y no como un reemplazo.
+
+    Un solo keyframe con las dos cosas: dos `animation` sobre la misma
+    propiedad no componen, la última gana.
+
+    Perspectiva autocontenida — el dock es `backdrop-filter` y aplanaría
+    cualquier contexto 3D heredado de un ancestro.
+  */
   @keyframes tab-symbol-bounce {
     0% {
-      transform: scale(1);
+      transform: perspective(420px) rotateY(-72deg) scale(0.9);
     }
     38% {
-      transform: scale(1.22);
+      transform: perspective(420px) rotateY(0deg) scale(1.22);
     }
     100% {
-      transform: scale(1);
+      transform: perspective(420px) rotateY(0deg) scale(1);
     }
   }
 
   .tab-item[aria-current='page'] .tab-icon-wrap {
     animation: tab-symbol-bounce 420ms var(--ease-spring);
+    backface-visibility: hidden;
   }
 
   .list-section {
@@ -1272,8 +1341,26 @@
     }
   }
 
+  /*
+    …y la fila además emerge de la superficie en vez de aparecer pintada. Sale
+    desde atrás (Z negativo), nunca hacia adelante: `.list-group` recorta con
+    `overflow: hidden`, así que una fila que se agranda se comería los bordes.
+
+    Las dos animaciones van en la misma declaración a propósito: son la misma
+    llegada contada dos veces (dónde aterrizó y que aterrizó), y un segundo
+    `animation` en otra clase pisaría a este.
+  */
+  @keyframes row-deal {
+    from {
+      opacity: 0;
+      transform: perspective(760px) translate3d(0, 6px, -70px) rotateX(9deg);
+    }
+  }
+
   .row-landed {
-    animation: row-landed 1200ms var(--ease-out-expo) backwards;
+    animation:
+      row-deal var(--dur-3) var(--ease-out-expo) backwards,
+      row-landed 1200ms var(--ease-out-expo) backwards;
   }
 
   /* Error de validación: el campo se sacude hacia donde está el problema */
@@ -1373,13 +1460,19 @@
     animation: notice-in var(--dur-2) var(--ease-out-expo) backwards;
   }
 
+  /*
+    El FAB se acerca y se hunde en vez de escalar. Misma lista de funciones en
+    los tres estados para que interpolen componente a componente en vez de por
+    descomposición de matriz. A 600px de perspectiva, translateZ(23px) ≈ el
+    scale(1.04) de antes.
+  */
   .fab:hover {
     @apply bg-primary/90;
-    transform: scale(1.04);
+    transform: perspective(600px) translate3d(0, 0, 23px) rotateX(0deg);
   }
 
   .fab:active {
-    transform: scale(0.94);
+    transform: perspective(600px) translate3d(0, 0, -30px) rotateX(7deg);
   }
 
   .input-amount {
@@ -1439,6 +1532,112 @@
   }
 
   /*
+    ─── Tarjeta de dos caras ───────────────────────────────────────────────
+    El único contexto 3D encadenado del proyecto (`perspective` en el ancestro
+    + `preserve-3d`). Ver `components/ui/flip-card.tsx` para por qué acá sí.
+
+    `.flip-card__inner` no puede llevar `overflow` distinto de `visible`: eso
+    aplana el `preserve-3d` y las dos caras quedan pegadas.
+  */
+  .flip-card {
+    perspective: 1400px;
+  }
+
+  .flip-card__inner {
+    display: grid;
+    transform-style: preserve-3d;
+    transform: rotateY(0deg);
+    transition: transform var(--dur-3) var(--ease-spring);
+  }
+
+  .flip-card__inner[data-flipped] {
+    transform: rotateY(180deg);
+  }
+
+  .flip-card__face {
+    grid-area: 1 / 1;
+    min-width: 0;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  .flip-card__face--back {
+    transform: rotateY(180deg);
+  }
+
+  /* Sin giro las dos caras quedan apiladas: la que no toca se esconde. El
+     `inert` ya lo pone el componente para el lector de pantalla. */
+  @media (prefers-reduced-motion: reduce) {
+    .flip-card__inner,
+    .flip-card__inner[data-flipped],
+    .flip-card__face--back {
+      transform: none;
+    }
+
+    .flip-card__face[inert] {
+      visibility: hidden;
+    }
+  }
+
+  /*
+    ─── Profundidad de modal ───────────────────────────────────────────────
+    Con un sheet abierto la pantalla de atrás retrocede en Z, como la tarjeta
+    que iOS empuja al fondo. Contesta la pregunta de siempre: esto que estás
+    mirando está *encima* de aquello, y aquello sigue ahí.
+
+    No hay un ancestro común que pueda llevar el transform. La app scrollea en
+    `window`, así que el div raíz del shell mide el alto del documento entero
+    y un transform ahí convertiría a `.tab-dock` (`fixed`) en su hijo
+    posicionado: su `bottom` dejaría de ser el borde de la pantalla. Por eso
+    van los tres en paralelo. Transformar un `sticky`/`fixed` **a sí mismo** es
+    válido; lo que rompe es tener un *ancestro* transformado — y ninguno de los
+    tres tiene nada `fixed` adentro (el FAB portalea a `document.body` y los
+    headers de fecha dejaron de ser sticky).
+
+    El atributo lo maneja `lib/modal-depth.ts` con refcount. Mientras existe,
+    los tres declaran su transform de reposo; al borrarse vuelven a
+    `transform: none` y dejan de ser containing block de nada.
+  */
+  html[data-modal] :is(.nav-bar, main, .tab-dock) {
+    transform: perspective(1200px) translate3d(0, 0, 0);
+    transition: transform var(--dur-2) var(--ease-sheet);
+  }
+
+  /*
+    Punto de fuga compartido: los tres apuntan al centro del viewport (50dvh),
+    cada uno expresado contra su propia caja. `main` es el único que depende
+    del scroll, y `modal-depth.ts` lo congela en `--modal-scroll` al abrir —
+    con el modal abierto la página de atrás no scrollea, así que alcanza con
+    leerlo una vez.
+  */
+  html[data-modal] .nav-bar {
+    transform-origin: 50% 50dvh;
+  }
+
+  html[data-modal] main {
+    transform-origin: 50% calc(50dvh + var(--modal-scroll, 0px) - var(--sticky-top));
+  }
+
+  html[data-modal] .tab-dock {
+    transform-origin: 50% calc(var(--app-tabbar-space) - 50dvh);
+  }
+
+  html[data-modal='1'] :is(.nav-bar, main, .tab-dock) {
+    transform: perspective(1200px) translate3d(0, 0, -64px);
+  }
+
+  /*
+    El FAB no retrocede: se va. Está portaleado a `body`, fuera de los tres, y
+    coordinar su origen sería frágil. Además es lo correcto de contar — el FAB
+    *es* lo que abrió el sheet.
+  */
+  html[data-modal='1'] .fab {
+    opacity: 0;
+    transform: perspective(600px) translate3d(0, 0, -30px) rotateX(0deg);
+    pointer-events: none;
+  }
+
+  /*
     ─── Navegación entre pantallas ─────────────────────────────────────────
     El mes ya entra desde el lado hacia el que fuiste (`.swap`). Las pantallas
     no: hasta acá las cuatro tabs fundían igual en las dos direcciones, que es
@@ -1479,31 +1678,60 @@
     view-transition-name: month-total;
   }
 
+  /*
+    Push/pop con eje Z. Las pantallas dejan de ser dos láminas que se cruzan y
+    pasan a ser dos tarjetas apiladas: la que se va cae al fondo girando sobre
+    el borde por el que se va, la que llega entra desde el borde contrario y se
+    endereza contra la pantalla.
+
+    Es el lugar más seguro del proyecto para 3D: los pseudos de view transition
+    viven en un árbol overlay aparte del documento, así que ninguna perspectiva
+    de acá puede atrapar un `position: fixed` real.
+
+    Los dos extremos declaran la misma lista de funciones para que interpolen
+    componente a componente y no por descomposición de matriz.
+  */
   @keyframes vt-exit-start {
+    from {
+      opacity: 1;
+      transform: perspective(1400px) translate3d(0, 0, 0) rotateY(0deg);
+    }
     to {
       opacity: 0;
-      transform: translateX(-24px);
+      transform: perspective(1400px) translate3d(-14%, 0, -170px) rotateY(5deg);
     }
   }
 
   @keyframes vt-enter-end {
     from {
       opacity: 0;
-      transform: translateX(24px);
+      transform: perspective(1400px) translate3d(32%, 0, -60px) rotateY(-8deg);
+    }
+    to {
+      opacity: 1;
+      transform: perspective(1400px) translate3d(0, 0, 0) rotateY(0deg);
     }
   }
 
   @keyframes vt-exit-end {
+    from {
+      opacity: 1;
+      transform: perspective(1400px) translate3d(0, 0, 0) rotateY(0deg);
+    }
     to {
       opacity: 0;
-      transform: translateX(24px);
+      transform: perspective(1400px) translate3d(14%, 0, -170px) rotateY(-5deg);
     }
   }
 
   @keyframes vt-enter-start {
     from {
       opacity: 0;
-      transform: translateX(-24px);
+      transform: perspective(1400px) translate3d(-32%, 0, -60px) rotateY(8deg);
+    }
+    to {
+      opacity: 1;
+      transform: perspective(1400px) translate3d(0, 0, 0) rotateY(0deg);
     }
   }
 
@@ -1512,18 +1740,36 @@
     ::view-transition-old(root),
     ::view-transition-new(root) {
       animation-duration: 180ms;
+      /*
+        El UA las pinta con `plus-lighter` para que un cross-fade no baje de
+        brillo en el cruce. Con dos tarjetas en profundidad el solape deja de
+        ser un cross-fade y `plus-lighter` lo lava.
+      */
+      mix-blend-mode: normal;
+      /* Que no asome el reverso del snapshot al pasar el filo */
+      backface-visibility: hidden;
     }
 
     :root[data-vt-dir='next']::view-transition-old(root) {
+      /* Bisagra en el borde por el que se va */
+      transform-origin: left center;
       animation: vt-exit-start var(--dur-2) var(--ease-out-expo) both;
     }
     :root[data-vt-dir='next']::view-transition-new(root) {
+      transform-origin: right center;
       animation: vt-enter-end var(--dur-2) var(--ease-out-expo) both;
     }
     :root[data-vt-dir='prev']::view-transition-old(root) {
+      transform-origin: right center;
+      /*
+        En el pop la saliente va **encima**: es lo único que distingue volver
+        de avanzar cuando las dos pantallas son del mismo tamaño.
+      */
+      z-index: 1;
       animation: vt-exit-end var(--dur-2) var(--ease-out-expo) both;
     }
     :root[data-vt-dir='prev']::view-transition-new(root) {
+      transform-origin: left center;
       animation: vt-enter-start var(--dur-2) var(--ease-out-expo) both;
     }
 

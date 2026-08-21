@@ -92,7 +92,7 @@ function ExpenseRow({
   onEdit: () => void
   onDelete: () => void
 }>) {
-  const { nodeRef, swipeHandlers } = useSwipeActions({
+  const { nodeRef, rowRef, swipeHandlers } = useSwipeActions({
     enabled: !isDesktop,
     isOpen: swipeOpen,
     onOpenChange: onSwipeOpenChange,
@@ -128,7 +128,7 @@ function ExpenseRow({
   if (isDesktop) return row
 
   return (
-    <div className="swipe-row" {...swipeHandlers}>
+    <div ref={rowRef} className="swipe-row" {...swipeHandlers}>
       {/* Botón real detrás: el swipe nunca es el único camino a la acción */}
       <div className="swipe-row__actions" aria-hidden={!swipeOpen}>
         <button

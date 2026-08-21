@@ -33,6 +33,7 @@ type Options = {
  */
 export function useSwipeActions({ enabled, onCommit, isOpen, onOpenChange }: Options) {
   const nodeRef = useRef<HTMLDivElement>(null)
+  const rowRef = useRef<HTMLDivElement>(null)
   const start = useRef({ x: 0, y: 0, t: 0 })
   const axis = useRef<'none' | 'x' | 'y'>('none')
   const offset = useRef(0)
@@ -41,15 +42,29 @@ export function useSwipeActions({ enabled, onCommit, isOpen, onOpenChange }: Opt
   const setOffset = useCallback((value: number) => {
     offset.current = value
     nodeRef.current?.style.setProperty('--swipe-x', `${value}px`)
+    // La puerta de la acción abre a la par del arrastre. Va en la fila y no en
+    // el contenido: el panel de acciones es hermano, no descendiente.
+    rowRef.current?.style.setProperty(
+      '--swipe-progress',
+      String(Math.min(1, Math.abs(value) / OPEN_W)),
+    )
+  }, [])
+
+  const setDragging = useCallback((on: boolean) => {
+    for (const node of [nodeRef.current, rowRef.current]) {
+      if (!node) continue
+      if (on) node.setAttribute('data-dragging', 'true')
+      else node.removeAttribute('data-dragging')
+    }
   }, [])
 
   const settle = useCallback(
     (open: boolean) => {
-      nodeRef.current?.removeAttribute('data-dragging')
+      setDragging(false)
       setOffset(open ? -OPEN_W : 0)
       onOpenChange(open)
     },
-    [onOpenChange, setOffset],
+    [onOpenChange, setDragging, setOffset],
   )
 
   // El estado abierto lo manda el padre (una sola fila abierta a la vez)
@@ -91,7 +106,7 @@ export function useSwipeActions({ enabled, onCommit, isOpen, onOpenChange }: Opt
           return
         }
         event.currentTarget.setPointerCapture(event.pointerId)
-        nodeRef.current?.setAttribute('data-dragging', 'true')
+        setDragging(true)
       }
 
       const base = isOpen ? -OPEN_W : 0
@@ -100,7 +115,7 @@ export function useSwipeActions({ enabled, onCommit, isOpen, onOpenChange }: Opt
       if (next < -OPEN_W) next = -OPEN_W + (next + OPEN_W) * RESISTANCE
       setOffset(next)
     },
-    [isOpen, setOffset],
+    [isOpen, setDragging, setOffset],
   )
 
   const onPointerUp = useCallback(
@@ -132,6 +147,7 @@ export function useSwipeActions({ enabled, onCommit, isOpen, onOpenChange }: Opt
 
   return {
     nodeRef,
+    rowRef,
     swipeHandlers: {
       onPointerDown,
       onPointerMove,

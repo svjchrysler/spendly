@@ -5,6 +5,7 @@ import { Dialog as SheetPrimitive } from "@base-ui/react/dialog"
 
 import { cn } from "@/lib/utils"
 import { useSheetDrag } from "@/hooks/useSheetDrag"
+import { useModalDepth } from "@/hooks/useModalDepth"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 
@@ -64,6 +65,9 @@ function SheetContent({
   onOpenChange,
   ...props
 }: SheetContentProps & { onOpenChange?: (open: boolean) => void }) {
+  // La pantalla de atrás retrocede en Z mientras esto esté abierto
+  useModalDepth()
+
   const grabber = showGrabber ?? side === "bottom"
   const { dragHandlers } = useSheetDrag({
     enabled: side === "bottom",
