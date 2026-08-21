@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Moon, Sun } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BrandMark } from '@/components/layout/BrandMark'
+import { HomeIconNotice } from '@/components/layout/HomeIconNotice'
 import { OfflineBanner } from '@/components/layout/OfflineBanner'
 import { PageEnter } from '@/components/layout/PageEnter'
 import { NavTitleProvider, useNavTitle } from '@/components/layout/NavBar'
@@ -193,6 +194,7 @@ function AppShellInner() {
       </header>
 
       <OfflineBanner />
+      <HomeIconNotice />
       <PullToRefresh />
 
       {/* Ancho completo: el contenido aprovecha el viewport (PWA / desktop). */}

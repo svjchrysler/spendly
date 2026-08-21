@@ -77,11 +77,13 @@ export default defineConfig({
       // se aplica en background — ver src/lib/register-pwa.ts.
       registerType: 'prompt',
       includeAssets: [
+        'favicon.ico',
         'favicon.svg',
         'apple-touch-icon.png',
         'pwa-192.png',
         'pwa-512.png',
         'pwa-512-maskable.png',
+        'pwa-512-mono.png',
       ],
       manifest: {
         id: '/',
@@ -135,6 +137,13 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
+          },
+          {
+            // Themed icons de Android: el SO tinta la silueta con el wallpaper
+            src: 'pwa-512-mono.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'monochrome',
           },
         ],
       },

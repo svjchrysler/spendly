@@ -1,59 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none" role="img" aria-label="Spendly">
-  <!--
-    Marca de Spendly: un recibo con el borde inferior dentado.
-
-    La app entera está construida sobre la metáfora del extracto en papel
-    (`.receipt-edge`, "Recibo · 08/2026", `font-ledger`, los filetes
-    punteados), y ese era el único activo visual que el ícono no usaba. El
-    dentado de acá es el mismo de `.receipt-edge`: dientes a 45°, el doble de
-    anchos que altos.
-
-    Legibilidad a 16px: la silueta dentada se reconoce por forma antes que por
-    detalle, y las dos líneas de extracto miden 2.2/32 (≈2px físicos en
-    pantalla retina, que renderiza el favicon a 32). Nada más entra: a ese
-    tamaño un tercer renglón se cierra contra los otros.
-
-    Light y dark siguen a `src/lib/palette.ts`, igual que el token `primary`.
-    En oscuro se suma un aro hairline al 20%, el mismo `ring-foreground/20`
-    que ya usa `BrandMark.tsx`, para que el campo negro no se disuelva contra
-    una barra de pestañas oscura.
-  -->
+  <!-- Generado por scripts/generate-pwa-icons.mjs — no editar a mano -->
   <style>
     .field { fill: #09090b }
     .edge  { stroke: none }
-    .paper { fill: #16a34a }
-    .cut   { fill: #09090b }
     @media (prefers-color-scheme: dark) {
-      .field { fill: #000000 }
-      .edge  { stroke: #ffffff; stroke-opacity: .2 }
-      .paper { fill: #4ade80 }
-      .cut   { fill: #000000 }
+      .field { fill: #000 }
+      .edge  { stroke: #fff; stroke-opacity: .2 }
     }
   </style>
-
-  <defs>
-    <linearGradient id="sheen" x1="16" y1="0" x2="16" y2="15" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#fff" stop-opacity=".07"/>
-      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
-    </linearGradient>
-    <linearGradient id="slip" x1="16" y1="6" x2="16" y2="25" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#fff" stop-opacity=".14"/>
-      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
-    </linearGradient>
-    <clipPath id="slipClip">
-      <path d="M10 6h12a1.5 1.5 0 0 1 1.5 1.5v15l-2.5 2.5-2.5-2.5-2.5 2.5-2.5-2.5-2.5 2.5-2.5-2.5V7.5A1.5 1.5 0 0 1 10 6Z"/>
-    </clipPath>
-  </defs>
-
   <rect class="field" width="32" height="32" rx="7"/>
-  <rect width="32" height="32" rx="7" fill="url(#sheen)"/>
-
-  <path class="paper" d="M10 6h12a1.5 1.5 0 0 1 1.5 1.5v15l-2.5 2.5-2.5-2.5-2.5 2.5-2.5-2.5-2.5 2.5-2.5-2.5V7.5A1.5 1.5 0 0 1 10 6Z"/>
-  <rect width="32" height="32" fill="url(#slip)" clip-path="url(#slipClip)"/>
-
-  <!-- Renglones del extracto: calados del campo, no trazos encima -->
-  <rect class="cut" x="11" y="11" width="10" height="2.2" rx="1.1"/>
-  <rect class="cut" x="11" y="15.5" width="6.5" height="2.2" rx="1.1"/>
-
+  <path d="M19.05 8.95A5.313 3.875 0 0 0 12.83 9.02A5.313 3.875 0 0 0 10.96 13.34A5.313 3.875 0 0 0 16.00 16.00A5.313 3.875 0 0 1 21.20 19.09A5.313 3.875 0 0 1 18.10 23.43A5.313 3.875 0 0 1 11.65 22.10" fill="none" stroke="#4ade80" stroke-width="5.25" stroke-linecap="round"/>
   <rect class="edge" x=".5" y=".5" width="31" height="31" rx="6.5" fill="none"/>
 </svg>

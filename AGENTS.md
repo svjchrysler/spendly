@@ -137,6 +137,8 @@ La app sigue la guía de iOS 26. Lo nativo lo aportan estructura, materiales, mo
 - Los headers de fecha **ya no son sticky**: las listas agrupadas de iOS no pegan sus headers (eso es de las listas `plain`). Por eso el swipe puede transformar la fila. Si se reintroduce algo sticky, el transform va en la fila, nunca en la `section`.
 - Safe areas: `env(safe-area-inset-*)` en header, tab bar, FAB, sheets.
 - PWA: `interactive-widget=resizes-content` en viewport; manifest/icons vía `vite-plugin-pwa`.
+- Iconos: monograma S (dos bowls elípticos tangentes, monolínea con cap redondo) generado por `scripts/generate-pwa-icons.mjs` — favicon.svg/.ico, apple-touch-icon, pwa-192/512/maskable/mono. No editarlos a mano. El favicon tiene talla óptica propia (trazo más grueso, bowls más anchos): a 16px el del icono grande se lava. `apple-touch-icon.png` va **sin** esquina redondeada: iOS aplica su superelipse encima.
+- iOS congela el icono del home screen al instalar: no hay forma de actualizarlo sin reinstalar el acceso directo. `HomeIconNotice` avisa una vez a las apps ya instaladas; si cambia el arte, subir `HOME_ICON_VERSION` en `lib/home-icon.ts`.
 - SW: `registerType: 'prompt'` + `skipWaiting: false`. La versión nueva se aplica sola al pasar la app a background y sin modales abiertos (`register-pwa.ts`). No volver a `autoUpdate`: recarga en caliente y tira el form a medio llenar.
 - Splash de iOS: `public/splash/*.png` + `scripts/ios-splash-links.html` los genera `scripts/generate-ios-splash.mjs` (necesita sharp temporal, igual que `generate-pwa-icons.mjs`). Si cambia la paleta, la marca o las métricas de `#app-splash`, re-correrlo — el layout está calibrado contra el DOM real.
 
