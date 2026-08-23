@@ -5,7 +5,7 @@ import { Dialog as SheetPrimitive } from "@base-ui/react/dialog"
 
 import { cn } from "@/lib/utils"
 import { useSheetDrag } from "@/hooks/useSheetDrag"
-import { useModalDepth } from "@/hooks/useModalDepth"
+import { useModalDepthRoot } from "@/hooks/useModalDepth"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 
@@ -25,8 +25,19 @@ type SheetFooterProps = Readonly<React.ComponentProps<"div">>
 type SheetTitleProps = Readonly<SheetPrimitive.Title.Props>
 type SheetDescriptionProps = Readonly<SheetPrimitive.Description.Props>
 
-function Sheet({ ...props }: SheetProps) {
-  return <SheetPrimitive.Root data-slot="sheet" {...props} />
+function Sheet({ open, defaultOpen, onOpenChange, ...props }: SheetProps) {
+  // La pantalla de atrás retrocede en Z mientras esto esté abierto
+  const handleOpenChange = useModalDepthRoot(open, defaultOpen, onOpenChange)
+
+  return (
+    <SheetPrimitive.Root
+      data-slot="sheet"
+      open={open}
+      defaultOpen={defaultOpen}
+      onOpenChange={handleOpenChange}
+      {...props}
+    />
+  )
 }
 
 function SheetTrigger({ ...props }: SheetTriggerProps) {
@@ -65,9 +76,6 @@ function SheetContent({
   onOpenChange,
   ...props
 }: SheetContentProps & { onOpenChange?: (open: boolean) => void }) {
-  // La pantalla de atrás retrocede en Z mientras esto esté abierto
-  useModalDepth()
-
   const grabber = showGrabber ?? side === "bottom"
   const { dragHandlers } = useSheetDrag({
     enabled: side === "bottom",

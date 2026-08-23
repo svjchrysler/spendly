@@ -3,10 +3,26 @@ import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { useModalDepth } from "@/hooks/useModalDepth"
+import { useModalDepthRoot } from "@/hooks/useModalDepth"
 
-function AlertDialog({ ...props }: Readonly<AlertDialogPrimitive.Root.Props>) {
-  return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />
+function AlertDialog({
+  open,
+  defaultOpen,
+  onOpenChange,
+  ...props
+}: Readonly<AlertDialogPrimitive.Root.Props>) {
+  // La pantalla de atrás retrocede en Z mientras esto esté abierto
+  const handleOpenChange = useModalDepthRoot(open, defaultOpen, onOpenChange)
+
+  return (
+    <AlertDialogPrimitive.Root
+      data-slot="alert-dialog"
+      open={open}
+      defaultOpen={defaultOpen}
+      onOpenChange={handleOpenChange}
+      {...props}
+    />
+  )
 }
 
 function AlertDialogTrigger({
@@ -50,9 +66,6 @@ function AlertDialogContent({
     size?: "default" | "sm"
   }
 >) {
-  // La pantalla de atrás retrocede en Z mientras esto esté abierto
-  useModalDepth()
-
   return (
     <AlertDialogPortal>
       <AlertDialogOverlay />
