@@ -18,8 +18,8 @@ No es un SaaS multi-tenant genérico: es una app chica, mobile-first, con shell 
 | Build | Vite 8 + React 19 + TypeScript |
 | Estilos | Tailwind v4 + tokens en `src/index.css` |
 | UI kit | shadcn / `@base-ui/react` en `src/components/ui/` |
-| Iconos | `lucide-react` (no emojis como iconos de sistema). Única excepción: `layout/TabIcons.tsx`, set propio outline/filled estilo SF Symbols para el tab bar |
-| Lenguaje visual | **iOS 26 / Apple HIG** — ver sección "Lenguaje visual" |
+| Iconos | `lucide-react` (no emojis como iconos de sistema). Única excepción: `layout/TabIcons.tsx`, set propio outline/filled estilo SF Symbols para tab bar y sidebar |
+| Lenguaje visual | **iOS 27 / Apple HIG** — ver sección "Lenguaje visual" |
 | Router | `react-router-dom` v7 |
 | Data | TanStack Query + persist (`src/lib/query-client.ts`) |
 | Backend | `@supabase/supabase-js` (`src/lib/supabase.ts`) |
@@ -59,13 +59,13 @@ src/
   App.tsx              # routes + PersistQueryClientProvider + Theme/Auth
   pages/               # una pantalla por ruta (lazy salvo Login)
   components/
-    layout/            # AppShell, PageEnter, skeletons, OfflineBanner
+    layout/            # AppShell, Sidebar, TabBar, PageEnter, skeletons, OfflineBanner
     expenses/          # form, list, filters, FAB sheets
     dashboard/         # SpendingHero, MonthlyCapAlert
     charts/            # CategoryAllocation, MonthlyBar
     ui/                # primitives shadcn — editar con cuidado
   contexts/            # Auth, Month, Theme
-  hooks/               # useExpenses, useCategories, useMonthlyStats, useRealtimeExpenses, useKeyboardInset
+  hooks/               # useExpenses, useCategories, useMonthlyStats, useRealtimeExpenses, useKeyboardInset, useMediaQuery, useLatchedWhile
   lib/                 # supabase, format, query-client, theme, predict-category, register-pwa
   types/database.ts    # tipos DB
 supabase/migrations/   # fuente de verdad del schema
@@ -81,7 +81,7 @@ supabase/migrations/   # fuente de verdad del schema
 | `/gastos` | ExpensesPage | listado + filtros + FAB add |
 | `/categorias` | CategoriesPage | CRUD categorías |
 
-Nav: 4 tabs. Mobile = bottom bar. Desktop = header tabs.
+Nav: 4 tabs. Compact (<768px: iPhone, iPhone Duo cerrado, Split View) = tab bar flotante. Regular (≥768px: Duo abierto, iPhone en landscape, iPad, desktop) = `Sidebar` de borde a borde, como iOS 27. El header ya no tiene tabs.
 
 ### Datos
 
@@ -107,7 +107,10 @@ Nav: 4 tabs. Mobile = bottom bar. Desktop = header tabs.
 3. **Copy UI en español.** Errores de auth también mapeados a español.
 4. **Dinero:** siempre `formatCurrency` de `@/lib/format` (respeta `VITE_CURRENCY`).
 5. **Fechas de gasto:** string `YYYY-MM-DD` (`expense_date`), no Date sueltos en DB.
-6. **Mobile vs desktop:** forms add/edit → `Sheet` bottom en mobile, `Dialog` en desktop (`useIsDesktop` = `min-width: 768px`).
+6. **Ancho vs puntero — son dos señales distintas.** El iPhone Duo abierto es ancho *y* táctil.
+   - `useIsDesktop` (`min-width: 768px`) decide layout y presentación. Forms add/edit van en `Sheet` bottom en compact y en `Dialog` en regular.
+   - `useIsTouch` (`pointer: coarse`) decide gestos y densidad: swipe, tap en fila → action sheet, 44pt. Los botones inline chicos son solo para mouse (`md:pointer-fine:`).
+   - Congelar la presentación mientras el modal está abierto: `useLatchedWhile(open, isDesktop)`. Si no, plegar/desplegar o entrar en Split View remonta el form y se pierde lo tipeado.
 7. **FAB:** portal a `document.body`; no meter `transform`/`filter` en ancestros del FAB (`PageEnter` = opacity only).
 8. **Skeletons:** al tocar loading de una page, actualizar el skeleton hermano en `skeletons.tsx`.
 9. **Comments:** solo si explican un tradeoff no obvio; prefijo `// ponytail:` para atajos deliberados.
@@ -115,27 +118,40 @@ Nav: 4 tabs. Mobile = bottom bar. Desktop = header tabs.
 11. **No** commits ni push salvo que el usuario lo pida.
 12. **Supabase:** cualquier cambio de schema → migración en `supabase/migrations/` + RLS. Seguir skill en `.agents/skills/supabase/`.
 
-## Lenguaje visual (iOS 26 / HIG)
+## Lenguaje visual (iOS 27 / HIG)
 
-La app sigue la guía de iOS 26. Lo nativo lo aportan estructura, materiales, motion y controles; la marca (Bricolage en títulos, Spline Sans Mono en montos, verde mint, borde de recibo) se conserva **dentro** de esa estructura.
+La app sigue la guía de iOS 27. Lo nativo lo aportan estructura, materiales, motion y controles; la marca (Bricolage en títulos, Spline Sans Mono en montos, verde mint, borde de recibo) se conserva **dentro** de esa estructura.
 
 - **Dos capas.** Contenido opaco que scrollea; navegación flotante con Liquid Glass. El glass va **solo** en la capa de navegación (`.material-glass`) y **nunca glass sobre glass**. Tarjetas y filas son opacas.
+- **Liquid Glass de iOS 27.**
+  - Menos transparencia que en iOS 26: `--glass-tint` más denso y `--glass-specular` más brillante.
+  - Borde oscurecido `--glass-edge` alrededor del vidrio.
+  - `prefers-reduced-transparency` apaga el blur en todo el vidrio.
+- **Sidebar (regular).** Va de borde a borde, no flotante. Usa el tint del vidrio ya compuesto sobre el fondo, sin blur: nada scrollea por debajo, y el blur solo dejaba artefactos. Solo el ítem activo lleva el icono en color. Tiene `view-transition-name` propio y retrocede con el modal depth hacia el mismo punto de fuga que el contenido.
 - **Listas `insetGrouped`.** Usar `List` / `ListSection` / `ListRow` de `@/components/ui/list`. Separador indentado al borde del label vía `--row-inset` — no reemplazar por `divide-y`, que no puede indentar.
 - **Nav bar.** `NavBar` de `@/components/layout/NavBar` con large title que colapsa. La barra **no tiene material en reposo**: con la status bar en estilo `default` iOS pinta esa franja con `theme-color` y una barra tintada dejaría costura.
 - **Tipografía.** Escala de iOS (`text-large-title` … `text-caption-2`). Cuerpo 17px. Bricolage arriba de 20px, Geist de 20px para abajo, Spline Mono en montos.
 - **Color semántico.** Labels (`text-label`, `-secondary`, `-tertiary`, `-quaternary`), fills (`bg-fill-*`) y fondos agrupados (`--group-surface`). `--muted-foreground` y `--border` están re-apuntados a la jerarquía nueva: el código viejo migró solo.
-- **Tap targets** de 44pt en mobile: `size="touch"` / `size="icon-touch"` en `Button`.
+- **Tap targets** de 44pt en táctil (también en ancho regular: el Duo abierto): `size="touch"` / `size="icon-touch"` en `Button`. `default`/`icon` solo bajan a 32px con `md:pointer-fine:`.
 - **Motion.** Sistema en `index.css` → "Motion didáctico". Nada decora: cada animación contesta de dónde salió algo, hacia dónde navegaste, cuánto cambió un número o qué se puede tocar. Duraciones `--dur-1/2/3` + `--stagger-step`; utilidades `.reveal`, `.stagger`, `.swap[data-dir]`, `.row-landed`, `.shake`, `.notice-in`, `.icon-swap`. Los montos grandes usan `AnimatedAmount` (count-up); las barras crecen desde cero; el mes entra desde el lado hacia el que navegaste (`MonthContext.direction`). Los gestos (swipe, sheet, pull) conservan su propio timing físico. `useReducedMotion` para lo que anima JS (count-up, recharts, la pista de swipe); el CSS ya lo cubre la regla global.
 - Status bar: se mantiene `apple-mobile-web-app-status-bar-style: default`. **No** cambiar a `black-translucent`: fuerza texto blanco e ilegible en modo claro. Consecuencia: `env(safe-area-inset-top)` vale 0 en standalone.
 
 ## UI / layout (reglas del producto)
 
-- Mobile-first; desktop aprovecha espacio (Resumen/Análisis: grid 2 cols en `lg+`, stretch vertical).
+- Mobile-first; el ancho extra se aprovecha según lo que **tiene el contenido**, no la ventana. `main` es `@container/main`, y los grids de página pasan a 2 columnas con `@4xl/main:` (56rem de contenido), no con `lg:`. Resultado:
+  - Duo abierto: sidebar + 1 columna.
+  - Desktop ancho: sidebar + 2 columnas.
+  - Duo cerrado / Split View: tab bar.
+
+  Los paddings del shell siguen por viewport.
+- iPhone Duo: no hay Viewport Segments en WebKit y el pliegue es suave, así que no se esquiva. Plegar/desplegar cambia el viewport sin recargar (≈466 ↔ 890px de ancho; Split View ≈445). Por eso el layout se hace con media/container queries y no se ramifica por dispositivo.
+- Manifest `orientation: 'any'`: la pantalla interior del Duo es apaisada. En landscape manda el sidebar.
 - Tokens semánticos (`bg-background`, `text-muted-foreground`, `border-border`, `primary`…). Evitar hex sueltos salvo colores de categoría.
 - Tema: `ThemeContext` + clase `.dark` en `<html>`; FOUC script en `index.html`.
 - Bottom sheets: usan `--keyboard-inset` (`useKeyboardInset` + `visualViewport`). No poner `bottom-0` fijo que ignore el teclado.
 - Los headers de fecha **ya no son sticky**: las listas agrupadas de iOS no pegan sus headers (eso es de las listas `plain`). Por eso el swipe puede transformar la fila. Si se reintroduce algo sticky, el transform va en la fila, nunca en la `section`.
-- Safe areas: `env(safe-area-inset-*)` en header, tab bar, FAB, sheets.
+- Safe areas: `env(safe-area-inset-*)` en header, tab bar, FAB, sheets. En landscape, el sidebar absorbe el inset izquierdo y la columna de contenido el derecho.
+- `Dialog` centrado sobre lo que deja el teclado (`--keyboard-inset`): con 626px de alto el teclado lo tapaba.
 - PWA: `interactive-widget=resizes-content` en viewport; manifest/icons vía `vite-plugin-pwa`.
 - Iconos: monograma S (dos bowls elípticos tangentes, monolínea con cap redondo) generado por `scripts/generate-pwa-icons.mjs` — favicon.svg/.ico, apple-touch-icon, pwa-192/512/maskable/mono. No editarlos a mano. El favicon tiene talla óptica propia (trazo más grueso, bowls más anchos): a 16px el del icono grande se lava. `apple-touch-icon.png` va **sin** esquina redondeada: iOS aplica su superelipse encima.
 - iOS congela el icono del home screen al instalar: no hay forma de actualizarlo sin reinstalar el acceso directo. `HomeIconNotice` avisa una vez a las apps ya instaladas; si cambia el arte, subir `HOME_ICON_VERSION` en `lib/home-icon.ts`.
@@ -155,6 +171,9 @@ La app sigue la guía de iOS 26. Lo nativo lo aportan estructura, materiales, mo
 | Datos del usuario tras logout | `purgeLocalUserData()` (`lib/session-cleanup.ts`) borra query cache + CacheStorage. Si se agrega otro runtime cache con datos, sumarlo a `DATA_CACHES` |
 | Animación de entrada que rompe un `position: fixed` | `animation-fill-mode: both` deja aplicado el `transform: translateY(0)` final y eso ya crea containing block. Las entradas van con **`backwards`** |
 | Globo de validación del navegador en inglés | El `<form>` con validación Zod necesita `noValidate`, o el browser dispara su propio mensaje antes y tapa el de la app |
+| Form vacío al plegar/desplegar el Duo o entrar en Split View | Al cruzar 768px con el modal abierto, Sheet ↔ Dialog remontaba el form. La presentación va con `useLatchedWhile(open, isDesktop)` |
+| Duo abierto sin swipe ni tap en filas, con botones de 32px | Se usaba `useIsDesktop` para gestos. Los gestos van con `useIsTouch` y la densidad con `md:pointer-fine:` |
+| Algo `fixed` dentro de `main` que deja de ser fixed | `main` es `@container`, y `container-type` implica layout containment: `main` es containing block. Todo lo `fixed` va por portal |
 
 ## Schema (alto nivel)
 

@@ -115,7 +115,7 @@ function MonthPulse({ report }: Readonly<{ report: MonthReport }>) {
     report.remaining != null && report.remaining < 0
 
   return (
-    <section className="stagger grid grid-cols-2 gap-x-4 gap-y-4 border-b border-border/70 pb-5 sm:grid-cols-3 lg:grid-cols-6 lg:gap-x-0 lg:divide-x lg:divide-border/60 lg:[&>*]:px-4 lg:[&>*:first-child]:pl-0 lg:[&>*:last-child]:pr-0">
+    <section className="stagger grid grid-cols-2 gap-x-4 gap-y-4 border-b border-border/70 pb-5 @xl/main:grid-cols-3 @4xl/main:grid-cols-6 @4xl/main:gap-x-0 @4xl/main:divide-x @4xl/main:divide-border/60 @4xl/main:[&>*]:px-4 @4xl/main:[&>*:first-child]:pl-0 @4xl/main:[&>*:last-child]:pr-0">
       <div className="metric-cell space-y-1.5">
         <p className="metric-cell-label">Movimientos</p>
         <p className="metric-cell-value">{report.count}</p>
@@ -341,7 +341,7 @@ export function AnalisisPage() {
 
       {!expensesLoading ? <MonthPulse report={report} /> : null}
 
-      <div className="grid gap-6 pt-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-start lg:gap-8 xl:gap-10">
+      <div className="grid gap-6 pt-1 @4xl/main:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] @4xl/main:items-start @4xl/main:gap-8 @6xl/main:gap-10">
         <div className="flex min-w-0 flex-col gap-5">
           <PanelSwitch
             value={panel}
@@ -394,7 +394,7 @@ export function AnalisisPage() {
           )}
         </div>
 
-        <section className="ledger-aside min-w-0 space-y-5 border-t border-border/70 pt-4 lg:sticky lg:top-[var(--sticky-top)] lg:border-t-0 lg:pt-0">
+        <section className="ledger-aside min-w-0 space-y-5 border-t border-border/70 pt-4 @4xl/main:sticky @4xl/main:top-[var(--sticky-top)] @4xl/main:border-t-0 @4xl/main:pt-0">
           {statsLoading ? (
             <CategoryAllocationSkeleton />
           ) : (

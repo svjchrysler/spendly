@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, type MouseEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 
@@ -28,6 +28,22 @@ export function navUsedViewTransition() {
  */
 export function isNavigating() {
   return performance.now() < navUntil
+}
+
+/**
+ * ¿Es un click que podemos tomar? Modificadores y botones raros son "abrir
+ * aparte": el navegador sabe mejor que nosotros qué hacer con eso. Lo usan
+ * tab bar y sidebar antes de llamar a `useRouteTransition`.
+ */
+export function isPlainClick(event: MouseEvent<HTMLAnchorElement>) {
+  return !(
+    event.defaultPrevented ||
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey ||
+    event.button !== 0
+  )
 }
 
 /**

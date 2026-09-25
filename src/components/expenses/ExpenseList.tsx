@@ -37,7 +37,8 @@ import { getExpenseLabel } from '@/lib/expense-display'
 import { formatCurrency, formatDayLabel } from '@/lib/format'
 import { useDeleteExpense } from '@/hooks/useExpenses'
 import { useFreshItems } from '@/hooks/useFreshItems'
-import { useIsDesktop } from '@/hooks/useMediaQuery'
+import { useLatchedWhile } from '@/hooks/useLatchedWhile'
+import { useIsDesktop, useIsTouch } from '@/hooks/useMediaQuery'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { useSwipeActions } from '@/hooks/useSwipeActions'
 import { tapFeedback, warnFeedback } from '@/lib/haptics'
@@ -70,7 +71,7 @@ interface ExpenseListProps {
 function ExpenseRow({
   expense,
   caption,
-  isDesktop,
+  touch,
   swipeOpen,
   fresh = false,
   hint = false,
@@ -81,7 +82,8 @@ function ExpenseRow({
 }: Readonly<{
   expense: ExpenseWithCategory
   caption: string
-  isDesktop: boolean
+  /** Puntero táctil: swipe + action sheet en vez de botones inline */
+  touch: boolean
   swipeOpen: boolean
   /** Llegó después del primer render: se tinta un momento para ubicarlo */
   fresh?: boolean
@@ -93,7 +95,7 @@ function ExpenseRow({
   onDelete: () => void
 }>) {
   const { nodeRef, rowRef, swipeHandlers } = useSwipeActions({
-    enabled: !isDesktop,
+    enabled: touch,
     isOpen: swipeOpen,
     onOpenChange: onSwipeOpenChange,
     onCommit: onDelete,
@@ -112,20 +114,20 @@ function ExpenseRow({
       }
       title={getExpenseLabel(expense.description, expense.category?.name)}
       subtitle={caption}
-      onPress={isDesktop ? undefined : onOpenActions}
+      onPress={touch ? onOpenActions : undefined}
       trailing={
         <span className="flex items-center gap-0.5 sm:gap-1">
           <span className="font-ledger text-body font-semibold whitespace-nowrap tabular-nums">
             {formatCurrency(Number(expense.amount))}
           </span>
-          {isDesktop ? <ExpenseRowActions onEdit={onEdit} onDelete={onDelete} /> : null}
+          {touch ? null : <ExpenseRowActions onEdit={onEdit} onDelete={onDelete} />}
         </span>
       }
-      className={cn(isDesktop && 'sm:cursor-default', fresh && 'row-landed')}
+      className={cn(!touch && 'sm:cursor-default', fresh && 'row-landed')}
     />
   )
 
-  if (isDesktop) return row
+  if (!touch) return row
 
   return (
     <div ref={rowRef} className="swipe-row" {...swipeHandlers}>
@@ -163,6 +165,9 @@ export function ExpenseList({
   // Una sola fila abierta a la vez, como iOS
   const [swipeOpenId, setSwipeOpenId] = useState<string | null>(null)
   const isDesktop = useIsDesktop()
+  const touch = useIsTouch()
+  const addAsDialog = useLatchedWhile(openAdd, isDesktop)
+  const editAsDialog = useLatchedWhile(Boolean(editing), isDesktop)
   const reducedMotion = useReducedMotion()
   const [searchParams, setSearchParams] = useSearchParams()
   // Filas que aparecieron después del primer render: el gasto que acabás de
@@ -182,7 +187,7 @@ export function ExpenseList({
     tic, no una ayuda.
   */
   useEffect(() => {
-    if (isDesktop || reducedMotion || !firstExpenseId) return
+    if (!touch || reducedMotion || !firstExpenseId) return
     if (localStorage.getItem(SWIPE_HINT_KEY)) return
 
     const show = window.setTimeout(() => {
@@ -194,7 +199,7 @@ export function ExpenseList({
       window.clearTimeout(show)
       window.clearTimeout(hide)
     }
-  }, [isDesktop, reducedMotion, firstExpenseId])
+  }, [touch, reducedMotion, firstExpenseId])
 
   // Atajo del manifest (long-press del icono → "Agregar gasto"): abre el form
   // al arrancar y limpia el param para que un back no lo reabra.
@@ -326,7 +331,7 @@ export function ExpenseList({
       document.body,
     )
 
-    if (isDesktop) {
+    if (addAsDialog) {
       addExpenseUi = (
         <>
           {fab}
@@ -374,7 +379,7 @@ export function ExpenseList({
               key={expense.id}
               expense={expense}
               caption={`${formatDayLabel(expense.expense_date)}${expense.category?.name ? ` · ${expense.category.name}` : ''}`}
-              isDesktop={isDesktop}
+              touch={touch}
               fresh={freshIds.has(expense.id)}
               hint={hintRowId === expense.id}
               swipeOpen={swipeOpenId === expense.id}
@@ -419,7 +424,7 @@ export function ExpenseList({
                       key={expense.id}
                       expense={expense}
                       caption={expense.category?.name ?? ''}
-                      isDesktop={isDesktop}
+                      touch={touch}
                       fresh={freshIds.has(expense.id)}
                       hint={hintRowId === expense.id}
                       swipeOpen={swipeOpenId === expense.id}
@@ -461,7 +466,7 @@ export function ExpenseList({
         </SheetContent>
       </Sheet>
 
-      {isDesktop ? (
+      {editAsDialog ? (
         <Dialog open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
           <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-md">
             <DialogHeader className="pr-8">

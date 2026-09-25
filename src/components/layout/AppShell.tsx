@@ -1,8 +1,7 @@
 import { useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { Moon, Sun } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { BrandMark } from '@/components/layout/BrandMark'
 import { HomeIconNotice } from '@/components/layout/HomeIconNotice'
 import { OfflineBanner } from '@/components/layout/OfflineBanner'
@@ -10,6 +9,7 @@ import { PageEnter } from '@/components/layout/PageEnter'
 import { NavTitleProvider, useNavTitle } from '@/components/layout/NavBar'
 import { ProfileMenu } from '@/components/layout/ProfileMenu'
 import { PullToRefresh } from '@/components/layout/PullToRefresh'
+import { Sidebar } from '@/components/layout/Sidebar'
 import { TabBar, type TabItem } from '@/components/layout/TabBar'
 import { ChartIcon, HouseIcon, ReceiptIcon, TagIcon } from '@/components/layout/TabIcons'
 import { useMonth } from '@/contexts/MonthContext'
@@ -100,109 +100,72 @@ function AppShellInner() {
   }
 
   return (
-    <div className="min-h-dvh overflow-x-clip bg-background">
-      {/* Sin material en reposo: con la status bar en estilo `default` iOS pinta
-          esa franja con theme-color y una barra tintada dejaría una costura. */}
-      <header
-        className="nav-bar material-glass--bar sticky top-0 z-50 pt-[env(safe-area-inset-top)]"
-        data-materialized="true"
-      >
-        <div className="relative mx-auto flex h-[var(--app-header-h)] w-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="nav-brand flex min-w-0 items-center gap-2.5">
-            <BrandMark />
-            <span className="font-display truncate text-sm font-semibold tracking-tight sm:text-[15px]">
-              Spendly
-            </span>
-          </div>
+    <div className="min-h-dvh overflow-x-clip bg-background md:grid md:grid-cols-[var(--app-sidebar-w)_minmax(0,1fr)]">
+      <Sidebar items={navItems} onWarm={warmRoute} onSelect={goToTab} />
 
-          {/* Título inline: entra cuando el large title de la página se va */}
-          {navTitle ? (
-            <div className="nav-inline-title pointer-events-none absolute inset-x-0 flex justify-center px-20 md:hidden">
-              <span className="truncate text-headline capitalize text-label">
-                {navTitle.title}
+      {/* El sidebar absorbe el safe area izquierdo en landscape; la columna,
+          el derecho */}
+      <div className="min-w-0 md:pr-[env(safe-area-inset-right)]">
+        {/* Sin material en reposo: con la status bar en estilo `default` iOS pinta
+            esa franja con theme-color y una barra tintada dejaría una costura. */}
+        <header
+          className="nav-bar material-glass--bar sticky top-0 z-50 pt-[env(safe-area-inset-top)]"
+          data-materialized="true"
+        >
+          <div className="relative mx-auto flex h-[var(--app-header-h)] w-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+            {/* En regular la marca vive en el sidebar */}
+            <div className="nav-brand flex min-w-0 items-center gap-2.5 md:invisible">
+              <BrandMark />
+              <span className="font-display truncate text-sm font-semibold tracking-tight sm:text-[15px]">
+                Spendly
               </span>
             </div>
-          ) : null}
 
-          <nav
-            className="hidden h-full flex-1 items-stretch justify-center gap-1 md:flex"
-            aria-label="Principal"
-          >
-            {navItems.map((item, index) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                onPointerEnter={() => warmRoute(item.prefetch)}
-                onFocus={() => warmRoute(item.prefetch)}
-                onClick={(event) => {
-                  if (
-                    event.defaultPrevented ||
-                    event.metaKey ||
-                    event.ctrlKey ||
-                    event.shiftKey ||
-                    event.altKey ||
-                    event.button !== 0
-                  ) {
-                    return
-                  }
-                  event.preventDefault()
-                  goToTab(item, index)
-                }}
-                className={({ isActive }) =>
-                  cn(
-                    'pressable relative inline-flex min-h-11 cursor-pointer items-center rounded-full px-4 text-sm font-medium transition-colors duration-200',
-                    isActive
-                      ? 'text-foreground'
-                      : 'text-muted-foreground hover:text-foreground/80',
-                  )
-                }
+            {/* Título inline: entra cuando el large title de la página se va */}
+            {navTitle ? (
+              <div className="nav-inline-title pointer-events-none absolute inset-x-0 flex justify-center px-20">
+                <span className="truncate text-headline capitalize text-label">
+                  {navTitle.title}
+                </span>
+              </div>
+            ) : null}
+
+            <div className="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="pressable inline-flex size-11 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+                aria-label={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
               >
-                {({ isActive }) => (
-                  <>
-                    {item.label}
-                    <span
-                      className={cn(
-                        'absolute inset-x-3 bottom-1.5 h-0.5 rounded-full bg-primary transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
-                        isActive ? 'scale-x-100 opacity-100' : 'scale-x-50 opacity-0',
-                      )}
-                    />
-                  </>
+                {/* El ícono gira al entrar: el toggle se lee como un cambio de
+                    estado y no como dos botones distintos */}
+                {theme === 'dark' ? (
+                  <Sun className="icon-swap size-4" />
+                ) : (
+                  <Moon className="icon-swap size-4" />
                 )}
-              </NavLink>
-            ))}
-          </nav>
-
-          <div className="flex shrink-0 items-center gap-1">
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="pressable inline-flex size-11 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
-              aria-label={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
-            >
-              {/* El ícono gira al entrar: el toggle se lee como un cambio de
-                  estado y no como dos botones distintos */}
-              {theme === 'dark' ? (
-                <Sun className="icon-swap size-4" />
-              ) : (
-                <Moon className="icon-swap size-4" />
-              )}
-            </button>
-            <ProfileMenu />
+              </button>
+              <ProfileMenu />
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <OfflineBanner />
-      <HomeIconNotice />
-      <PullToRefresh />
+        <OfflineBanner />
+        <HomeIconNotice />
+        <PullToRefresh />
 
-      {/* Ancho completo: el contenido aprovecha el viewport (PWA / desktop). */}
-      <main className="mx-auto w-full px-4 pb-[calc(var(--app-tabbar-space)+2rem)] pt-4 sm:px-6 sm:pt-5 md:pb-10 lg:px-8 xl:px-10 2xl:px-12">
-        <PageEnter>
-          <Outlet />
-        </PageEnter>
-      </main>
+        {/*
+          Ancho completo. Container: los grids de página responden al ancho que
+          de verdad tiene el contenido (sidebar, Split View), no al viewport.
+          Ojo: `container-type` implica layout containment — `main` pasa a ser
+          containing block de todo `fixed` de adentro. Lo fixed va por portal.
+        */}
+        <main className="@container/main mx-auto w-full px-4 pb-[calc(var(--app-tabbar-space)+2rem)] pt-4 sm:px-6 sm:pt-5 md:pb-10 lg:px-8 xl:px-10 2xl:px-12">
+          <PageEnter>
+            <Outlet />
+          </PageEnter>
+        </main>
+      </div>
 
       <TabBar items={navItems} onWarm={warmRoute} onSelect={goToTab} />
     </div>

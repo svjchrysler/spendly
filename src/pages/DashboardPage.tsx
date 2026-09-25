@@ -72,8 +72,8 @@ export function DashboardPage() {
     <div className="flex min-h-[calc(100dvh-var(--sticky-top)-5.5rem)] flex-col gap-4 pb-2 md:min-h-[calc(100dvh-var(--sticky-top)-3.5rem)] lg:gap-5">
       <MonthMasthead eyebrow="Resumen" />
 
-      <div className="grid min-h-0 flex-1 gap-6 pt-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-stretch lg:gap-8 xl:gap-10">
-        <div className="flex min-h-0 min-w-0 flex-col gap-6 lg:gap-8">
+      <div className="grid min-h-0 flex-1 gap-6 pt-1 @4xl/main:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] @4xl/main:items-stretch @4xl/main:gap-8 @6xl/main:gap-10">
+        <div className="flex min-h-0 min-w-0 flex-col gap-6 @4xl/main:gap-8">
           {statsLoading ? (
             <SpendingHeroSkeleton />
           ) : (
@@ -87,7 +87,7 @@ export function DashboardPage() {
           <RecentMovements expenses={expenses} loading={expensesLoading} />
         </div>
 
-        <aside className="ledger-aside flex min-h-0 min-w-0 flex-col border-t border-border/70 pt-5 lg:border-t-0 lg:pt-0">
+        <aside className="ledger-aside flex min-h-0 min-w-0 flex-col border-t border-border/70 pt-5 @4xl/main:border-t-0 @4xl/main:pt-0">
           {statsLoading ? (
             <CategoryAllocationSkeleton fill />
           ) : (
