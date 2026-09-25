@@ -284,6 +284,9 @@
   );
   /* iOS-ish chrome metrics — keep sticky/FAB/main in sync */
   --app-header-h: 3.5rem;
+  /* Sidebar de ancho regular. Angosto a propósito: en el Duo abierto (~890px)
+     deja ~600px de contenido, el ancho de un iPhone grande */
+  --app-sidebar-w: 15rem;
   /* Alto de la cápsula expandida; colapsada solo cambia el visual */
   --app-tabbar-h: 3.5rem;
   /* Aire entre la cápsula flotante y el borde/home indicator */
@@ -301,14 +304,19 @@
 
   /* ── Material Liquid Glass ────────────────────────────────────────────
      Extraído de .tab-glass para que nav bar, toolbar, menús y FAB compartan
-     una sola definición. El tab bar sigue siendo la referencia. */
-  --glass-tint: color-mix(in oklab, var(--muted) 52%, transparent);
+     una sola definición. El tab bar sigue siendo la referencia.
+
+     iOS 27: menos transparencia por defecto (tint más denso), specular más
+     brillante y un borde oscurecido que separa el vidrio de lo que tiene
+     detrás — la legibilidad le gana a la refracción. */
+  --glass-tint: color-mix(in oklab, var(--muted) 64%, transparent);
   --glass-tint-fallback: color-mix(in oklab, var(--muted) 96%, transparent);
   --glass-blur: 30px;
   --glass-saturate: 180%;
-  --glass-specular: color-mix(in oklab, #fff 75%, transparent);
+  --glass-specular: color-mix(in oklab, #fff 88%, transparent);
   --glass-inner-shade: color-mix(in oklab, var(--foreground) 6%, transparent);
   --glass-hairline: color-mix(in oklab, var(--foreground) 6%, transparent);
+  --glass-edge: color-mix(in oklab, var(--foreground) 12%, transparent);
   --glass-sheen: linear-gradient(
     to bottom,
     color-mix(in oklab, #fff 32%, transparent),
@@ -400,11 +408,12 @@
 
   /* Glass oscuro: se construye tintando con blanco, no bajando la opacidad de
      una superficie oscura — sobre negro puro no hay nada que aclarar. */
-  --glass-tint: color-mix(in oklab, #fff 8%, transparent);
+  --glass-tint: color-mix(in oklab, #fff 12%, transparent);
   --glass-tint-fallback: color-mix(in oklab, var(--secondary) 96%, transparent);
-  --glass-specular: color-mix(in oklab, #fff 16%, transparent);
+  --glass-specular: color-mix(in oklab, #fff 22%, transparent);
   --glass-inner-shade: color-mix(in oklab, #000 35%, transparent);
   --glass-hairline: color-mix(in oklab, #fff 9%, transparent);
+  --glass-edge: color-mix(in oklab, #000 55%, transparent);
   --glass-sheen: linear-gradient(
     to bottom,
     color-mix(in oklab, #fff 10%, transparent),
@@ -562,9 +571,12 @@
       0 0 / 14px 7px repeat-x;
   }
 
-  /* Columna secundaria en desktop: separada por hairline vertical */
-  .ledger-aside {
-    @apply lg:border-l lg:border-border/70 lg:pl-8;
+  /* Columna secundaria cuando hay dos columnas: separada por hairline vertical.
+     Container query, no viewport — mismo umbral que `@4xl/main:` de los grids */
+  @container main (width >= 56rem) {
+    .ledger-aside {
+      @apply border-l border-border/70 pl-8;
+    }
   }
 
   .metric-cell {
@@ -853,16 +865,10 @@
     transform-origin: left center;
   }
 
-  /* En mobile la marca y el título inline ocupan el mismo rol: uno entra
-     cuando el otro sale. En desktop la marca no se va nunca. */
+  /* En compact la marca y el título inline ocupan el mismo rol: uno entra
+     cuando el otro sale. En regular la marca vive en el sidebar. */
   .nav-brand {
     opacity: calc(1 - var(--nav-progress) * 1.8);
-  }
-
-  @media (min-width: 768px) {
-    .nav-brand {
-      opacity: 1;
-    }
   }
 
   :root[data-nav-collapsed='true'] {
@@ -902,8 +908,9 @@
     display: none;
   }
 
-  /* En el riel desktop los chips envuelven; sin scroll no hace falta el fade */
-  @media (min-width: 1024px) {
+  /* En el riel de dos columnas los chips envuelven; sin scroll no hace falta
+     el fade */
+  @container main (width >= 56rem) {
     .filter-scroll {
       mask-image: none;
       flex-wrap: wrap;
@@ -964,6 +971,8 @@
       inset 0 1px 0 var(--glass-specular),
       inset 0 -1px 0 var(--glass-inner-shade),
       inset 0 0 0 1px var(--glass-hairline),
+      /* borde oscurecido de iOS 27: recorta el vidrio contra el contenido */
+      0 0 0 0.5px var(--glass-edge),
       0 12px 32px -8px var(--shadow),
       0 3px 10px -3px var(--shadow);
   }
@@ -973,6 +982,7 @@
       inset 0 1px 0 var(--glass-specular),
       inset 0 -1px 0 var(--glass-inner-shade),
       inset 0 0 0 1px var(--glass-hairline),
+      0 0 0 0.5px var(--glass-edge),
       0 14px 38px -10px var(--shadow-elevated),
       0 3px 12px -4px var(--shadow-elevated);
   }
@@ -1002,11 +1012,77 @@
     --glass-blur: 20px;
   }
 
+  /* "Reducir transparencia" apaga todo el vidrio, no solo las barras: es el
+     extremo "tintado" del slider de Liquid Glass de iOS 27 */
   @media (prefers-reduced-transparency: reduce) {
+    .material-glass,
     .material-glass--bar {
       -webkit-backdrop-filter: none;
       backdrop-filter: none;
       background-color: var(--glass-tint-fallback);
+    }
+  }
+
+  /*
+    Sidebar de iOS 27: de borde a borde, no una cápsula flotante. Lleva el
+    tint del vidrio pero ya compuesto sobre el fondo: nada scrollea por
+    debajo, así que el blur no tenía qué difuminar — solo costaba y dejaba
+    artefactos. Opaco también evita que la página asome mientras se desliza
+    en una view transition. Lo separa del contenido el borde oscurecido, igual
+    que al resto del vidrio de iOS 27. Sticky en su columna del grid; no
+    `fixed`, así la columna de contenido no necesita un padding que lo espeje.
+  */
+  .app-sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    height: 100dvh;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-block: env(safe-area-inset-top) max(1rem, env(safe-area-inset-bottom));
+    padding-inline: max(0.75rem, env(safe-area-inset-left)) 0.75rem;
+    overflow-y: auto;
+    background-color: var(--background);
+    background-image: linear-gradient(var(--glass-tint), var(--glass-tint));
+    box-shadow: inset calc(-1 * var(--hairline)) 0 0 var(--glass-edge);
+  }
+
+  .sidebar-item {
+    display: flex;
+    min-height: 2.75rem;
+    align-items: center;
+    gap: 0.75rem;
+    padding-inline: 0.75rem;
+    border-radius: var(--radius-lg);
+    color: var(--label);
+    @apply text-body;
+    cursor: pointer;
+    transition:
+      background-color var(--dur-1) ease,
+      color var(--dur-1) ease;
+  }
+
+  /* Solo el activo lleva color: en iOS 27 el icono tintado marca dónde estás */
+  .sidebar-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+    color: var(--label-secondary);
+  }
+
+  .sidebar-item[aria-current='page'] {
+    background-color: color-mix(in oklab, var(--primary) 14%, transparent);
+    color: var(--primary);
+    font-weight: 600;
+  }
+
+  .sidebar-item[aria-current='page'] .sidebar-icon {
+    color: currentColor;
+  }
+
+  @media (hover: hover) {
+    .sidebar-item:not([aria-current='page']):hover {
+      background-color: var(--fill-quaternary);
     }
   }
 
@@ -1598,7 +1674,7 @@
     los tres declaran su transform de reposo; al borrarse vuelven a
     `transform: none` y dejan de ser containing block de nada.
   */
-  html[data-modal] :is(.nav-bar, main, .tab-dock) {
+  html[data-modal] :is(.nav-bar, main, .tab-dock, .app-sidebar) {
     transform: perspective(1200px) translate3d(0, 0, 0);
     transition: transform var(--dur-2) var(--ease-sheet);
   }
@@ -1622,7 +1698,28 @@
     transform-origin: 50% calc(var(--app-tabbar-space) - 50dvh);
   }
 
-  html[data-modal='1'] :is(.nav-bar, main, .tab-dock) {
+  /*
+    Con sidebar el centro del viewport ya no es el centro de la columna: la
+    columna arranca en `--app-sidebar-w`, así que el 50vw queda medio sidebar
+    a la izquierda de su 50%. Sin esto sidebar y contenido se achican hacia
+    puntos distintos y se abre una grieta entre los dos.
+  */
+  @media (min-width: 768px) {
+    html[data-modal] .nav-bar {
+      transform-origin: calc(50% - var(--app-sidebar-w) / 2) 50dvh;
+    }
+
+    html[data-modal] main {
+      transform-origin: calc(50% - var(--app-sidebar-w) / 2)
+        calc(50dvh + var(--modal-scroll, 0px) - var(--sticky-top));
+    }
+
+    html[data-modal] .app-sidebar {
+      transform-origin: 50vw 50dvh;
+    }
+  }
+
+  html[data-modal='1'] :is(.nav-bar, main, .tab-dock, .app-sidebar) {
     transform: perspective(1200px) translate3d(0, 0, -64px);
   }
 
@@ -1657,6 +1754,10 @@
 
   .tab-dock {
     view-transition-name: tab-dock;
+  }
+
+  .app-sidebar {
+    view-transition-name: sidebar;
   }
 
   .fab {
@@ -1779,12 +1880,14 @@
       anterior mientras la real viaja al nuevo.
     */
     ::view-transition-old(nav-bar),
-    ::view-transition-old(tab-dock) {
+    ::view-transition-old(tab-dock),
+    ::view-transition-old(sidebar) {
       display: none;
     }
 
     ::view-transition-new(nav-bar),
-    ::view-transition-new(tab-dock) {
+    ::view-transition-new(tab-dock),
+    ::view-transition-new(sidebar) {
       animation: none;
     }
 

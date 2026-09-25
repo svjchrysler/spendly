@@ -157,14 +157,14 @@ export function ExpensesPage() {
     <div className="flex flex-col gap-3 pb-3 lg:gap-4 lg:pb-6">
       <MonthMasthead eyebrow="Gastos" />
 
-      <div className="grid gap-5 pt-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] xl:gap-10">
+      <div className="grid gap-5 pt-1 @4xl/main:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] @4xl/main:items-start @4xl/main:gap-8 @6xl/main:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] @6xl/main:gap-10">
         {/* Riel sticky: resumen + filtros siempre a mano mientras scrolleas la lista */}
-        <aside className="ledger-aside order-1 min-w-0 space-y-4 lg:order-2 lg:sticky lg:top-[var(--sticky-top)]">
+        <aside className="ledger-aside order-1 min-w-0 space-y-4 @4xl/main:order-2 @4xl/main:sticky @4xl/main:top-[var(--sticky-top)]">
           {summary}
           <section className="min-w-0 border-t border-border/70 pt-4">{filters}</section>
         </aside>
 
-        <div className="order-2 min-w-0 lg:order-1">{list}</div>
+        <div className="order-2 min-w-0 @4xl/main:order-1">{list}</div>
       </div>
     </div>
   )

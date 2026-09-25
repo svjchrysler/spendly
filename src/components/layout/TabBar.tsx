@@ -1,6 +1,7 @@
 import { useEffect, useRef, type CSSProperties } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import type { TabIcon } from '@/components/layout/TabIcons'
+import { isPlainClick } from '@/hooks/useRouteTransition'
 import { useTabBarCollapse } from '@/hooks/useTabBarCollapse'
 
 export type TabItem = Readonly<{
@@ -11,7 +12,7 @@ export type TabItem = Readonly<{
   prefetch: () => Promise<unknown>
 }>
 
-type TabBarProps = Readonly<{
+export type TabBarProps = Readonly<{
   items: readonly TabItem[]
   onWarm: (prefetch: () => Promise<unknown>) => void
   /** Navega con la transición direccional — ver `useRouteTransition` */
@@ -24,9 +25,10 @@ const PILL_TRAVEL_MS = 520
 const MAX_TRAVEL = 3
 
 /**
- * Tab bar "Liquid Glass" (iOS 26): cápsula flotante sobre el safe area, con
- * material translúcido, píldora activa que desliza entre tabs y colapso al
- * scrollear. Solo mobile — en desktop manda el nav del header.
+ * Tab bar "Liquid Glass": cápsula flotante sobre el safe area, con material
+ * translúcido, píldora activa que desliza entre tabs y colapso al scrollear.
+ * Solo en ancho compact (iPhone, Duo cerrado, Split View) — en regular manda
+ * el `Sidebar`, como en iOS 27.
  */
 export function TabBar({ items, onWarm, onSelect }: TabBarProps) {
   const { pathname } = useLocation()
@@ -93,18 +95,7 @@ export function TabBar({ items, onWarm, onSelect }: TabBarProps) {
               onPointerEnter={() => onWarm(prefetch)}
               onFocus={() => onWarm(prefetch)}
               onClick={(event) => {
-                // Modificadores y botones raros son "abrir aparte": el
-                // navegador sabe mejor que nosotros qué hacer con eso.
-                if (
-                  event.defaultPrevented ||
-                  event.metaKey ||
-                  event.ctrlKey ||
-                  event.shiftKey ||
-                  event.altKey ||
-                  event.button !== 0
-                ) {
-                  return
-                }
+                if (!isPlainClick(event)) return
                 event.preventDefault()
                 onSelect(item, index)
               }}

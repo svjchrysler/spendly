@@ -146,8 +146,8 @@ export function DashboardSkeleton() {
       aria-label="Cargando resumen"
     >
       <MastheadSkeleton />
-      <div className="grid min-h-0 flex-1 gap-6 pt-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-stretch lg:gap-8 xl:gap-10">
-        <div className="flex min-h-0 flex-col gap-6 lg:gap-8">
+      <div className="grid min-h-0 flex-1 gap-6 pt-1 @4xl/main:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] @4xl/main:items-stretch @4xl/main:gap-8 @6xl/main:gap-10">
+        <div className="flex min-h-0 flex-col gap-6 @4xl/main:gap-8">
           <SpendingHeroSkeleton />
           <div className="flex min-h-0 flex-1 flex-col border-t border-border/70 pt-5">
             <div className="mb-1 flex items-baseline justify-between">
@@ -161,7 +161,7 @@ export function DashboardSkeleton() {
             </div>
           </div>
         </div>
-        <div className="ledger-aside flex min-h-0 flex-col border-t border-border/70 pt-5 lg:border-t-0 lg:pt-0">
+        <div className="ledger-aside flex min-h-0 flex-col border-t border-border/70 pt-5 @4xl/main:border-t-0 @4xl/main:pt-0">
           <CategoryAllocationSkeleton fill />
         </div>
       </div>
@@ -177,7 +177,7 @@ export function AnalisisPageSkeleton() {
       aria-label="Cargando análisis"
     >
       <MastheadSkeleton />
-      <div className="grid grid-cols-2 gap-4 border-b border-border/70 pb-5 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-4 border-b border-border/70 pb-5 @xl/main:grid-cols-3 @4xl/main:grid-cols-6">
         {Array.from({ length: 6 }, (_, i) => (
           <div key={i} className="space-y-1.5">
             <Bone className="h-2.5 w-16" />
@@ -187,7 +187,7 @@ export function AnalisisPageSkeleton() {
         ))}
       </div>
       <Bone className="h-10 w-56 rounded-lg" />
-      <div className="grid gap-6 pt-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-8 xl:gap-10">
+      <div className="grid gap-6 pt-1 @4xl/main:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] @4xl/main:gap-8 @6xl/main:gap-10">
         <div className="space-y-5">
           <ChartSkeleton />
           <div className="space-y-2 border-t border-border/70 pt-5">
@@ -199,7 +199,7 @@ export function AnalisisPageSkeleton() {
             ))}
           </div>
         </div>
-        <div className="ledger-aside space-y-5 border-t border-border/70 pt-4 lg:border-t-0 lg:pt-0">
+        <div className="ledger-aside space-y-5 border-t border-border/70 pt-4 @4xl/main:border-t-0 @4xl/main:pt-0">
           <CategoryAllocationSkeleton />
         </div>
       </div>
@@ -211,8 +211,8 @@ export function ExpensesPageSkeleton() {
   return (
     <div className="flex flex-col gap-4 pb-4 lg:gap-5 lg:pb-8" aria-busy="true" aria-label="Cargando gastos">
       <MastheadSkeleton />
-      <div className="grid gap-6 pt-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
-        <div className="ledger-aside order-1 space-y-5 lg:order-2">
+      <div className="grid gap-6 pt-1 @4xl/main:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] @4xl/main:items-start @4xl/main:gap-8 @6xl/main:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] @6xl/main:gap-10">
+        <div className="ledger-aside order-1 space-y-5 @4xl/main:order-2">
           <section className="space-y-3">
             <Bone className="h-2.5 w-24" />
             <Bone className="h-10 w-44" />
@@ -222,7 +222,7 @@ export function ExpensesPageSkeleton() {
             <ExpenseFiltersSkeleton />
           </section>
         </div>
-        <div className="order-2 lg:order-1">
+        <div className="order-2 @4xl/main:order-1">
           <ExpenseListSkeleton rows={6} />
         </div>
       </div>

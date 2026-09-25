@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react'
 
 /**
- * Set local para el tab bar: pares outline/filled al estilo SF Symbols.
+ * Set local para tab bar y sidebar: pares outline/filled al estilo SF Symbols.
  *
  * lucide no tiene variantes rellenas, y el salto outline → filled al
  * seleccionar es justamente lo que hace que un tab bar se lea como iOS.
- * Vive solo acá: fuera del tab bar seguimos con lucide (ver AGENTS.md).
+ * Vive solo acá: fuera de la navegación seguimos con lucide (ver AGENTS.md).
  *
  * Los cuatro dibujos están normalizados a una caja óptica de ~17×17 centrada
  * en (12,12) sobre la grilla de 24. Sin eso la casa rellena pesa el doble que

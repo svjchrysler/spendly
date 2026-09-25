@@ -17,6 +17,15 @@ export function useMediaQuery(query: string) {
   return matches
 }
 
+/** Ancho regular: decide layout y presentación (sidebar, Dialog), no gestos. */
 export function useIsDesktop() {
   return useMediaQuery('(min-width: 768px)')
+}
+
+/**
+ * Puntero táctil: decide gestos y densidad. El iPhone Duo abierto es ancho
+ * *y* táctil — con solo el ancho recibía la UI de mouse.
+ */
+export function useIsTouch() {
+  return useMediaQuery('(pointer: coarse)')
 }

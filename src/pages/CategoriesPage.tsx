@@ -42,7 +42,8 @@ import {
 } from '@/lib/category-emojis'
 import { categoryColorOptions, defaultCategoryColor } from '@/lib/category-colors'
 import { useCategoryColor } from '@/hooks/useCategoryColor'
-import { useIsDesktop } from '@/hooks/useMediaQuery'
+import { useLatchedWhile } from '@/hooks/useLatchedWhile'
+import { useIsDesktop, useIsTouch } from '@/hooks/useMediaQuery'
 import { cn } from '@/lib/utils'
 import type { Category } from '@/types/database'
 
@@ -165,9 +166,11 @@ export function CategoriesPage() {
   const { data: categories = [], isLoading } = useCategories()
   const deleteCategory = useDeleteCategory()
   const isDesktop = useIsDesktop()
+  const touch = useIsTouch()
   const [openCreate, setOpenCreate] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
   const [deleting, setDeleting] = useState<Category | null>(null)
+  const modalAsDialog = useLatchedWhile(openCreate || editing !== null, isDesktop)
 
   async function handleDelete() {
     if (!deleting) return
@@ -181,8 +184,24 @@ export function CategoriesPage() {
   }
 
   const createForm = <CategoryForm onSuccess={() => setOpenCreate(false)} />
+  // En táctil no hay botones inline: sin esto borrar no tenía camino
   const editForm = editing ? (
-    <CategoryForm category={editing} onSuccess={() => setEditing(null)} />
+    <>
+      <CategoryForm category={editing} onSuccess={() => setEditing(null)} />
+      <Button
+        type="button"
+        variant="destructive"
+        size="touch"
+        className="mt-3 w-full cursor-pointer"
+        onClick={() => {
+          setEditing(null)
+          setDeleting(editing)
+        }}
+      >
+        <Trash2 className="size-4" aria-hidden />
+        Eliminar categoría
+      </Button>
+    </>
   ) : null
 
   return (
@@ -225,10 +244,10 @@ export function CategoriesPage() {
                   />
                 }
                 title={category.name}
-                onPress={isDesktop ? undefined : () => setEditing(category)}
-                chevron={!isDesktop}
+                onPress={touch ? () => setEditing(category) : undefined}
+                chevron={touch}
                 trailing={
-                  isDesktop ? (
+                  touch ? undefined : (
                     <span className="flex shrink-0 gap-0.5">
                       <Button
                         variant="ghost"
@@ -249,7 +268,7 @@ export function CategoriesPage() {
                         <Trash2 className="size-4" />
                       </Button>
                     </span>
-                  ) : undefined
+                  )
                 }
               />
             ))}
@@ -257,7 +276,7 @@ export function CategoriesPage() {
         </List>
       )}
 
-      {isDesktop ? (
+      {modalAsDialog ? (
         <>
           <Dialog open={openCreate} onOpenChange={setOpenCreate}>
             <DialogContent>

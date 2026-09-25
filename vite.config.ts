@@ -96,7 +96,10 @@ export default defineConfig({
         scope: '/',
         display: 'standalone',
         display_override: ['standalone', 'minimal-ui'],
-        orientation: 'portrait-primary',
+        // La pantalla interior del iPhone Duo es apaisada (1.4:1): con lock a
+        // portrait la app quedaba rotada o con bandas. En landscape manda el
+        // sidebar, como en iOS 27.
+        orientation: 'any',
         background_color: palette.dark.background,
         theme_color: palette.dark.background,
         categories: ['finance', 'productivity'],
