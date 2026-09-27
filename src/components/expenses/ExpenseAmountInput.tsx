@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { formatAmountDraft, parseAmountDraft, toAmountDraft } from '@/lib/amount-draft'
 import { getCurrencySymbol } from '@/lib/currency-config'
 import { cn } from '@/lib/utils'
 
@@ -14,67 +15,6 @@ interface ExpenseAmountInputProps {
   className?: string
 }
 
-/** es-BO while typing: 1.234,56 — dots are thousands, comma is decimal */
-function formatAmountDraft(raw: string): string {
-  const cleaned = raw.replace(/[^\d.,]/g, '')
-
-  let intDigits = ''
-  let decDigits: string | null = null
-
-  if (cleaned.includes(',')) {
-    const [left, ...rest] = cleaned.split(',')
-    intDigits = left.replace(/\D/g, '')
-    decDigits = rest.join('').replace(/\D/g, '').slice(0, 2)
-  } else if (cleaned.includes('.')) {
-    const parts = cleaned.split('.')
-    const last = parts.at(-1) ?? ''
-    if (parts.length === 2 && last.length <= 2) {
-      intDigits = parts[0]?.replace(/\D/g, '') ?? ''
-      decDigits = last.replace(/\D/g, '')
-    } else {
-      intDigits = parts.join('').replace(/\D/g, '')
-    }
-  } else {
-    intDigits = cleaned.replace(/\D/g, '')
-  }
-
-  intDigits = intDigits.replace(/^0+(?=\d)/, '')
-  if (!intDigits && decDigits != null) intDigits = '0'
-
-  const withDots = intDigits.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
-  if (decDigits != null) return `${withDots || '0'},${decDigits}`
-  return withDots
-}
-
-function parseAmountDraft(draft: string): number | undefined {
-  if (!draft || draft === ',') return undefined
-  const normalized = draft.replace(/\./g, '').replace(',', '.')
-  const value = Number(normalized)
-  return Number.isFinite(value) ? value : undefined
-}
-
-function toDraft(value: number | undefined): string {
-  if (value == null || Number.isNaN(value)) return ''
-  return formatAmountDraft(value.toFixed(2).replace('.', ','))
-}
-
-if (import.meta.env.DEV) {
-  const cases: [string, string, number?][] = [
-    ['12000', '12.000', 12000],
-    ['1.2000', '12.000', 12000],
-    ['12.000', '12.000', 12000],
-    ['1,20', '1,20', 1.2],
-    ['1.5', '1,5', 1.5],
-  ]
-  for (const [input, expected, num] of cases) {
-    const out = formatAmountDraft(input)
-    if (out !== expected) console.error(`amount format: ${input} → ${out}, expected ${expected}`)
-    if (num != null && parseAmountDraft(out) !== num) {
-      console.error(`amount parse: ${out} → ${parseAmountDraft(out)}, expected ${num}`)
-    }
-  }
-}
-
 export function ExpenseAmountInput({
   id = 'amount',
   value,
@@ -87,10 +27,10 @@ export function ExpenseAmountInput({
 }: Readonly<ExpenseAmountInputProps>) {
   const symbol = getCurrencySymbol()
   const focusedRef = useRef(false)
-  const [draft, setDraft] = useState(() => toDraft(value))
+  const [draft, setDraft] = useState(() => toAmountDraft(value))
 
   useEffect(() => {
-    if (!focusedRef.current) setDraft(toDraft(value))
+    if (!focusedRef.current) setDraft(toAmountDraft(value))
   }, [value])
 
   return (
@@ -127,7 +67,7 @@ export function ExpenseAmountInput({
           }}
           onBlur={() => {
             focusedRef.current = false
-            if (value != null && !Number.isNaN(value)) setDraft(toDraft(value))
+            if (value != null && !Number.isNaN(value)) setDraft(toAmountDraft(value))
             onBlur?.()
           }}
           className={cn(

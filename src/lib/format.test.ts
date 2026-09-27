@@ -1,11 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   capitalize,
+  defaultExpenseDate,
+  foldForSearch,
   formatCurrency,
   formatCurrencyCompact,
   formatDayLabel,
   formatMonthYear,
   getMonthRange,
+  toDateString,
 } from '@/lib/format'
 
 describe('formatCurrency', () => {
@@ -41,7 +44,7 @@ describe('formatCurrencyCompact', () => {
 describe('formatMonthYear', () => {
   it('returns a Spanish month label', () => {
     expect(formatMonthYear(2026, 7).toLowerCase()).toContain('julio')
-    expect(formatMonthYear(2026, 7)).toContain('2026')
+    expect(formatMonthYear(2026, 7)).toBe('julio 2026')
   })
 })
 
@@ -56,7 +59,7 @@ describe('formatDayLabel', () => {
 
     expect(formatDayLabel('2026-07-11')).toBe('Hoy')
     expect(formatDayLabel('2026-07-10')).toBe('Ayer')
-    expect(formatDayLabel('2026-07-01').toLowerCase()).toContain('julio')
+    expect(formatDayLabel('2026-07-01')).toBe('1 de julio')
   })
 })
 
@@ -77,5 +80,34 @@ describe('capitalize', () => {
   it('uppercases the first character', () => {
     expect(capitalize('julio')).toBe('Julio')
     expect(capitalize('')).toBe('')
+  })
+})
+
+describe('toDateString', () => {
+  it('uses the local calendar day, not UTC', () => {
+    // 23:30 local: en cualquier zona al oeste de UTC, toISOString ya es mañana
+    expect(toDateString(new Date(2026, 8, 30, 23, 30))).toBe('2026-09-30')
+    expect(toDateString(new Date(2026, 0, 1, 0, 5))).toBe('2026-01-01')
+  })
+})
+
+describe('defaultExpenseDate', () => {
+  const now = new Date(2026, 8, 27, 21, 0)
+
+  it('is today when viewing the current month', () => {
+    expect(defaultExpenseDate(2026, 9, now)).toBe('2026-09-27')
+  })
+
+  it('clamps into the viewed month otherwise', () => {
+    expect(defaultExpenseDate(2026, 8, now)).toBe('2026-08-31')
+    expect(defaultExpenseDate(2025, 12, now)).toBe('2025-12-31')
+    expect(defaultExpenseDate(2026, 11, now)).toBe('2026-11-01')
+  })
+})
+
+describe('foldForSearch', () => {
+  it('ignores case and accents', () => {
+    expect(foldForSearch('Café Ñandú')).toBe('cafe nandu')
+    expect(foldForSearch('Café').includes(foldForSearch('cafe'))).toBe(true)
   })
 })

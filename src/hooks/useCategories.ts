@@ -75,17 +75,9 @@ export function useDeleteCategory() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    // Sin pre-chequeo de gastos: la FK `on delete restrict` ya lo impide y
+    // devuelve 23503, que `dbErrorMessage` traduce. Un viaje en vez de dos.
     mutationFn: async (id: string) => {
-      const { count, error: countError } = await supabase
-        .from('expenses')
-        .select('*', { count: 'exact', head: true })
-        .eq('category_id', id)
-
-      if (countError) throw countError
-      if (count && count > 0) {
-        throw new Error('No puedes eliminar una categoría con gastos asociados')
-      }
-
       const { error } = await supabase.from('categories').delete().eq('id', id)
       if (error) throw error
     },

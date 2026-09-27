@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { MonthMasthead } from '@/components/layout/MonthPicker'
 import { AnimatedAmount } from '@/components/ui/animated-amount'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useMonth } from '@/contexts/MonthContext'
 import { useCategories } from '@/hooks/useCategories'
 import { useExpenses } from '@/hooks/useExpenses'
-import { formatCurrency } from '@/lib/format'
+import { useSessionState } from '@/hooks/useSessionState'
+import { foldForSearch, formatCurrency } from '@/lib/format'
 import {
   activeExpenseDays,
   averageTicket,
@@ -22,19 +23,30 @@ import {
 
 export function ExpensesPage() {
   const { year, month } = useMonth()
-  const [search, setSearch] = useState('')
-  const [categoryId, setCategoryId] = useState<string>()
+  // Persisten al ir y volver de otro tab: filtrar, mirar Resumen y volver
+  // no debería obligar a filtrar de nuevo
+  const [search, setSearch] = useSessionState('spendly-expenses-search', '')
+  const [storedCategoryId, setCategoryId] = useSessionState<string | undefined>(
+    'spendly-expenses-category',
+    undefined,
+  )
   const { data: categories = [], isLoading: categoriesLoading } = useCategories()
   const { data: allExpenses = [], isLoading } = useExpenses(year, month)
+  // Un filtro guardado de una categoría que ya no existe no debe dejar la
+  // lista vacía sin explicación
+  const categoryId =
+    categoriesLoading || categories.some((category) => category.id === storedCategoryId)
+      ? storedCategoryId
+      : undefined
 
   const expenses = useMemo(() => {
-    const q = search.toLowerCase()
+    const q = foldForSearch(search.trim())
     return allExpenses.filter((expense) => {
       if (categoryId && expense.category_id !== categoryId) return false
       if (!q) return true
       return (
-        expense.description?.toLowerCase().includes(q) ||
-        expense.category?.name.toLowerCase().includes(q)
+        foldForSearch(expense.description ?? '').includes(q) ||
+        foldForSearch(expense.category?.name ?? '').includes(q)
       )
     })
   }, [allExpenses, categoryId, search])

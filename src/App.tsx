@@ -26,7 +26,13 @@ const CategoriesPage = lazy(() =>
 
 export default function App() {
   return (
-    <PersistQueryClientProvider client={queryClient} persistOptions={queryPersistOptions}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={queryPersistOptions}
+      // Gastos guardados sin red en una sesión anterior: siguen pausados hasta
+      // que haya conexión (sus mutationFn vienen de los defaults por key)
+      onSuccess={() => void queryClient.resumePausedMutations()}
+    >
       <ThemeProvider>
         <AuthProvider>
           <BrowserRouter>

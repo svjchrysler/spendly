@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { lazy, Suspense, useCallback, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Outlet, useLocation } from 'react-router-dom'
 import { Moon, Sun } from 'lucide-react'
@@ -7,11 +7,11 @@ import { HomeIconNotice } from '@/components/layout/HomeIconNotice'
 import { OfflineBanner } from '@/components/layout/OfflineBanner'
 import { PageEnter } from '@/components/layout/PageEnter'
 import { NavTitleProvider, useNavTitle } from '@/components/layout/NavBar'
-import { ProfileMenu } from '@/components/layout/ProfileMenu'
 import { PullToRefresh } from '@/components/layout/PullToRefresh'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { TabBar, type TabItem } from '@/components/layout/TabBar'
 import { ChartIcon, HouseIcon, ReceiptIcon, TagIcon } from '@/components/layout/TabIcons'
+import { useAuth } from '@/contexts/AuthContext'
 import { useMonth } from '@/contexts/MonthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useKeyboardInset } from '@/hooks/useKeyboardInset'
@@ -20,6 +20,27 @@ import { useRouteTransition } from '@/hooks/useRouteTransition'
 import { useScrollRestoration } from '@/hooks/useScrollRestoration'
 import { tapFeedback } from '@/lib/haptics'
 import { prefetchMonthData } from '@/lib/prefetch-month'
+
+/*
+  El menú de perfil es lo único del shell que usa el Menu de base-ui (y con él
+  floating-ui): estático, pesaba en el chunk de entrada de todas las pantallas.
+  Se precarga en idle; hasta entonces se ve el mismo avatar.
+*/
+const importProfileMenu = () => import('@/components/layout/ProfileMenu')
+const ProfileMenu = lazy(() =>
+  importProfileMenu().then((module) => ({ default: module.ProfileMenu })),
+)
+
+function ProfileMenuPlaceholder() {
+  const { user } = useAuth()
+  return (
+    <span className="inline-flex size-11 items-center justify-center" aria-hidden>
+      <span className="inline-flex size-8 items-center justify-center rounded-full border border-border bg-secondary text-xs font-medium text-foreground">
+        {user?.email?.charAt(0).toUpperCase() ?? 'S'}
+      </span>
+    </span>
+  )
+}
 
 const navItems: readonly TabItem[] = [
   {
@@ -78,6 +99,17 @@ function AppShellInner() {
   const { pathname } = useLocation()
   const navigateToRoute = useRouteTransition()
   const activeIndex = tabIndexOf(pathname)
+
+  useEffect(() => {
+    if (typeof window.requestIdleCallback !== 'function') {
+      const timer = window.setTimeout(() => void importProfileMenu(), 1500)
+      return () => window.clearTimeout(timer)
+    }
+    const handle = window.requestIdleCallback(() => void importProfileMenu(), {
+      timeout: 3000,
+    })
+    return () => window.cancelIdleCallback(handle)
+  }, [])
 
   /*
     La dirección sale del orden de los tabs, no del path: es el mismo
@@ -145,7 +177,9 @@ function AppShellInner() {
                   <Moon className="icon-swap size-4" />
                 )}
               </button>
-              <ProfileMenu />
+              <Suspense fallback={<ProfileMenuPlaceholder />}>
+                <ProfileMenu />
+              </Suspense>
             </div>
           </div>
         </header>

@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { onlineManager } from '@tanstack/react-query'
 import { useForm, type FieldErrors } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, Sparkles } from 'lucide-react'
-import { z } from 'zod'
+import { Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { ExpenseAmountInput } from '@/components/expenses/ExpenseAmountInput'
@@ -10,9 +9,12 @@ import { ExpenseCategoryPicker } from '@/components/expenses/ExpenseCategoryPick
 import { ExpenseDatePicker } from '@/components/expenses/ExpenseDatePicker'
 import { ExpenseNoteInput } from '@/components/expenses/ExpenseNoteInput'
 import { ExpenseFormSkeleton } from '@/components/layout/skeletons'
+import { useAuth } from '@/contexts/AuthContext'
 import { useCategories } from '@/hooks/useCategories'
 import { useExpenseHistory } from '@/hooks/useExpenseHistory'
 import { useCreateExpense, useUpdateExpense } from '@/hooks/useExpenses'
+import { expenseResolver, type ExpenseFormValues } from '@/lib/expense-validation'
+import { defaultExpenseDate } from '@/lib/format'
 import { successFeedback } from '@/lib/haptics'
 import { useMonth } from '@/contexts/MonthContext'
 import {
@@ -22,17 +24,7 @@ import {
 import { cn } from '@/lib/utils'
 import type { ExpenseWithCategory } from '@/types/database'
 
-const schema = z.object({
-  amount: z
-    .number({ error: 'El monto es obligatorio' })
-    .refine((value) => !Number.isNaN(value), 'El monto es obligatorio')
-    .positive('El monto debe ser mayor a 0'),
-  category_id: z.string().min(1, 'Selecciona una categoría'),
-  description: z.string().trim().min(1, 'La descripción es obligatoria'),
-  expense_date: z.string().min(1, 'La fecha es obligatoria'),
-})
-
-type FormValues = z.infer<typeof schema>
+type FormValues = ExpenseFormValues
 
 interface ExpenseFormProps {
   expense?: ExpenseWithCategory
@@ -43,14 +35,20 @@ export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) 
   const { year, month } = useMonth()
   const { data: categories = [], isLoading } = useCategories()
   const { data: history = [] } = useExpenseHistory()
-  const createExpense = useCreateExpense(year, month)
-  const updateExpense = useUpdateExpense(year, month)
+  const { user } = useAuth()
+  const createExpense = useCreateExpense()
+  const updateExpense = useUpdateExpense()
   const isEditing = Boolean(expense)
   const originalDescription = expense?.description ?? ''
   const [categoryManual, setCategoryManual] = useState(isEditing)
   const [prediction, setPrediction] = useState<CategoryPrediction | null>(null)
   const [shaking, setShaking] = useState(false)
   const skipNextPredictionRef = useRef(isEditing)
+  // El botón ya no se deshabilita esperando al servidor: esto frena el doble
+  // tap que entra antes de que el sheet termine de cerrarse
+  const submittedRef = useRef(false)
+  // Vuelta de "Guardar y agregar otro": remonta el monto limpio y con foco
+  const [round, setRound] = useState(0)
 
   useEffect(() => {
     if (!shaking) return
@@ -64,17 +62,17 @@ export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) 
     setValue,
     watch,
     trigger,
-    formState: { errors, isSubmitting },
+    reset,
+    formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: expenseResolver,
     mode: 'onSubmit',
     reValidateMode: 'onBlur',
     defaultValues: {
       amount: expense?.amount ?? undefined,
       category_id: expense?.category_id ?? '',
       description: expense?.description ?? '',
-      expense_date:
-        expense?.expense_date ?? new Date().toISOString().split('T')[0],
+      expense_date: expense?.expense_date ?? defaultExpenseDate(year, month),
     },
   })
 
@@ -129,20 +127,49 @@ export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) 
     setValue,
   ])
 
-  async function onSubmit(values: FormValues) {
-    try {
-      if (isEditing && expense) {
-        await updateExpense.mutateAsync({ id: expense.id, ...values })
-        toast.success('Gasto actualizado')
-      } else {
-        await createExpense.mutateAsync(values)
-        toast.success('Gasto guardado')
-      }
-      successFeedback()
-      onSuccess?.()
-    } catch {
-      toast.error('No se pudo guardar el gasto')
+  /*
+    Sin await: el optimistic update ya pintó la fila, así que el sheet cierra
+    al instante. Sin red la mutation queda pausada y persistida; antes esto
+    esperaba la respuesta y el botón se quedaba en "Guardando…" para siempre.
+    Si el servidor rechaza, el hook revierte la fila y avisa con un toast.
+  */
+  function onSubmit(values: FormValues, addAnother = false) {
+    if (submittedRef.current) return
+    submittedRef.current = true
+    const online = onlineManager.isOnline()
+    if (isEditing && expense) {
+      updateExpense.mutate({ id: expense.id, ...values })
+      toast.success(
+        online ? 'Gasto actualizado' : 'Cambio guardado · se sincroniza al volver la conexión',
+      )
+    } else {
+      if (!user) return
+      createExpense.mutate({ ...values, id: crypto.randomUUID(), user_id: user.id })
+      toast.success(
+        online ? 'Gasto guardado' : 'Gasto guardado · se sincroniza al volver la conexión',
+      )
     }
+    successFeedback()
+
+    /*
+      Varios tickets seguidos: el form queda abierto, limpio, con el foco en el
+      monto. Fecha y categoría se conservan — suelen repetirse — y la
+      categoría se vuelve a sugerir con la próxima descripción.
+    */
+    if (addAnother) {
+      reset({
+        amount: Number.NaN,
+        description: '',
+        category_id: values.category_id,
+        expense_date: values.expense_date,
+      })
+      setPrediction(null)
+      setCategoryManual(false)
+      setRound((value) => value + 1)
+      submittedRef.current = false
+      return
+    }
+    onSuccess?.()
   }
 
   /*
@@ -175,12 +202,11 @@ export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) 
     )
   }
 
-  const isSaving = isSubmitting || createExpense.isPending || updateExpense.isPending
   const showPredictionHint = prediction && !categoryManual
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit, handleInvalid)}
+      onSubmit={handleSubmit((values) => onSubmit(values), handleInvalid)}
       // La validación la manda Zod, en español. Sin esto el navegador dispara
       // primero su propio globo ("Please fill out this field.", en el idioma
       // del browser) y tapa el mensaje y la sacudida del campo. Los `required`
@@ -190,6 +216,7 @@ export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) 
     >
       <div className={cn('min-w-0 space-y-1.5', shaking && 'shake')}>
         <ExpenseAmountInput
+          key={round}
           id="amount"
           hasError={Boolean(errors.amount)}
           autoFocus={!isEditing}
@@ -274,19 +301,20 @@ export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) 
         type="submit"
         size="lg"
         className="h-11 w-full max-w-full shrink cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90"
-        disabled={isSaving}
       >
-        {isSaving ? (
-          <>
-            <Loader2 className="size-4 animate-spin" aria-hidden />
-            Guardando…
-          </>
-        ) : isEditing ? (
-          'Actualizar'
-        ) : (
-          'Guardar gasto'
-        )}
+        {isEditing ? 'Actualizar' : 'Guardar gasto'}
       </Button>
+      {isEditing ? null : (
+        <Button
+          type="button"
+          variant="ghost"
+          size="touch"
+          className="-mt-3 w-full cursor-pointer text-primary"
+          onClick={handleSubmit((values) => onSubmit(values, true), handleInvalid)}
+        >
+          Guardar y agregar otro
+        </Button>
+      )}
     </form>
   )
 }
