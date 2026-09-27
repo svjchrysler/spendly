@@ -1,18 +1,24 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+  type QueryKey,
+} from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { categoryKeys } from '@/hooks/useCategories'
+import {
+  expenseMutationKeys,
+  type CreateExpenseVars,
+  type UpdateExpenseVars,
+} from '@/lib/expense-mutations'
 import { getMonthRange } from '@/lib/format'
-import type { Expense, ExpenseWithCategory } from '@/types/database'
+import type { Category, ExpenseWithCategory } from '@/types/database'
 
 export const expenseKeys = {
   month: (year: number, month: number) => ['expenses', year, month] as const,
-}
-
-type ExpenseInput = {
-  category_id: string
-  amount: number
-  description?: string | null
-  expense_date: string
 }
 
 /** Fuente única del fetch del mes — la comparte el prefetch de los tabs. */
@@ -40,136 +46,131 @@ export function useExpenses(year: number, month: number) {
   })
 }
 
-export function useCreateExpense(year: number, month: number) {
+type MonthSnapshot = [QueryKey, ExpenseWithCategory[] | undefined][]
+
+/*
+  El optimistic update va al mes de `expense_date`, no al mes que se está
+  viendo: cargar hoy un gasto mientras mirás agosto no debe aparecer en agosto
+  y desaparecer después. Por eso se opera sobre todas las listas de mes en
+  cache y el rollback restaura todas las que se tocaron.
+*/
+async function snapshotMonths(queryClient: QueryClient): Promise<MonthSnapshot> {
+  await queryClient.cancelQueries({ queryKey: ['expenses'] })
+  return queryClient.getQueriesData<ExpenseWithCategory[]>({ queryKey: ['expenses'] })
+}
+
+function restoreMonths(queryClient: QueryClient, snapshot: MonthSnapshot | undefined) {
+  for (const [key, rows] of snapshot ?? []) queryClient.setQueryData(key, rows)
+}
+
+function monthKeyOf(date: string) {
+  return expenseKeys.month(Number(date.slice(0, 4)), Number(date.slice(5, 7)))
+}
+
+// Mismo orden que fetchMonthExpenses
+function byNewest(a: ExpenseWithCategory, b: ExpenseWithCategory) {
+  return (
+    b.expense_date.localeCompare(a.expense_date) || b.created_at.localeCompare(a.created_at)
+  )
+}
+
+function dropFromMonths(queryClient: QueryClient, snapshot: MonthSnapshot, id: string) {
+  for (const [key, rows] of snapshot) {
+    if (rows?.some((row) => row.id === id)) {
+      queryClient.setQueryData(key, rows.filter((row) => row.id !== id))
+    }
+  }
+}
+
+/** Mes no cacheado → no se inventa la lista; se baja entera al abrirlo. */
+function placeInMonth(queryClient: QueryClient, expense: ExpenseWithCategory) {
+  queryClient.setQueryData<ExpenseWithCategory[]>(monthKeyOf(expense.expense_date), (old) =>
+    old ? [...old, expense].sort(byNewest) : old,
+  )
+}
+
+// Sin la categoría la fila optimista pinta sin ícono ni color y salta al refetch
+function cachedCategory(queryClient: QueryClient, id: string) {
+  return (
+    queryClient.getQueryData<Category[]>(categoryKeys.all)?.find((item) => item.id === id) ??
+    null
+  )
+}
+
+/*
+  mutationFn, invalidación y reanudación offline vienen de los defaults del
+  QueryClient (query-client.ts). Los consumidores no esperan la respuesta: la
+  UI ya cambió con el optimistic update, y sin red la mutation queda pausada
+  y persistida hasta que vuelva la conexión.
+*/
+export function useCreateExpense() {
   const queryClient = useQueryClient()
-  const { user } = useAuth()
 
   return useMutation({
-    mutationFn: async (input: ExpenseInput) => {
-      if (!user) throw new Error('No autenticado')
-      const { data, error } = await supabase
-        .from('expenses')
-        .insert({ ...input, user_id: user.id })
-        .select('*, category:categories(*)')
-        .single()
-
-      if (error) throw error
-      return data as ExpenseWithCategory
+    mutationKey: expenseMutationKeys.create,
+    onMutate: async (vars: CreateExpenseVars) => {
+      const snapshot = await snapshotMonths(queryClient)
+      const now = new Date().toISOString()
+      placeInMonth(queryClient, {
+        ...vars,
+        description: vars.description ?? null,
+        created_at: vars.created_at ?? now,
+        updated_at: now,
+        category: cachedCategory(queryClient, vars.category_id),
+      })
+      return { snapshot }
     },
-    onMutate: async (input) => {
-      await queryClient.cancelQueries({ queryKey: expenseKeys.month(year, month) })
-      const previous = queryClient.getQueryData<ExpenseWithCategory[]>(
-        expenseKeys.month(year, month),
-      )
-
-      const optimistic: ExpenseWithCategory = {
-        id: `temp-${Date.now()}`,
-        user_id: user!.id,
-        category_id: input.category_id,
-        amount: input.amount,
-        description: input.description ?? null,
-        expense_date: input.expense_date,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        category: null,
-      }
-
-      queryClient.setQueryData<ExpenseWithCategory[]>(
-        expenseKeys.month(year, month),
-        (old) => [optimistic, ...(old ?? [])],
-      )
-
-      return { previous }
-    },
-    onError: (_err, _input, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(expenseKeys.month(year, month), context.previous)
-      }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses'] })
-      queryClient.invalidateQueries({ queryKey: ['monthly-stats'] })
-      queryClient.invalidateQueries({ queryKey: ['monthly-budget'] })
+    onError: (_err, _vars, context) => {
+      restoreMonths(queryClient, context?.snapshot)
+      toast.error('No se pudo guardar el gasto')
     },
   })
 }
 
-export function useUpdateExpense(year: number, month: number) {
+export function useUpdateExpense() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      ...input
-    }: Pick<Expense, 'id'> & Partial<ExpenseInput>) => {
-      const { data, error } = await supabase
-        .from('expenses')
-        .update(input)
-        .eq('id', id)
-        .select('*, category:categories(*)')
-        .single()
+    mutationKey: expenseMutationKeys.update,
+    onMutate: async ({ id, ...input }: UpdateExpenseVars) => {
+      const snapshot = await snapshotMonths(queryClient)
+      const current = snapshot
+        .flatMap(([, rows]) => rows ?? [])
+        .find((row) => row.id === id)
 
-      if (error) throw error
-      return data as ExpenseWithCategory
-    },
-    onMutate: async ({ id, ...input }) => {
-      await queryClient.cancelQueries({ queryKey: expenseKeys.month(year, month) })
-      const previous = queryClient.getQueryData<ExpenseWithCategory[]>(
-        expenseKeys.month(year, month),
-      )
-
-      queryClient.setQueryData<ExpenseWithCategory[]>(
-        expenseKeys.month(year, month),
-        (old) =>
-          old?.map((item) =>
-            item.id === id ? { ...item, ...input, updated_at: new Date().toISOString() } : item,
-          ) ?? [],
-      )
-
-      return { previous }
-    },
-    onError: (_err, _input, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(expenseKeys.month(year, month), context.previous)
+      if (current) {
+        dropFromMonths(queryClient, snapshot, id)
+        placeInMonth(queryClient, {
+          ...current,
+          ...input,
+          category: input.category_id
+            ? cachedCategory(queryClient, input.category_id)
+            : current.category,
+          updated_at: new Date().toISOString(),
+        })
       }
+      return { snapshot }
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses'] })
-      queryClient.invalidateQueries({ queryKey: ['monthly-stats'] })
+    onError: (_err, _vars, context) => {
+      restoreMonths(queryClient, context?.snapshot)
+      toast.error('No se pudo actualizar el gasto')
     },
   })
 }
 
-export function useDeleteExpense(year: number, month: number) {
+export function useDeleteExpense() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('expenses').delete().eq('id', id)
-      if (error) throw error
-    },
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: expenseKeys.month(year, month) })
-      const previous = queryClient.getQueryData<ExpenseWithCategory[]>(
-        expenseKeys.month(year, month),
-      )
-
-      queryClient.setQueryData<ExpenseWithCategory[]>(
-        expenseKeys.month(year, month),
-        (old) => old?.filter((item) => item.id !== id) ?? [],
-      )
-
-      return { previous }
+    mutationKey: expenseMutationKeys.delete,
+    onMutate: async (id: string) => {
+      const snapshot = await snapshotMonths(queryClient)
+      dropFromMonths(queryClient, snapshot, id)
+      return { snapshot }
     },
     onError: (_err, _id, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(expenseKeys.month(year, month), context.previous)
-      }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses'] })
-      queryClient.invalidateQueries({ queryKey: ['monthly-stats'] })
-      queryClient.invalidateQueries({ queryKey: ['monthly-budget'] })
+      restoreMonths(queryClient, context?.snapshot)
+      toast.error('No se pudo eliminar el gasto')
     },
   })
 }

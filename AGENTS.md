@@ -25,7 +25,7 @@ No es un SaaS multi-tenant genérico: es una app chica, mobile-first, con shell 
 | Backend | `@supabase/supabase-js` (`src/lib/supabase.ts`) |
 | Forms | RHF + Zod |
 | Charts | Recharts (lazy donde ya esté lazy) |
-| Motion | Framer Motion (cuidado con `transform` — ver pitfalls) |
+| Motion | CSS (sistema "Motion didáctico" en `index.css`) + `useCountUp`. Sin librería de animación: framer-motion se sacó, pesaba 40 kB gz por un solo uso |
 | Package manager | **pnpm** (no npm/yarn) |
 | Lint / test | `oxlint`, `vitest` |
 
@@ -86,7 +86,9 @@ Nav: 4 tabs. Compact (<768px: iPhone, iPhone Duo cerrado, Split View) = tab bar 
 ### Datos
 
 - Queries en hooks (`useExpenses`, `useCategories`, `useMonthlyStats`, …).
-- Keys tipicas: `['expenses', …]`, `['monthly-stats', year, month]`, `['categories']`, `['monthly-budget', year, month]`.
+- Keys tipicas: `['expenses', year, month]`, `['categories']`, `['monthly-budget', year, month]`, `['monthly-history', n]`.
+- Total y desglose del mes (`useMonthlyStats`) se **derivan** de `['expenses', year, month]` con `select: computeMonthlyStats` — no hay query aparte.
+- Mutations de gastos: `mutationFn` + invalidación viven en `setMutationDefaults` (`query-client.ts`) por `mutationKey`; los hooks solo agregan optimistic/rollback. Así una mutation pausada sin red se persiste y se reanuda al reabrir. El `id` lo genera el cliente (`crypto.randomUUID()`).
 - `['expense-history']` va **fuera** del prefijo `['expenses']` a propósito: bajo ese prefijo cada mutation lo invalidaba y re-bajaba 1500 filas solo para predecir categoría.
 - Los `queryFn` del mes viven en `fetchMonthExpenses` / `fetchMonthlyStats` / `fetchCategories` (exportados desde los hooks) y los reusa `prefetch-month.ts` — no duplicar el select.
 - Mutations con optimistic updates + invalidate de stats.
@@ -167,7 +169,7 @@ La app sigue la guía de iOS 27. Lo nativo lo aportan estructura, materiales, mo
 | Logout al reabrir offline | Ignorar `SIGNED_OUT` sin red; persist session |
 | Cache vieja post-cambio de keys | Subir `buster` en `queryPersistOptions` |
 | Desktop vacío abajo (Resumen) | No estirar con `justify-between`/`min-h` — empaquetar contenido arriba |
-| recharts/motion en el arranque | Un util compartido (`clsx`, `use-sync-external-store`) cae en el chunk de un grupo pesado y el entry lo importa estático. Los grupos `ui-vendor`/`react-vendor` de `vite.config.ts` van **antes** que `recharts` y llevan `/` final. Verificar con `grep -c recharts- dist/assets/index-*.js` → 0 |
+| recharts en el arranque | Un util compartido (`clsx`, `use-sync-external-store`) cae en el chunk de un grupo pesado y el entry lo importa estático. Los grupos `ui-vendor`/`react-vendor` de `vite.config.ts` van **antes** que `recharts` y llevan `/` final. Verificar con `grep -c recharts- dist/assets/index-*.js` → 0 |
 | Datos del usuario tras logout | `purgeLocalUserData()` (`lib/session-cleanup.ts`) borra query cache + CacheStorage. Si se agrega otro runtime cache con datos, sumarlo a `DATA_CACHES` |
 | Animación de entrada que rompe un `position: fixed` | `animation-fill-mode: both` deja aplicado el `transform: translateY(0)` final y eso ya crea containing block. Las entradas van con **`backwards`** |
 | Globo de validación del navegador en inglés | El `<form>` con validación Zod necesita `noValidate`, o el browser dispara su propio mensaje antes y tapa el de la app |

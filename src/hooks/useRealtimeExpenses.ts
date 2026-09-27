@@ -1,18 +1,25 @@
 import { useEffect } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { isLocalEcho } from '@/lib/expense-mutations'
+import { invalidateExpenseData } from '@/lib/query-client'
+
+/** Una importación o un sync de otro dispositivo llega como ráfaga de eventos:
+ *  se juntan en una sola invalidación. */
+const BURST_MS = 400
+
+type ExpenseRowRef = { id?: string }
 
 export function useRealtimeExpenses() {
   const { user } = useAuth()
-  const queryClient = useQueryClient()
 
   useEffect(() => {
     if (!user) return
 
+    let timer: number | undefined
     const channel = supabase
       .channel('expenses-changes')
-      .on(
+      .on<ExpenseRowRef>(
         'postgres_changes',
         {
           event: '*',
@@ -20,17 +27,20 @@ export function useRealtimeExpenses() {
           table: 'expenses',
           filter: `user_id=eq.${user.id}`,
         },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['expenses'] })
-          queryClient.invalidateQueries({ queryKey: ['monthly-stats'] })
-          queryClient.invalidateQueries({ queryKey: ['monthly-budget'] })
-          queryClient.invalidateQueries({ queryKey: ['monthly-history'] })
+        (payload) => {
+          // DELETE solo trae `old` (con la PK); INSERT/UPDATE traen `new`
+          const id = (payload.new as ExpenseRowRef).id ?? (payload.old as ExpenseRowRef).id
+          // Cambio hecho acá: su mutation ya invalidó lo que tocaba
+          if (isLocalEcho(id)) return
+          window.clearTimeout(timer)
+          timer = window.setTimeout(invalidateExpenseData, BURST_MS)
         },
       )
       .subscribe()
 
     return () => {
+      window.clearTimeout(timer)
       supabase.removeChannel(channel)
     }
-  }, [user, queryClient])
+  }, [user])
 }

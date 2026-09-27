@@ -224,10 +224,6 @@ export default defineConfig({
               test: /node_modules\/(recharts|d3-|victory-vendor|internmap|delaunator)/,
             },
             {
-              name: 'motion',
-              test: /node_modules\/framer-motion/,
-            },
-            {
               name: 'supabase',
               test: /node_modules\/(@supabase|@supabase\/)/,
             },

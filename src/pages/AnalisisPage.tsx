@@ -14,6 +14,7 @@ import { useMonthlyBudget, useMonthlyHistory, useMonthlyStats } from '@/hooks/us
 import { capitalize, formatCurrency, formatDayLabel } from '@/lib/format'
 import { getExpenseLabel } from '@/lib/expense-display'
 import { topShare } from '@/lib/month-insights'
+import type { HistoryMonth } from '@/lib/month-history'
 import { buildMonthReport, type MonthReport } from '@/lib/month-report'
 import { cn } from '@/lib/utils'
 
@@ -49,9 +50,16 @@ const WeekOfMonthChart = lazy(() =>
   })),
 )
 
-function TrendStrip({
-  history,
-}: Readonly<{ history: { label: string; total: number }[] }>) {
+/*
+  Un mes en curso contra un mes completo siempre "baja": el día 5 de
+  septiembre no se puede comparar con agosto entero. Si el mes todavía corre,
+  la base es lo gastado en el mes anterior hasta el mismo día.
+*/
+function comparisonBase(item: HistoryMonth, previous: HistoryMonth) {
+  return item.inProgress ? previous.totalToDay : previous.total
+}
+
+function TrendStrip({ history }: Readonly<{ history: HistoryMonth[] }>) {
   const last = history.at(-1)
   const previous = history.at(-2)
   const average = history.reduce((sum, item) => sum + item.total, 0) / history.length
@@ -62,8 +70,9 @@ function TrendStrip({
   )
 
   let deltaCell: ReactNode = <p className="metric-cell-value">—</p>
-  if (last && previous && previous.total > 0) {
-    const delta = ((last.total - previous.total) / previous.total) * 100
+  const base = last && previous ? comparisonBase(last, previous) : 0
+  if (last && previous && base > 0) {
+    const delta = ((last.total - base) / base) * 100
     const rising = delta > 0
     deltaCell = (
       <p
@@ -87,6 +96,9 @@ function TrendStrip({
       <div className="metric-cell space-y-1.5">
         <p className="metric-cell-label">Vs. mes anterior</p>
         {deltaCell}
+        {last?.inProgress && last.cutoffDay ? (
+          <p className="text-xs text-muted-foreground">al día {last.cutoffDay}</p>
+        ) : null}
       </div>
       <div className="metric-cell space-y-1.5">
         <p className="metric-cell-label">Mes más alto</p>
@@ -241,9 +253,7 @@ function TopExpensesList({ report }: Readonly<{ report: MonthReport }>) {
   )
 }
 
-function MonthDetail({
-  history,
-}: Readonly<{ history: { label: string; total: number }[] }>) {
+function MonthDetail({ history }: Readonly<{ history: HistoryMonth[] }>) {
   const rows = [...history].reverse()
 
   return (
@@ -251,8 +261,9 @@ function MonthDetail({
       {rows.map((item, index) => {
         const previous = rows[index + 1]
         let delta: ReactNode = null
-        if (previous && previous.total > 0) {
-          const pct = ((item.total - previous.total) / previous.total) * 100
+        const base = previous ? comparisonBase(item, previous) : 0
+        if (previous && base > 0) {
+          const pct = ((item.total - base) / base) * 100
           const rising = pct > 0
           delta = (
             <span
@@ -270,6 +281,11 @@ function MonthDetail({
           <ListRow
             key={item.label}
             title={capitalize(item.label)}
+            subtitle={
+              item.inProgress && item.cutoffDay
+                ? `En curso · vs. ${previous?.label ?? 'mes anterior'} al día ${item.cutoffDay}`
+                : undefined
+            }
             trailing={
               <span className="flex items-baseline gap-2.5">
                 <span className="font-ledger text-callout font-semibold tabular-nums">
@@ -292,7 +308,7 @@ export function AnalisisPage() {
   const [panelDir, setPanelDir] = useState<'next' | 'prev'>('next')
   const { year, month } = useMonth()
   const { data: stats, isLoading: statsLoading } = useMonthlyStats(year, month)
-  const { data: history, isLoading: historyLoading } = useMonthlyHistory()
+  const { data: history, isLoading: historyLoading } = useMonthlyHistory(year, month)
   const { data: expenses, isLoading: expensesLoading } = useExpenses(year, month)
   const { data: budget } = useMonthlyBudget(year, month)
 

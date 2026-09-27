@@ -1,8 +1,8 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
+import { useMutationState } from '@tanstack/react-query'
 import { Plus, Trash2 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { List, ListRow, ListSection } from '@/components/ui/list'
 import {
@@ -18,16 +18,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import {
   ExpenseActionSheet,
   ExpenseRowActions,
 } from '@/components/expenses/ExpenseActionSheet'
@@ -35,7 +25,7 @@ import { ExpenseIcon } from '@/components/expenses/ExpenseIcon'
 import { ExpenseFormSkeleton } from '@/components/layout/skeletons'
 import { getExpenseLabel } from '@/lib/expense-display'
 import { formatCurrency, formatDayLabel } from '@/lib/format'
-import { useDeleteExpense } from '@/hooks/useExpenses'
+import { useCreateExpense, useDeleteExpense } from '@/hooks/useExpenses'
 import { useFreshItems } from '@/hooks/useFreshItems'
 import { useLatchedWhile } from '@/hooks/useLatchedWhile'
 import { useIsDesktop, useIsTouch } from '@/hooks/useMediaQuery'
@@ -75,6 +65,7 @@ function ExpenseRow({
   swipeOpen,
   fresh = false,
   hint = false,
+  pending = false,
   onSwipeOpenChange,
   onOpenActions,
   onEdit,
@@ -89,6 +80,8 @@ function ExpenseRow({
   fresh?: boolean
   /** Pista única de swipe: la fila se asoma y vuelve */
   hint?: boolean
+  /** Guardado sin red: la mutation está pausada esperando conexión */
+  pending?: boolean
   onSwipeOpenChange: (open: boolean) => void
   onOpenActions: () => void
   onEdit: () => void
@@ -113,7 +106,9 @@ function ExpenseRow({
         />
       }
       title={getExpenseLabel(expense.description, expense.category?.name)}
-      subtitle={caption}
+      subtitle={
+        pending ? [caption, 'Sin sincronizar'].filter(Boolean).join(' · ') : caption
+      }
       onPress={touch ? onOpenActions : undefined}
       trailing={
         <span className="flex items-center gap-0.5 sm:gap-1">
@@ -150,17 +145,34 @@ function ExpenseRow({
   )
 }
 
+/*
+  El primer gasto de un día crea la sección entera: que suba a su lugar
+  explica de dónde salió ese bloque nuevo. Se decide en el primer render de la
+  sección y no cambia: sumar `.reveal` a un nodo ya pintado lo haría parpadear.
+*/
+function DaySection({ arrived, children }: Readonly<{ arrived: boolean; children: ReactNode }>) {
+  const [reveal] = useState(arrived)
+  return <div className={cn('list-section', reveal && 'reveal')}>{children}</div>
+}
+
 export function ExpenseList({
   expenses,
   showFab = false,
   compact = false,
   emptyCta,
 }: Readonly<ExpenseListProps>) {
-  const { year, month, monthKey } = useMonth()
-  const deleteExpense = useDeleteExpense(year, month)
+  const { monthKey } = useMonth()
+  const deleteExpense = useDeleteExpense()
+  const restoreExpense = useCreateExpense()
+  // Ids con una mutation pausada por falta de red (alta o edición)
+  const pendingIds = new Set(
+    useMutationState({
+      filters: { mutationKey: ['expenses'], predicate: (m) => m.state.isPaused },
+      select: (m) => (m.state.variables as { id?: string } | undefined)?.id,
+    }),
+  )
   const [openAdd, setOpenAdd] = useState(false)
   const [editing, setEditing] = useState<ExpenseWithCategory | null>(null)
-  const [deleting, setDeleting] = useState<ExpenseWithCategory | null>(null)
   const [actionExpense, setActionExpense] = useState<ExpenseWithCategory | null>(null)
   // Una sola fila abierta a la vez, como iOS
   const [swipeOpenId, setSwipeOpenId] = useState<string | null>(null)
@@ -177,6 +189,10 @@ export function ExpenseList({
     expenses.map((expense) => expense.id),
     { resetKey: monthKey },
   )
+  // Mes cuya lista ya está en pantalla: una sección que monte después es una
+  // llegada (el primer gasto de un día nuevo), no parte de la carga inicial
+  const [settledMonth, setSettledMonth] = useState<string | null>(null)
+  useEffect(() => setSettledMonth(monthKey), [monthKey])
   const [hintRowId, setHintRowId] = useState<string | null>(null)
   const firstExpenseId = expenses[0]?.id
 
@@ -240,16 +256,33 @@ export function ExpenseList({
     }))
   }, [expenses])
 
-  async function handleDelete() {
-    if (!deleting) return
-    try {
-      await deleteExpense.mutateAsync(deleting.id)
-      warnFeedback()
-      toast.success('Gasto eliminado')
-      setDeleting(null)
-    } catch {
-      toast.error('No se pudo eliminar el gasto')
-    }
+  /*
+    Borrar es inmediato y reversible, como en Mail: un swipe completo ya es la
+    confirmación, y un diálogo encima era pedirla dos veces. "Deshacer"
+    re-inserta la misma fila (mismo id y created_at, vuelve a su lugar). Las
+    dos mutations comparten scope, así que el alta espera al borrado aunque
+    no haya red.
+  */
+  function handleDelete(expense: ExpenseWithCategory) {
+    setActionExpense(null)
+    deleteExpense.mutate(expense.id)
+    warnFeedback()
+    toast.success('Gasto eliminado', {
+      description: `${getExpenseLabel(expense.description, expense.category?.name)} · ${formatCurrency(Number(expense.amount))}`,
+      action: {
+        label: 'Deshacer',
+        onClick: () =>
+          restoreExpense.mutate({
+            id: expense.id,
+            user_id: expense.user_id,
+            category_id: expense.category_id,
+            amount: Number(expense.amount),
+            description: expense.description,
+            expense_date: expense.expense_date,
+            created_at: expense.created_at,
+          }),
+      },
+    })
   }
 
   function warmForm() {
@@ -264,11 +297,6 @@ export function ExpenseList({
   function openEdit(expense: ExpenseWithCategory) {
     setActionExpense(null)
     setEditing(expense)
-  }
-
-  function openDelete(expense: ExpenseWithCategory) {
-    setActionExpense(null)
-    setDeleting(expense)
   }
 
   const emptyState =
@@ -382,11 +410,12 @@ export function ExpenseList({
               touch={touch}
               fresh={freshIds.has(expense.id)}
               hint={hintRowId === expense.id}
+              pending={pendingIds.has(expense.id)}
               swipeOpen={swipeOpenId === expense.id}
               onSwipeOpenChange={(open) => setSwipeOpenId(open ? expense.id : null)}
               onOpenActions={() => openActions(expense)}
               onEdit={() => openEdit(expense)}
-              onDelete={() => openDelete(expense)}
+              onDelete={() => handleDelete(expense)}
             />
           ))}
         </div>
@@ -394,18 +423,8 @@ export function ExpenseList({
 
       {!compact && expenses.length > 0 ? (
         <List>
-          <AnimatePresence mode="popLayout">
             {grouped.map(({ date, items, subtotal }) => (
-              <motion.div
-                key={date}
-                // El primer gasto de un día crea la sección entera: que suba a
-                // su lugar explica de dónde salió ese bloque nuevo
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
-                className="list-section"
-              >
+              <DaySection key={date} arrived={settledMonth === monthKey}>
                 {/*
                   El header ya no es sticky: las listas agrupadas de iOS no
                   pegan sus headers, eso es de las listas `plain`. Eso libera
@@ -427,19 +446,19 @@ export function ExpenseList({
                       touch={touch}
                       fresh={freshIds.has(expense.id)}
                       hint={hintRowId === expense.id}
+                      pending={pendingIds.has(expense.id)}
                       swipeOpen={swipeOpenId === expense.id}
                       onSwipeOpenChange={(open) =>
                         setSwipeOpenId(open ? expense.id : null)
                       }
                       onOpenActions={() => openActions(expense)}
                       onEdit={() => openEdit(expense)}
-                      onDelete={() => openDelete(expense)}
+                      onDelete={() => handleDelete(expense)}
                     />
                   ))}
                 </ListSection>
-              </motion.div>
+              </DaySection>
             ))}
-          </AnimatePresence>
         </List>
       ) : null}
 
@@ -460,7 +479,7 @@ export function ExpenseList({
             <ExpenseActionSheet
               expense={actionExpense}
               onEdit={() => openEdit(actionExpense)}
-              onDelete={() => openDelete(actionExpense)}
+              onDelete={() => handleDelete(actionExpense)}
             />
           ) : null}
         </SheetContent>
@@ -490,27 +509,6 @@ export function ExpenseList({
         </Sheet>
       )}
 
-      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar este gasto?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {deleting
-                ? `Se eliminará "${getExpenseLabel(deleting.description, deleting.category?.name)}" por ${formatCurrency(Number(deleting.amount))}. Esta acción no se puede deshacer.`
-                : 'Esta acción no se puede deshacer.'}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="cursor-pointer">Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="cursor-pointer bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={handleDelete}
-            >
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   )
 }

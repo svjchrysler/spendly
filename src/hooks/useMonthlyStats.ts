@@ -1,7 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
-import { getMonthRange } from '@/lib/format'
+import { expenseKeys, fetchMonthExpenses } from '@/hooks/useExpenses'
+import { bucketHistory, historyRange } from '@/lib/month-history'
+import { computeMonthlyStats } from '@/lib/month-stats'
 import type { MonthlyBudget } from '@/types/database'
 
 export function useMonthlyBudget(year: number, month: number) {
@@ -16,6 +18,33 @@ export function useMonthlyBudget(year: number, month: number) {
         .select('*')
         .eq('year', year)
         .eq('month', month)
+        .maybeSingle()
+
+      if (error) throw error
+      return data as MonthlyBudget | null
+    },
+  })
+}
+
+/**
+ * El último presupuesto definido antes de este mes. El presupuesto es por mes y
+ * antes había que volver a tipearlo cada mes: esto alimenta la sugerencia de
+ * "usar el mismo" con un tap. Solo se pide cuando el mes no tiene uno.
+ */
+export function usePreviousBudget(year: number, month: number, enabled: boolean) {
+  const { user } = useAuth()
+
+  return useQuery({
+    queryKey: ['monthly-budget', 'before', year, month],
+    enabled: Boolean(user) && enabled,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('monthly_budgets')
+        .select('*')
+        .or(`year.lt.${year},and(year.eq.${year},month.lt.${month})`)
+        .order('year', { ascending: false })
+        .order('month', { ascending: false })
+        .limit(1)
         .maybeSingle()
 
       if (error) throw error
@@ -52,98 +81,41 @@ export function useUpsertBudget() {
       if (error) throw error
       return data as MonthlyBudget
     },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ['monthly-budget', variables.year, variables.month],
-      })
+    // Prefijo entero: la sugerencia "antes de" de los meses siguientes también cambia
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['monthly-budget'] })
     },
   })
 }
 
-type StatRow = {
-  amount: number
-  category_id: string
-  category: { name: string; color: string; icon: string } | null
-}
-
-/** Fuente única del agregado del mes — la comparte el prefetch de los tabs. */
-export async function fetchMonthlyStats(year: number, month: number) {
-  const { start, end } = getMonthRange(year, month)
-  const { data, error } = await supabase
-    .from('expenses')
-    .select('amount, category_id, category:categories(name, color, icon)')
-    .gte('expense_date', start)
-    .lte('expense_date', end)
-
-  if (error) throw error
-
-  const rows = (data ?? []) as StatRow[]
-  const total = rows.reduce((sum, item) => sum + Number(item.amount), 0)
-  const byCategory = new Map<
-    string,
-    { name: string; color: string; icon: string; total: number }
-  >()
-
-  for (const item of rows) {
-    const category = item.category
-    if (!category) continue
-    const existing = byCategory.get(item.category_id) ?? {
-      name: category.name,
-      color: category.color,
-      icon: category.icon,
-      total: 0,
-    }
-    existing.total += Number(item.amount)
-    byCategory.set(item.category_id, existing)
-  }
-
-  return {
-    total,
-    categoryBreakdown: Array.from(byCategory.entries()).map(([id, value]) => ({
-      id,
-      ...value,
-    })),
-  }
-}
-
+/** Total + desglose del mes, derivados de la lista del mes (misma query y
+ *  cache que Gastos): no hay un segundo fetch de las mismas filas. */
 export function useMonthlyStats(year: number, month: number) {
   const { user } = useAuth()
 
   return useQuery({
-    queryKey: ['monthly-stats', year, month],
+    queryKey: expenseKeys.month(year, month),
     enabled: Boolean(user),
-    queryFn: () => fetchMonthlyStats(year, month),
+    queryFn: () => fetchMonthExpenses(year, month),
+    select: computeMonthlyStats,
   })
 }
 
-export function useMonthlyHistory(monthsBack = 6) {
+/** Los `monthsBack` meses que terminan en el mes seleccionado — mirar marzo
+ *  muestra oct–mar, no los seis meses hasta hoy. */
+export function useMonthlyHistory(year: number, month: number, monthsBack = 6) {
   const { user } = useAuth()
 
   return useQuery({
-    queryKey: ['monthly-history', monthsBack],
+    queryKey: ['monthly-history', year, month, monthsBack],
     enabled: Boolean(user),
+    // Cambiar de mes corre la ventana un mes: el chart se queda con la anterior
+    // mientras llega la nueva en vez de volver al skeleton
+    placeholderData: keepPreviousData,
     queryFn: async () => {
-      const now = new Date()
-      const results = Array.from({ length: monthsBack }, (_, index) => {
-        const date = new Date(
-          now.getFullYear(),
-          now.getMonth() - (monthsBack - 1 - index),
-          1,
-        )
-        return {
-          year: date.getFullYear(),
-          month: date.getMonth() + 1,
-          total: 0,
-          label: date.toLocaleDateString('es-ES', { month: 'short' }),
-        }
-      })
-
       // ponytail: un round-trip sobre el rango completo y bucketing en cliente.
       // Antes era una query por mes, secuenciales — 6 viajes al abrir Análisis.
-      const oldest = new Date(now.getFullYear(), now.getMonth() - (monthsBack - 1), 1)
-      const { start } = getMonthRange(oldest.getFullYear(), oldest.getMonth() + 1)
-      const { end } = getMonthRange(now.getFullYear(), now.getMonth() + 1)
-
+      const { start, end } = historyRange(year, month, monthsBack)
       const { data, error } = await supabase
         .from('expenses')
         .select('amount, expense_date')
@@ -151,19 +123,7 @@ export function useMonthlyHistory(monthsBack = 6) {
         .lte('expense_date', end)
 
       if (error) throw error
-
-      const byMonth = new Map(
-        results.map((item) => [
-          `${item.year}-${String(item.month).padStart(2, '0')}`,
-          item,
-        ]),
-      )
-      for (const row of data ?? []) {
-        const bucket = byMonth.get(row.expense_date.slice(0, 7))
-        if (bucket) bucket.total += Number(row.amount)
-      }
-
-      return results
+      return bucketHistory(data ?? [], year, month, monthsBack)
     },
   })
 }

@@ -6,11 +6,12 @@ import { FlipCard } from '@/components/ui/flip-card'
 import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
 import { MonthlyCapAlert } from '@/components/dashboard/MonthlyCapAlert'
-import { useUpsertBudget } from '@/hooks/useMonthlyStats'
+import { usePreviousBudget, useUpsertBudget } from '@/hooks/useMonthlyStats'
 import { isNavigating } from '@/hooks/useRouteTransition'
 import { useMonth } from '@/contexts/MonthContext'
 import { dailyBudgetRemaining, projectedMonthSpend } from '@/lib/month-insights'
-import { formatCurrency } from '@/lib/format'
+import { formatAmountDraft, parseAmountDraft, toAmountDraft } from '@/lib/amount-draft'
+import { formatCurrency, formatMonthYear } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -28,7 +29,8 @@ export function SpendingHero({
   const { year, month, monthKey } = useMonth()
   const upsertBudget = useUpsertBudget()
   const [editingBudget, setEditingBudget] = useState(false)
-  const [budgetValue, setBudgetValue] = useState(budget?.toString() ?? '')
+  const [budgetValue, setBudgetValue] = useState(() => toAmountDraft(budget ?? undefined))
+  const { data: previousBudget } = usePreviousBudget(year, month, budget == null)
   const [showProjection, setShowProjection] = useState(false)
 
   const remaining = budget != null ? budget - spent : null
@@ -47,9 +49,8 @@ export function SpendingHero({
   const daysLeft = Math.max(daysInMonth - dayOfMonth, 0)
   const projectedGap = budget != null ? projected - budget : null
 
-  async function handleSaveBudget() {
-    const amount = Number.parseFloat(budgetValue)
-    if (Number.isNaN(amount) || amount < 0) {
+  async function saveBudget(amount: number | undefined) {
+    if (amount == null || amount < 0) {
       toast.error('Ingresa un presupuesto válido')
       return
     }
@@ -68,13 +69,32 @@ export function SpendingHero({
 
   // Afordancia de texto, no chip: la columna del monto se lee de corrido
   let budgetHint: ReactNode = (
-    <button
-      type="button"
-      className="pressable inline-flex min-h-11 cursor-pointer items-center text-sm font-medium text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary/60"
-      onClick={() => setEditingBudget(true)}
-    >
-      Definir presupuesto
-    </button>
+    <div className="flex flex-wrap items-center gap-x-4">
+      {/* Un tap en vez de volver a tipear el mismo número cada mes */}
+      {previousBudget ? (
+        <button
+          type="button"
+          className="pressable inline-flex min-h-11 cursor-pointer items-center text-sm font-medium text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary/60 disabled:opacity-50"
+          disabled={upsertBudget.isPending}
+          onClick={() => void saveBudget(previousBudget.amount)}
+        >
+          Usar {formatCurrency(previousBudget.amount)}, como en{' '}
+          {formatMonthYear(previousBudget.year, previousBudget.month)}
+        </button>
+      ) : null}
+      <button
+        type="button"
+        className={cn(
+          'pressable inline-flex min-h-11 cursor-pointer items-center text-sm font-medium underline underline-offset-4',
+          previousBudget
+            ? 'text-muted-foreground decoration-border hover:text-foreground'
+            : 'text-primary decoration-primary/30 hover:decoration-primary/60',
+        )}
+        onClick={() => setEditingBudget(true)}
+      >
+        {previousBudget ? 'Otro monto' : 'Definir presupuesto'}
+      </button>
+    </div>
   )
 
   if (budget != null && !editingBudget) {
@@ -92,7 +112,7 @@ export function SpendingHero({
           type="button"
           className="pressable ml-2.5 cursor-pointer font-normal text-muted-foreground underline decoration-border underline-offset-4 hover:text-foreground hover:decoration-foreground/40"
           onClick={() => {
-            setBudgetValue(budget.toString())
+            setBudgetValue(toAmountDraft(budget))
             setEditingBudget(true)
           }}
         >
@@ -103,20 +123,28 @@ export function SpendingHero({
   } else if (editingBudget) {
     budgetHint = (
       <div className="flex max-w-sm flex-col gap-2 sm:flex-row sm:items-center">
+        {/* Texto + teclado decimal: `type="number"` con teclado en español
+            rechaza la coma y "1500,50" llegaba vacío */}
         <Input
-          type="number"
-          min="0"
-          step="0.01"
+          type="text"
+          inputMode="decimal"
+          autoComplete="off"
+          autoFocus
+          aria-label="Presupuesto del mes"
           value={budgetValue}
-          onChange={(e) => setBudgetValue(e.target.value)}
-          placeholder="Presupuesto"
+          onChange={(e) => setBudgetValue(formatAmountDraft(e.target.value))}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') void saveBudget(parseAmountDraft(budgetValue))
+            if (e.key === 'Escape') setEditingBudget(false)
+          }}
+          placeholder="0,00"
           className="h-11 border-0 border-b border-border bg-transparent px-0 shadow-none focus-visible:border-primary/50 focus-visible:ring-0"
         />
         <div className="flex gap-2">
           <Button
             size="sm"
             className="cursor-pointer"
-            onClick={handleSaveBudget}
+            onClick={() => void saveBudget(parseAmountDraft(budgetValue))}
             disabled={upsertBudget.isPending}
           >
             Guardar
