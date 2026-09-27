@@ -44,6 +44,10 @@ import { categoryColorOptions, defaultCategoryColor } from '@/lib/category-color
 import { useCategoryColor } from '@/hooks/useCategoryColor'
 import { useLatchedWhile } from '@/hooks/useLatchedWhile'
 import { useIsDesktop, useIsTouch } from '@/hooks/useMediaQuery'
+import { useMonth } from '@/contexts/MonthContext'
+import { useMonthlyStats } from '@/hooks/useMonthlyStats'
+import { dbErrorMessage } from '@/lib/db-errors'
+import { formatCurrency, formatMonthYear } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { Category } from '@/types/database'
 
@@ -82,7 +86,7 @@ function CategoryForm({ category, onSuccess }: CategoryFormProps) {
       }
       onSuccess()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Error al guardar')
+      toast.error(dbErrorMessage(error, 'No se pudo guardar la categoría'))
     }
   }
 
@@ -162,8 +166,19 @@ function CategoryForm({ category, onSuccess }: CategoryFormProps) {
   )
 }
 
+function categoryUsage(item: { total: number; count: number } | undefined, monthLabel: string) {
+  if (!item) return `Sin gastos en ${monthLabel}`
+  return `${formatCurrency(item.total)} en ${monthLabel} · ${item.count} ${item.count === 1 ? 'gasto' : 'gastos'}`
+}
+
 export function CategoriesPage() {
   const { data: categories = [], isLoading } = useCategories()
+  const { year, month } = useMonth()
+  // Cuánto pesa cada categoría en el mes: contexto antes de editarla, y la
+  // razón visible de por qué una no se puede borrar
+  const { data: stats } = useMonthlyStats(year, month)
+  const monthLabel = formatMonthYear(year, month)
+  const usage = new Map(stats?.categoryBreakdown.map((item) => [item.id, item]))
   const deleteCategory = useDeleteCategory()
   const isDesktop = useIsDesktop()
   const touch = useIsTouch()
@@ -179,7 +194,12 @@ export function CategoriesPage() {
       toast.success('Categoría eliminada')
       setDeleting(null)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'No se pudo eliminar')
+      toast.error(
+        dbErrorMessage(error, 'No se pudo eliminar la categoría', {
+          // on delete restrict
+          '23503': 'Tiene gastos asociados. Muévelos a otra categoría antes de eliminarla.',
+        }),
+      )
     }
   }
 
@@ -244,6 +264,7 @@ export function CategoriesPage() {
                   />
                 }
                 title={category.name}
+                subtitle={categoryUsage(usage.get(category.id), monthLabel)}
                 onPress={touch ? () => setEditing(category) : undefined}
                 chevron={touch}
                 trailing={

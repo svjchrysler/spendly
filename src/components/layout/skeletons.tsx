@@ -240,6 +240,8 @@ export function CategoryListSkeleton({ rows = 8 }: Readonly<{ rows?: number }>) 
             loading
             separatorInset="4rem"
             leading={<Bone className="size-9 rounded-lg" />}
+            // La fila real lleva el uso del mes debajo del nombre
+            subtitle=""
           />
         ))}
       </ListSection>
