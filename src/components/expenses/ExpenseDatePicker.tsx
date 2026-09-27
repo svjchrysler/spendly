@@ -17,18 +17,12 @@ import {
 } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
+import { toDateString } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 interface ExpenseDatePickerProps {
   value: string
   onChange: (value: string) => void
-}
-
-function toDateString(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
 }
 
 function otherDayLabel(date: Date) {
