@@ -2,6 +2,8 @@ import { queryClient, queryPersister } from '@/lib/query-client'
 
 /** Cachés de Workbox que guardan respuestas con datos del usuario. */
 const DATA_CACHES = ['supabase-rest']
+/** Estado de sesión con datos del usuario (filtros y búsqueda de Gastos) */
+const SESSION_KEYS = ['spendly-expenses-search', 'spendly-expenses-category']
 
 /**
  * Borra todo rastro local de la sesión: cache de TanStack (memoria +
@@ -18,6 +20,12 @@ export async function purgeLocalUserData() {
     await queryPersister.removeClient()
   } catch {
     /* cache en memoria/localStorage inaccesible — seguimos con CacheStorage */
+  }
+
+  try {
+    for (const key of SESSION_KEYS) sessionStorage.removeItem(key)
+  } catch {
+    /* storage bloqueado: no hay nada guardado que borrar */
   }
 
   if (typeof caches === 'undefined') return
