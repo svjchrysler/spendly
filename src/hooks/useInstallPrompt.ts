@@ -7,7 +7,7 @@ interface BeforeInstallPromptEvent extends Event {
 
 /**
  * Instalación a demanda (Chrome/Edge/Android). Interceptamos el evento para
- * que el browser no tire su propia barra y ofrecerlo desde el menú de perfil.
+ * que el browser no tire su propia barra y ofrecerlo desde Ajustes.
  *
  * iOS no dispara `beforeinstallprompt`: ahí `canInstall` queda en false y la
  * opción no aparece, que es lo correcto — se instala desde Compartir.

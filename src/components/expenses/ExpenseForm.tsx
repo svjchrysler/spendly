@@ -29,9 +29,11 @@ type FormValues = ExpenseFormValues
 interface ExpenseFormProps {
   expense?: ExpenseWithCategory
   onSuccess?: () => void
+  /** El confirmar vive en la barra del sheet y envía el form por este id */
+  formId: string
 }
 
-export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) {
+export function ExpenseForm({ expense, onSuccess, formId }: Readonly<ExpenseFormProps>) {
   const { year, month } = useMonth()
   const { data: categories = [], isLoading } = useCategories()
   const { data: history = [] } = useExpenseHistory()
@@ -196,8 +198,8 @@ export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) 
 
   if (categories.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        Crea al menos una categoría antes de registrar gastos.
+      <p className="px-4 pb-4 text-callout text-label-secondary">
+        Crea al menos una categoría en Ajustes → Categorías antes de registrar gastos.
       </p>
     )
   }
@@ -206,15 +208,16 @@ export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) 
 
   return (
     <form
+      id={formId}
       onSubmit={handleSubmit((values) => onSubmit(values), handleInvalid)}
       // La validación la manda Zod, en español. Sin esto el navegador dispara
       // primero su propio globo ("Please fill out this field.", en el idioma
       // del browser) y tapa el mensaje y la sacudida del campo. Los `required`
       // se quedan: siguen exponiendo aria-required.
       noValidate
-      className="flex w-full min-w-0 max-w-full flex-col gap-5 overflow-x-hidden"
+      className="flex w-full min-w-0 max-w-full flex-col gap-5 overflow-x-hidden pb-1"
     >
-      <div className={cn('min-w-0 space-y-1.5', shaking && 'shake')}>
+      <div className={cn('min-w-0', shaking && 'shake')}>
         <ExpenseAmountInput
           key={round}
           id="amount"
@@ -231,85 +234,78 @@ export function ExpenseForm({ expense, onSuccess }: Readonly<ExpenseFormProps>) 
           }}
         />
         {errors.amount ? (
-          <p role="alert" className="notice-in text-center text-xs text-destructive">
+          <p role="alert" className="notice-in text-center text-footnote text-destructive">
             {errors.amount.message}
           </p>
         ) : null}
       </div>
 
-      <div className="min-w-0 space-y-4">
-        <div className="min-w-0 space-y-2">
-          <label htmlFor="description" className="stat-label">
-            Descripción
-          </label>
-          <ExpenseNoteInput
-            id="description"
-            hasError={Boolean(errors.description)}
-            aria-invalid={Boolean(errors.description)}
-            required
-            {...register('description')}
-          />
-          {errors.description ? (
-            <p role="alert" className="notice-in text-xs text-destructive">
-              {errors.description.message}
-            </p>
-          ) : null}
-        </div>
-
-        <div className="min-w-0 space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <p className="stat-label">Categoría</p>
-            {/* La categoría se autodetecta sola: si el aviso entra animado, el
-                salto del riel de chips se lee como consecuencia y no como bug */}
-            {showPredictionHint ? (
-              <p
-                key={prediction.categoryId}
-                className="notice-in flex items-center gap-1 text-[11px] text-primary/90"
-              >
-                <Sparkles className="size-3 shrink-0" aria-hidden />
-                Sugerido
-              </p>
-            ) : null}
-          </div>
-          <ExpenseCategoryPicker
-            categories={categories}
-            value={categoryId}
-            onChange={handleCategoryChange}
-          />
-          {errors.category_id ? (
-            <p role="alert" className="notice-in text-xs text-destructive">
-              {errors.category_id.message}
-            </p>
-          ) : null}
-        </div>
-
-        <div className="min-w-0 space-y-2">
-          <p className="stat-label">Fecha</p>
-          <ExpenseDatePicker
-            value={expenseDate}
-            onChange={(date) => setValue('expense_date', date)}
-          />
-          {errors.expense_date ? (
-            <p role="alert" className="notice-in text-xs text-destructive">
-              {errors.expense_date.message}
-            </p>
-          ) : null}
-        </div>
+      <div className="min-w-0 space-y-1.5">
+        <label htmlFor="description" className="list-section-header block px-4">
+          Descripción
+        </label>
+        <ExpenseNoteInput
+          id="description"
+          hasError={Boolean(errors.description)}
+          aria-invalid={Boolean(errors.description)}
+          required
+          {...register('description')}
+        />
+        {errors.description ? (
+          <p role="alert" className="notice-in px-4 text-footnote text-destructive">
+            {errors.description.message}
+          </p>
+        ) : null}
       </div>
 
-      <Button
-        type="submit"
-        size="lg"
-        className="h-11 w-full max-w-full shrink cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90"
-      >
-        {isEditing ? 'Actualizar' : 'Guardar gasto'}
-      </Button>
+      <div className="min-w-0 space-y-1.5">
+        <div className="flex items-center justify-between gap-2 px-4">
+          <p className="list-section-header">Categoría</p>
+          {/* La categoría se autodetecta sola: si el aviso entra animado, el
+              salto del riel de chips se lee como consecuencia y no como bug */}
+          {showPredictionHint ? (
+            <p
+              key={prediction.categoryId}
+              className="notice-in flex items-center gap-1 text-footnote text-primary"
+            >
+              <Sparkles className="size-3.5 shrink-0" aria-hidden />
+              Sugerida
+            </p>
+          ) : null}
+        </div>
+        <ExpenseCategoryPicker
+          categories={categories}
+          value={categoryId}
+          onChange={handleCategoryChange}
+        />
+        {errors.category_id ? (
+          <p role="alert" className="notice-in px-4 text-footnote text-destructive">
+            {errors.category_id.message}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="min-w-0 space-y-1.5">
+        <p className="list-section-header px-4">Fecha</p>
+        <ExpenseDatePicker
+          value={expenseDate}
+          onChange={(date) => setValue('expense_date', date)}
+        />
+        {errors.expense_date ? (
+          <p role="alert" className="notice-in px-4 text-footnote text-destructive">
+            {errors.expense_date.message}
+          </p>
+        ) : null}
+      </div>
+
+      {/* Guardar y cerrar es el ✓ de la barra; esto es la variante para cargar
+          varios tickets seguidos sin salir del sheet */}
       {isEditing ? null : (
         <Button
           type="button"
-          variant="ghost"
-          size="touch"
-          className="-mt-3 w-full cursor-pointer text-primary"
+          variant="tinted"
+          size="pill"
+          className="w-full cursor-pointer"
           onClick={handleSubmit((values) => onSubmit(values, true), handleInvalid)}
         >
           Guardar y agregar otro

@@ -1,5 +1,6 @@
 import { useEffect, useRef, type CSSProperties } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import { Plus } from 'lucide-react'
 import type { TabIcon } from '@/components/layout/TabIcons'
 import { isPlainClick } from '@/hooks/useRouteTransition'
 import { useTabBarCollapse } from '@/hooks/useTabBarCollapse'
@@ -19,6 +20,12 @@ export type TabBarProps = Readonly<{
   onSelect: (item: TabItem, index: number) => void
 }>
 
+type TabBarActionProps = Readonly<{
+  /** Acción principal de la app, suelta junto a la cápsula */
+  onAdd: () => void
+  onWarmAdd: () => void
+}>
+
 /** Igual que la animación `pill-travel` de index.css */
 const PILL_TRAVEL_MS = 520
 /** Más allá de tres slots el estirón ya no se distingue */
@@ -30,7 +37,7 @@ const MAX_TRAVEL = 3
  * Solo en ancho compact (iPhone, Duo cerrado, Split View) — en regular manda
  * el `Sidebar`, como en iOS 27.
  */
-export function TabBar({ items, onWarm, onSelect }: TabBarProps) {
+export function TabBar({ items, onWarm, onSelect, onAdd, onWarmAdd }: TabBarProps & TabBarActionProps) {
   const { pathname } = useLocation()
   const collapsed = useTabBarCollapse()
   const pillRef = useRef<HTMLSpanElement>(null)
@@ -67,55 +74,69 @@ export function TabBar({ items, onWarm, onSelect }: TabBarProps) {
 
   return (
     <div className="tab-dock md:hidden" data-collapsed={collapsed}>
-      <nav
-        className="material-glass tab-glass"
-        aria-label="Principal"
-        style={{ '--tab-count': items.length } as CSSProperties}
-      >
-        <div className="tab-track">
-          <span
-            ref={pillRef}
-            className="tab-pill"
-            aria-hidden
-            style={
-              {
-                '--tab-index': Math.max(activeIndex, 0),
-                opacity: activeIndex < 0 ? 0 : 1,
-              } as CSSProperties
-            }
-          />
+      <div className="tab-dock-row">
+        <nav
+          className="material-glass tab-glass"
+          aria-label="Principal"
+          style={{ '--tab-count': items.length } as CSSProperties}
+        >
+          <div className="tab-track">
+            <span
+              ref={pillRef}
+              className="tab-pill"
+              aria-hidden
+              style={
+                {
+                  '--tab-index': Math.max(activeIndex, 0),
+                  opacity: activeIndex < 0 ? 0 : 1,
+                } as CSSProperties
+              }
+            />
 
-          {items.map((item, index) => {
-            const { to, label, end, icon: Icon, prefetch } = item
-            return (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              onPointerEnter={() => onWarm(prefetch)}
-              onFocus={() => onWarm(prefetch)}
-              onClick={(event) => {
-                if (!isPlainClick(event)) return
-                event.preventDefault()
-                onSelect(item, index)
-              }}
-              className="tab-item"
-            >
-              {({ isActive }) => (
-                <>
-                  {/* key: remonta el wrap para que el bounce del símbolo
-                      vuelva a dispararse en cada selección */}
-                  <span key={isActive ? 'on' : 'off'} className="tab-icon-wrap">
-                    <Icon active={isActive} className="tab-icon" />
-                  </span>
-                  <span className="tab-label">{label}</span>
-                </>
-              )}
-            </NavLink>
-            )
-          })}
-        </div>
-      </nav>
+            {items.map((item, index) => {
+              const { to, label, end, icon: Icon, prefetch } = item
+              return (
+              <NavLink
+                key={to}
+                to={to}
+                end={end}
+                onPointerEnter={() => onWarm(prefetch)}
+                onFocus={() => onWarm(prefetch)}
+                onClick={(event) => {
+                  if (!isPlainClick(event)) return
+                  event.preventDefault()
+                  onSelect(item, index)
+                }}
+                className="tab-item"
+              >
+                {({ isActive }) => (
+                  <>
+                    {/* key: remonta el wrap para que el bounce del símbolo
+                        vuelva a dispararse en cada selección */}
+                    <span key={isActive ? 'on' : 'off'} className="tab-icon-wrap">
+                      <Icon active={isActive} className="tab-icon" />
+                    </span>
+                    <span className="tab-label">{label}</span>
+                  </>
+                )}
+              </NavLink>
+              )
+            })}
+          </div>
+        </nav>
+
+        <button
+          type="button"
+          className="tab-action glass-btn glass-btn--tinted"
+          onClick={onAdd}
+          onPointerEnter={onWarmAdd}
+          onPointerDown={onWarmAdd}
+          onFocus={onWarmAdd}
+          aria-label="Agregar gasto"
+        >
+          <Plus className="size-6" strokeWidth={2.5} aria-hidden />
+        </button>
+      </div>
     </div>
   )
 }

@@ -6,8 +6,7 @@ import { popModal, pushModal } from '@/lib/modal-depth'
  *
  * Va en los `Root` de sheet/dialog/alert-dialog, no en los `*Content`: Base UI
  * renderiza los hijos de `Root` también con el modal cerrado, así que colgar el
- * efecto del montaje lo dejaría empujado para siempre — y con él el FAB, que
- * desaparece mientras hay un modal abierto. Al cerrar tampoco sirve montarse
+ * efecto del montaje lo dejaría empujado para siempre. Al cerrar tampoco sirve montarse
  * dentro del `Portal`: sigue montado hasta que termina la animación de salida,
  * y la pantalla tiene que volver junto con ella, no después.
  */

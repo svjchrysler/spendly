@@ -1,10 +1,8 @@
-import type { ReactNode } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ExpenseIcon } from '@/components/expenses/ExpenseIcon'
 import { getExpenseLabel } from '@/lib/expense-display'
-import { cn } from '@/lib/utils'
-import { formatCurrency } from '@/lib/format'
+import { formatCurrency, formatDayLabel } from '@/lib/format'
 import type { ExpenseWithCategory } from '@/types/database'
 
 interface ExpenseActionSheetProps {
@@ -13,77 +11,57 @@ interface ExpenseActionSheetProps {
   onDelete: () => void
 }
 
-function ActionIconBox({
-  children,
-  tone,
-  className,
-}: Readonly<{
-  children: ReactNode
-  tone: 'primary' | 'destructive'
-  className?: string
-}>) {
-  return (
-    <span
-      className={cn(
-        'flex size-11 items-center justify-center rounded-lg bg-secondary ring-1',
-        tone === 'primary' ? 'ring-primary/35' : 'ring-destructive/35',
-        className,
-      )}
-    >
-      {children}
-    </span>
-  )
-}
-
+/**
+ * Detalle del gasto + acciones, como el action sheet de iOS 26/27: el objeto
+ * arriba y las acciones en un grupo de celdas, con la destructiva en rojo.
+ */
 export function ExpenseActionSheet({
   expense,
   onEdit,
   onDelete,
 }: Readonly<ExpenseActionSheetProps>) {
   const title = getExpenseLabel(expense.description, expense.category?.name)
+  const meta = [expense.category?.name, formatDayLabel(expense.expense_date)]
+    .filter(Boolean)
+    .join(' · ')
 
   return (
-    <div className="px-1 pb-1 pt-2">
-      {/* Mini-recibo del gasto: firma visual de la marca */}
-      <div className="receipt-edge mx-auto w-full max-w-[17rem] rounded-t-lg bg-secondary px-4 pb-5 pt-4 [--receipt-fill:var(--secondary)]">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <ExpenseIcon
-            description={expense.description}
-            categoryName={expense.category?.name}
-            categoryIcon={expense.category?.icon}
-            categoryColor={expense.category?.color}
-            size="xl"
-          />
-          <div className="w-full space-y-1">
-            <p className="font-ledger text-3xl font-semibold tracking-tight text-foreground tabular-nums">
-              {formatCurrency(Number(expense.amount))}
-            </p>
-            <p className="truncate px-4 text-sm font-medium text-foreground">{title}</p>
-            <p className="text-xs text-muted-foreground">{expense.category?.name}</p>
-          </div>
+    <div className="pt-3">
+      <div className="flex flex-col items-center gap-2 px-2 pb-5 text-center">
+        <ExpenseIcon
+          description={expense.description}
+          categoryName={expense.category?.name}
+          categoryIcon={expense.category?.icon}
+          categoryColor={expense.category?.color}
+          size="xl"
+        />
+        <p className="mt-1 font-ledger text-[2.25rem] leading-none font-bold text-label">
+          {formatCurrency(Number(expense.amount))}
+        </p>
+        <div className="w-full min-w-0">
+          <p className="truncate text-headline text-label">{title}</p>
+          <p className="truncate text-subhead text-label-secondary">{meta}</p>
         </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-3">
+      <div className="overflow-hidden rounded-xl bg-sheet-cell">
         <button
           type="button"
           onClick={onEdit}
-          className="pressable flex min-h-11 cursor-pointer flex-col items-center gap-2.5 rounded-xl border border-border/70 bg-muted/25 px-3 py-4 transition-colors hover:bg-muted/40 active:bg-muted/50"
+          className="list-row list-row--tappable"
+          style={{ '--row-inset': '3.25rem' } as React.CSSProperties}
         >
-          <ActionIconBox tone="primary">
-            <Pencil className="size-5 text-primary" />
-          </ActionIconBox>
-          <span className="text-sm font-medium">Editar</span>
+          <Pencil className="size-5 shrink-0 text-primary" aria-hidden />
+          <span className="flex-1 text-body text-label">Editar gasto</span>
         </button>
         <button
           type="button"
           onClick={onDelete}
-          className="pressable flex min-h-11 cursor-pointer flex-col items-center gap-2.5 rounded-xl border border-destructive/25 bg-destructive/10 px-3 py-4 text-destructive transition-colors hover:bg-destructive/15 active:bg-destructive/20"
+          className="list-row list-row--tappable"
+          style={{ '--row-inset': '3.25rem' } as React.CSSProperties}
         >
-          <ActionIconBox tone="destructive">
-            <Trash2 className="size-5" />
-          </ActionIconBox>
-          <span className="text-sm font-medium">Eliminar</span>
+          <Trash2 className="size-5 shrink-0 text-destructive" aria-hidden />
+          <span className="flex-1 text-body text-destructive">Eliminar gasto</span>
         </button>
       </div>
     </div>

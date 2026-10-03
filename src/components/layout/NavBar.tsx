@@ -10,7 +10,7 @@ import {
 import { useLargeTitleCollapse } from '@/hooks/useLargeTitleCollapse'
 import { cn } from '@/lib/utils'
 
-type NavTitle = { title: string; trailing?: ReactNode }
+type NavTitle = { title: string; subtitle?: string }
 
 type NavTitleStore = {
   current: NavTitle | null
@@ -36,14 +36,15 @@ export function useNavTitle() {
 }
 
 type NavBarProps = Readonly<{
-  /** Kicker de marca sobre el título */
-  eyebrow?: string
   title: string
+  /** El subtítulo de navegación de iOS 26: va debajo del large title */
+  subtitle?: string
+  /** Control de la pantalla alineado con el subtítulo (el stepper de mes) */
   trailing?: ReactNode
   /**
-   * Remonta el título para volver a disparar el swap. Con `direction` el
-   * título entra desde el lado hacia el que navegaste — así el mes se lee
-   * como una cinta y no como una lista de opciones.
+   * Remonta el subtítulo para volver a disparar el swap. Con `direction`
+   * entra desde el lado hacia el que navegaste — así el mes se lee como una
+   * cinta y no como una lista de opciones.
    */
   swapKey?: string
   direction?: 'next' | 'prev' | 'none'
@@ -53,34 +54,45 @@ type NavBarProps = Readonly<{
  * Large title en flujo normal, debajo del header sticky — exactamente como
  * iOS. El header se encarga del título inline cuando esto se colapsa.
  */
-export function NavBar({ eyebrow, title, trailing, swapKey, direction = 'none' }: NavBarProps) {
+export function NavBar({ title, subtitle, trailing, swapKey, direction = 'none' }: NavBarProps) {
   const ref = useRef<HTMLDivElement>(null)
   const store = useContext(NavTitleContext)
   useLargeTitleCollapse(ref)
 
   const setTitle = store?.setTitle
   useEffect(() => {
-    setTitle?.({ title, trailing })
+    setTitle?.({ title, subtitle })
     return () => setTitle?.(null)
-  }, [setTitle, title, trailing])
+  }, [setTitle, title, subtitle])
 
   return (
-    <div ref={ref} className="flex items-end justify-between gap-3 pb-4">
-      <div className="nav-large-title min-w-0 space-y-1">
-        {eyebrow ? <p className="stat-label">{eyebrow}</p> : null}
-        {/* `vt-page-title`: el large title es el mismo objeto en las cuatro
+    <div ref={ref} className="pb-3">
+      <div className="nav-large-title min-w-0">
+        {/* `vt-page-title`: el large title es el mismo objeto en las tres
             pantallas, así que entre tabs se queda y lo que viaja es el
             contenido de abajo — la lectura de iOS, donde el título pertenece
             a la barra y no a la página. */}
-        <h1
-          key={swapKey}
-          data-dir={swapKey ? direction : undefined}
-          className={cn('page-title vt-page-title capitalize', swapKey && 'swap')}
-        >
-          {title}
-        </h1>
+        <h1 className="page-title vt-page-title">{title}</h1>
+        {subtitle || trailing ? (
+          <div className="mt-0.5 flex min-h-11 items-center justify-between gap-3">
+            {subtitle ? (
+              <p
+                key={swapKey}
+                data-dir={swapKey ? direction : undefined}
+                className={cn(
+                  'truncate text-headline font-normal text-label-secondary first-letter:uppercase',
+                  swapKey && 'swap',
+                )}
+              >
+                {subtitle}
+              </p>
+            ) : (
+              <span />
+            )}
+            {trailing ? <div className="flex shrink-0 items-center">{trailing}</div> : null}
+          </div>
+        ) : null}
       </div>
-      {trailing ? <div className="flex shrink-0 items-center gap-1">{trailing}</div> : null}
     </div>
   )
 }

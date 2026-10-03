@@ -52,8 +52,8 @@ export function WeekOfMonthChart({
   const peak = Math.max(...data.map((item) => item.total), 0)
 
   return (
-    <section ref={revealRef} className="space-y-4 border-t border-border/70 pt-5">
-      <p className="stat-label">Por semana del mes</p>
+    <section ref={revealRef} className="surface-card space-y-4">
+      <p className="text-headline text-label">Por semana del mes</p>
       <div className="h-44 sm:h-48">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart

@@ -1,5 +1,3 @@
-import { Link } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
 import {
   CategoryAllocationSkeleton,
   DashboardSkeleton,
@@ -10,49 +8,10 @@ import { SpendingHero } from '@/components/dashboard/SpendingHero'
 import { CategoryAllocation } from '@/components/charts/CategoryAllocation'
 import { ExpenseList } from '@/components/expenses/ExpenseList'
 import { MonthMasthead } from '@/components/layout/MonthPicker'
+import { ContentSection } from '@/components/ui/list'
 import { useMonth } from '@/contexts/MonthContext'
 import { useExpenses } from '@/hooks/useExpenses'
 import { useMonthlyBudget, useMonthlyStats } from '@/hooks/useMonthlyStats'
-import type { ExpenseWithCategory } from '@/types/database'
-
-function RecentMovements({
-  expenses,
-  loading,
-}: Readonly<{ expenses: ExpenseWithCategory[]; loading: boolean }>) {
-  const recent = expenses.slice(0, 5)
-
-  return (
-    <section className="reveal flex min-h-0 flex-1 flex-col border-t border-border/70 pt-5">
-      <div className="flex shrink-0 items-baseline justify-between gap-3 pb-1">
-        <p className="stat-label">Movimientos recientes</p>
-        <Link
-          to="/gastos"
-          className="pressable -my-3.5 inline-flex cursor-pointer items-center gap-1 py-3.5 text-xs font-medium text-primary hover:text-primary/80"
-        >
-          Ver todos
-          <ArrowRight className="size-3.5" aria-hidden />
-        </Link>
-      </div>
-      {loading ? (
-        <div
-          className="flex flex-1 flex-col justify-evenly divide-y divide-border/25"
-          aria-hidden
-        >
-          {Array.from({ length: 4 }, (_, i) => (
-            <ExpenseRowSkeleton key={i} />
-          ))}
-        </div>
-      ) : null}
-      {/* Tocables: mismo action sheet / editar / eliminar que Gastos; monta el FAB */}
-      <ExpenseList
-        expenses={loading ? [] : recent}
-        compact
-        emptyCta={loading ? undefined : 'Agregar tu primer gasto'}
-        showFab
-      />
-    </section>
-  )
-}
 
 export function DashboardPage() {
   const { year, month } = useMonth()
@@ -69,11 +28,13 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="flex min-h-[calc(100dvh-var(--sticky-top)-5.5rem)] flex-col gap-4 pb-2 md:min-h-[calc(100dvh-var(--sticky-top)-3.5rem)] lg:gap-5">
-      <MonthMasthead eyebrow="Resumen" />
+    <div className="flex flex-col gap-6 pb-2">
+      <MonthMasthead title="Resumen" />
 
-      <div className="grid min-h-0 flex-1 gap-6 pt-1 @4xl/main:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] @4xl/main:items-stretch @4xl/main:gap-8 @6xl/main:gap-10">
-        <div className="flex min-h-0 min-w-0 flex-col gap-6 @4xl/main:gap-8">
+      {/* Empaquetado arriba en las dos columnas: estirar para llenar el alto
+          dejaba huecos (ver pitfalls en AGENTS.md) */}
+      <div className="grid gap-7 @4xl/main:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] @4xl/main:items-start @4xl/main:gap-8">
+        <div className="flex min-w-0 flex-col gap-7">
           {statsLoading ? (
             <SpendingHeroSkeleton />
           ) : (
@@ -84,16 +45,34 @@ export function DashboardPage() {
             />
           )}
 
-          <RecentMovements expenses={expenses} loading={expensesLoading} />
+          <ContentSection title="Recientes" action={{ label: 'Ver todo', to: '/gastos' }}>
+            {expensesLoading ? (
+              <div className="list-group" aria-hidden>
+                {Array.from({ length: 4 }, (_, i) => (
+                  <ExpenseRowSkeleton key={i} />
+                ))}
+              </div>
+            ) : (
+              // Tocables: mismo action sheet / editar / eliminar que Gastos
+              <ExpenseList
+                expenses={expenses.slice(0, 5)}
+                compact
+                emptyCta="Agregar tu primer gasto"
+              />
+            )}
+          </ContentSection>
         </div>
 
-        <aside className="ledger-aside flex min-h-0 min-w-0 flex-col border-t border-border/70 pt-5 @4xl/main:border-t-0 @4xl/main:pt-0">
+        <ContentSection
+          title="Por categoría"
+          action={{ label: 'Análisis', to: '/analisis' }}
+        >
           {statsLoading ? (
-            <CategoryAllocationSkeleton fill />
+            <CategoryAllocationSkeleton />
           ) : (
-            <CategoryAllocation data={breakdown} total={spent} limit={6} fill />
+            <CategoryAllocation data={breakdown} total={spent} limit={5} />
           )}
-        </aside>
+        </ContentSection>
       </div>
     </div>
   )

@@ -81,11 +81,11 @@ export function DailyPaceChart({
   }
 
   return (
-    <section ref={revealRef} className="space-y-4 border-t border-border/70 pt-5">
+    <section ref={revealRef} className="surface-card space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="stat-label">Ritmo del mes</p>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="text-headline text-label">Ritmo del mes</p>
+          <p className="mt-0.5 text-footnote text-label-secondary">
             Barras = gasto del día · línea = acumulado
             {hasBudget ? ' · punteado = presupuesto' : ''}
             {crossing ? ' · el punto marca dónde lo cruzaste' : ''}

@@ -11,12 +11,12 @@ export const ExpenseNoteInput = forwardRef<HTMLInputElement, ExpenseNoteInputPro
       <input
         ref={ref}
         type="text"
-        placeholder="Ej: Cena, Uber, supermercado..."
+        placeholder="Cena, Uber, supermercado…"
         className={cn(
-          'h-11 w-full min-w-0 rounded-xl border bg-muted/15 px-3.5 text-base text-foreground transition-colors outline-none placeholder:text-muted-foreground/50 focus-visible:bg-muted/25 focus-visible:ring-1',
-          hasError
-            ? 'border-destructive/50 focus-visible:border-destructive/50 focus-visible:ring-destructive/15'
-            : 'border-border/60 focus-visible:border-primary/35 focus-visible:ring-primary/20',
+          // Celda agrupada de iOS: superficie de celda, sin borde. 17px: bajo
+          // 16px iOS hace zoom al enfocar y descuadra la PWA
+          'h-12 w-full min-w-0 rounded-xl bg-sheet-cell px-4 text-body text-label outline-none transition-shadow placeholder:text-label-tertiary',
+          hasError ? 'ring-1 ring-destructive/60' : 'focus-visible:ring-2 focus-visible:ring-primary/35',
           className,
         )}
         {...props}

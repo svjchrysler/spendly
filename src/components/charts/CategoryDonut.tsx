@@ -23,7 +23,7 @@ function DonutTooltip({
   const item = payload[0]
   const pct = item.payload?.pct ?? 0
   return (
-    <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-md">
+    <div className="rounded-xl bg-popover px-3 py-2 text-footnote shadow-[0_8px_24px_-8px_var(--shadow-elevated)] ring-1 ring-foreground/5">
       <p className="mb-1 text-muted-foreground">{item.name}</p>
       <p className="font-semibold tabular-nums">
         {formatCurrency(Number(item.value))}
@@ -73,64 +73,42 @@ export function CategoryDonut({
       : []),
   ]
 
+  // Solo el anillo con el total al centro: la leyenda es la lista de
+  // categorías de abajo, que ya lleva el color, el monto y el porcentaje
   return (
-    <section ref={revealRef} className="space-y-3">
-      <p className="stat-label">Mix de categorías</p>
-      <div className="flex items-center gap-4">
-        <div className="relative size-36 shrink-0 sm:size-40">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={slices}
-                dataKey="total"
-                nameKey="name"
-                innerRadius="62%"
-                outerRadius="88%"
-                paddingAngle={2}
-                stroke="var(--background)"
-                strokeWidth={2}
-                // El anillo se barre: la torta se lee como reparto de un total
-                isAnimationActive={!reducedMotion}
-                animationDuration={700}
-                animationEasing="ease-out"
-              >
-                {slices.map((slice) => (
-                  <Cell key={slice.id} fill={slice.color} />
-                ))}
-              </Pie>
-              <Tooltip content={<DonutTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-            <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-              Total
-            </p>
-            {/* El centro cuenta mientras el anillo barre: las dos lecturas del
-                mismo dato llegan juntas */}
-            <p className="max-w-[5.5rem] truncate text-center text-sm font-semibold tabular-nums tracking-tight">
-              <AnimatedAmount value={total} duration={700} />
-            </p>
-          </div>
+    <section ref={revealRef} className="flex justify-center py-1">
+      <div className="relative size-44">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={slices}
+              dataKey="total"
+              nameKey="name"
+              innerRadius="70%"
+              outerRadius="96%"
+              paddingAngle={2}
+              cornerRadius={4}
+              stroke="none"
+              // El anillo se barre: la torta se lee como reparto de un total
+              isAnimationActive={!reducedMotion}
+              animationDuration={700}
+              animationEasing="ease-out"
+            >
+              {slices.map((slice) => (
+                <Cell key={slice.id} fill={slice.color} />
+              ))}
+            </Pie>
+            <Tooltip content={<DonutTooltip />} />
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+          <p className="text-footnote text-label-secondary">Total</p>
+          {/* El centro cuenta mientras el anillo barre: las dos lecturas del
+              mismo dato llegan juntas */}
+          <p className="max-w-[7.5rem] truncate text-center font-ledger text-headline text-label">
+            <AnimatedAmount value={total} duration={700} />
+          </p>
         </div>
-        <ul className="min-w-0 flex-1 space-y-2">
-          {slices.map((slice) => (
-            <li key={slice.id} className="flex items-baseline justify-between gap-2">
-              <span className="flex min-w-0 items-center gap-2">
-                <span
-                  className="size-1.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: slice.color }}
-                  aria-hidden
-                />
-                <span className="truncate text-xs font-medium tracking-tight">
-                  {slice.name}
-                </span>
-              </span>
-              <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                {Math.round(slice.pct)}%
-              </span>
-            </li>
-          ))}
-        </ul>
       </div>
     </section>
   )

@@ -44,33 +44,6 @@ export default defineConfig({
         },
       },
     },
-    {
-      // Los woff2 viven dentro del CSS: el browser recién los descubre tras
-      // parsearlo. Preload con el nombre hasheado real → sin FOUT en el arranque.
-      name: 'spendly-font-preload',
-      transformIndexHtml: {
-        order: 'post',
-        handler(html, ctx) {
-          const fonts = Object.keys(ctx.bundle ?? {}).filter((file) =>
-            file.endsWith('.woff2'),
-          )
-          return {
-            html,
-            tags: fonts.map((file) => ({
-              tag: 'link',
-              attrs: {
-                rel: 'preload',
-                as: 'font',
-                type: 'font/woff2',
-                href: `/${file}`,
-                crossorigin: '',
-              },
-              injectTo: 'head-prepend' as const,
-            })),
-          }
-        },
-      },
-    },
     VitePWA({
       // `prompt` (no autoUpdate): con autoUpdate el SW nuevo recarga la pestaña
       // en caliente y se lleva puesto un form a medio llenar. La versión nueva
@@ -159,8 +132,8 @@ export default defineConfig({
         clientsClaim: true,
         // El update lo aplicamos nosotros en background, no en caliente
         skipWaiting: false,
-        // Self-hosted fonts only (fontsource) — no Google Fonts runtime caches
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webmanifest}'],
+        // Tipografía del sistema: no hay fuentes que precachear
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
         // Las splash de iOS pesan y las pide el SO, no la app: fuera del precache
         globIgnores: ['**/node_modules/**', 'splash/**'],
         runtimeCaching: [
