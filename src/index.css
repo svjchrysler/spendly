@@ -1,36 +1,3 @@
-/* ponytail: latin only — es-BO; skip cyrillic/latin-ext in SW precache */
-@font-face {
-  font-family: "Geist Variable";
-  font-style: normal;
-  font-display: swap;
-  font-weight: 100 900;
-  src: url("@fontsource-variable/geist/files/geist-latin-wght-normal.woff2")
-    format("woff2-variations");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
-    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-/* Display: títulos, brand, masthead */
-@font-face {
-  font-family: "Bricolage Grotesque Variable";
-  font-style: normal;
-  font-display: swap;
-  font-weight: 200 800;
-  src: url("@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2")
-    format("woff2-variations");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
-    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-/* Ledger: todo lo numérico (montos, fechas, tablas) — mono tabular como rasgo de marca */
-@font-face {
-  font-family: "Spline Sans Mono Variable";
-  font-style: normal;
-  font-display: swap;
-  font-weight: 300 700;
-  src: url("@fontsource-variable/spline-sans-mono/files/spline-sans-mono-latin-wght-normal.woff2")
-    format("woff2-variations");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
-    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -38,13 +5,21 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: "Geist Variable", "Geist", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Bricolage Grotesque Variable", "Geist Variable", ui-sans-serif, system-ui, sans-serif;
-  /* Los primitivos shadcn piden `font-heading`; sin este token la clase no
-     existía y los títulos de sheet/dialog caían a Geist en silencio. */
-  --font-heading: var(--font-display);
-  /* Montos y datos: mono tabular — la cifra es la marca */
-  --font-ledger: "Spline Sans Mono Variable", ui-monospace, "SF Mono", monospace;
+  /*
+    Tipografía del sistema: en iPhone/iPad/Mac es SF Pro, con su tracking
+    óptico por tamaño aplicado por WebKit. Cero descargas: el texto pinta con
+    el primer frame. En Android/Windows cae a Roboto/Segoe, que es lo nativo
+    de cada plataforma.
+  */
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto,
+    "Helvetica Neue", sans-serif;
+  --font-display: var(--font-sans);
+  /* Los primitivos shadcn piden `font-heading` */
+  --font-heading: var(--font-sans);
+  /* Montos: SF Pro Rounded, como Wallet y Fitness. `ui-rounded` solo existe
+     en Apple; afuera cae a la sans del sistema con cifras tabulares */
+  --font-ledger: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, sans-serif;
 
   /* Jerarquía de labels de iOS: opacidades sobre el foreground, no grises
      opacos. Así se leen bien sobre cualquier superficie agrupada. */
@@ -63,6 +38,12 @@
   --color-group-bg: var(--group-bg);
   --color-group-surface: var(--group-surface);
   --color-group-surface-raised: var(--group-surface-raised);
+  --color-sheet: var(--sheet-bg);
+  --color-sheet-cell: var(--sheet-cell);
+  --color-tint-orange: var(--tint-orange);
+  --color-tint-blue: var(--tint-blue);
+  --color-tint-gray: var(--tint-gray);
+  --color-tint-red: var(--tint-red);
 
   --color-separator: var(--separator);
   --color-separator-opaque: var(--separator-opaque);
@@ -116,40 +97,35 @@
 }
 
 /*
-  Escala tipográfica de iOS. Va en un @theme plano (no inline) para que
-  Tailwind emita utilidades reales con su line-height y tracking pareados.
-  Bricolage arriba de 20px, Geist de 20px para abajo: iOS manda el ritmo y
-  las métricas, la marca manda la voz en los tamaños de título.
+  Escala tipográfica de iOS (Dynamic Type, tamaño Large). Va en un @theme
+  plano (no inline) para que Tailwind emita utilidades reales con su
+  line-height pareado. Sin letter-spacing: con la fuente del sistema WebKit
+  aplica el tracking óptico de SF por tamaño, y sumarle uno propio lo
+  duplicaba. Los títulos van en bold, como los large titles de las barras.
 */
 @theme {
   --text-large-title: 2.125rem;
   --text-large-title--line-height: 2.5625rem;
-  --text-large-title--letter-spacing: -0.03em;
-  --text-large-title--font-weight: 600;
+  --text-large-title--font-weight: 700;
 
   --text-title-1: 1.75rem;
   --text-title-1--line-height: 2.125rem;
-  --text-title-1--letter-spacing: -0.025em;
-  --text-title-1--font-weight: 600;
+  --text-title-1--font-weight: 700;
 
   --text-title-2: 1.375rem;
   --text-title-2--line-height: 1.75rem;
-  --text-title-2--letter-spacing: -0.02em;
-  --text-title-2--font-weight: 600;
+  --text-title-2--font-weight: 700;
 
   --text-title-3: 1.25rem;
   --text-title-3--line-height: 1.5625rem;
-  --text-title-3--letter-spacing: -0.015em;
   --text-title-3--font-weight: 600;
 
   --text-headline: 1.0625rem;
   --text-headline--line-height: 1.375rem;
-  --text-headline--letter-spacing: -0.01em;
   --text-headline--font-weight: 600;
 
   --text-body: 1.0625rem;
   --text-body--line-height: 1.375rem;
-  --text-body--letter-spacing: -0.01em;
 
   --text-callout: 1rem;
   --text-callout--line-height: 1.3125rem;
@@ -194,6 +170,15 @@
   --group-bg: var(--background);
   --group-surface: #ffffff;
   --group-surface-raised: #f7f7f8;
+  /* Sheets: canvas agrupado propio con celdas blancas encima, como un form
+     sheet de iOS. En dark el sheet sube a #1C1C1E y sus celdas a #2C2C2E. */
+  --sheet-bg: var(--background);
+  --sheet-cell: #ffffff;
+  /* Colores de sistema de iOS, solo para los glifos de Ajustes */
+  --tint-orange: #ff9500;
+  --tint-blue: #007aff;
+  --tint-gray: #8e8e93;
+  --tint-red: #ff3b30;
 
   /* Separadores. El hairline baja a 0.5px en pantallas retina. */
   --separator: color-mix(in oklab, var(--foreground) 12%, transparent);
@@ -282,7 +267,7 @@
     0.9971 95.2%,
     1 100%
   );
-  /* iOS-ish chrome metrics — keep sticky/FAB/main in sync */
+  /* iOS-ish chrome metrics — keep sticky/tab bar/main in sync */
   --app-header-h: 3.5rem;
   /* Sidebar de ancho regular. Angosto a propósito: en el Duo abierto (~890px)
      deja ~600px de contenido, el ancho de un iPhone grande */
@@ -291,7 +276,7 @@
   --app-tabbar-h: 3.5rem;
   /* Aire entre la cápsula flotante y el borde/home indicator */
   --app-tabbar-inset: 0.5rem;
-  /* Espacio total que el tab bar le roba al viewport (main, FAB, sheets) */
+  /* Espacio total que el tab bar le roba al viewport (main, sheets) */
   --app-tabbar-space: calc(
     var(--app-tabbar-h) + var(--app-tabbar-inset) + env(safe-area-inset-bottom)
   );
@@ -303,7 +288,7 @@
   --group-inset: 1rem;
 
   /* ── Material Liquid Glass ────────────────────────────────────────────
-     Extraído de .tab-glass para que nav bar, toolbar, menús y FAB compartan
+     Extraído de .tab-glass para que tab bar, toolbar y controles compartan
      una sola definición. El tab bar sigue siendo la referencia.
 
      iOS 27: menos transparencia por defecto (tint más denso), specular más
@@ -364,14 +349,21 @@
   --fill-tertiary: color-mix(in oklab, var(--foreground) 24%, transparent);
   --fill-quaternary: color-mix(in oklab, var(--foreground) 18%, transparent);
 
-  /* El equivalente al #1C1C1E de iOS afinado a la rampa zinc. Con el #0a0a0a
-     anterior las tarjetas inset daban ~2% de contraste sobre negro: invisibles. */
+  /* Los grises agrupados de iOS: secondary (#1C1C1E) para las celdas sobre el
+     negro del canvas, tertiary (#2C2C2E) para celdas dentro de un sheet, que
+     ya flota un escalón más arriba. */
   --group-bg: var(--background);
-  --group-surface: #131315;
-  --group-surface-raised: #1c1c1e;
+  --group-surface: #1c1c1e;
+  --group-surface-raised: #2c2c2e;
+  --sheet-bg: #1c1c1e;
+  --sheet-cell: #2c2c2e;
+  --tint-orange: #ff9f0a;
+  --tint-blue: #0a84ff;
+  --tint-gray: #98989d;
+  --tint-red: #ff453a;
 
   --separator: color-mix(in oklab, var(--foreground) 14%, transparent);
-  --separator-opaque: #2b2b2e;
+  --separator-opaque: #38383a;
 
   --card: var(--group-surface);
   --card-foreground: #ffffff;
@@ -515,68 +507,46 @@
 }
 
 @layer utilities {
+  /* Cifras tabulares siempre: una columna de montos no baila al cambiar */
   .font-ledger {
     font-family: var(--font-ledger);
-    font-optical-sizing: auto;
+    font-variant-numeric: tabular-nums;
   }
 
   .font-display {
     font-family: var(--font-display);
-    font-optical-sizing: auto;
   }
 
   /*
-    Header de sección: el footnote de iOS, con la caja alta y el tracking
-    abierto como rasgo de marca. `.metric-cell-label` era una regla idéntica
-    duplicada y `.list-section-header` es el nombre que usa el código nuevo.
+    Etiqueta de dato (sobre una cifra, en una celda de métricas): footnote en
+    gris secundario, en caja normal. La caja alta con tracking abierto era
+    voz editorial, no de iOS.
   */
-  .stat-label,
-  .metric-cell-label,
-  .list-section-header {
-    @apply text-caption-1 font-medium uppercase tracking-[0.08em] text-label-secondary;
+  .metric-cell-label {
+    @apply text-footnote text-label-secondary;
   }
 
-  /* Títulos: Bricolage — la voz de la marca, en la escala de iOS */
+  /* Header de sección de una lista agrupada: el default de iOS, caja alta */
+  .list-section-header {
+    @apply text-footnote uppercase text-label-secondary;
+  }
+
+  /*
+    Header prominente (`headerProminence(.increased)`): el de las secciones de
+    contenido de Salud o Wallet — "Recientes", "Por categoría".
+  */
+  .section-title {
+    @apply text-title-3 font-bold text-label;
+  }
+
   .page-title {
-    @apply font-display text-large-title text-label;
+    @apply text-large-title text-label;
     text-wrap: balance;
   }
 
-  /* Montos: mono tabular — la cifra como recibo */
+  /* Montos grandes: SF Pro Rounded bold, como el saldo de Wallet */
   .stat-value {
-    @apply font-ledger text-[2.35rem] font-semibold leading-none tracking-[-0.02em] text-label tabular-nums sm:text-[2.85rem] lg:text-[3.15rem];
-  }
-
-  /*
-    Firma visual: borde perforado de boleta (dientes hacia abajo del mismo
-    color que la superficie). Ajustar --receipt-fill si el fondo no es card.
-  */
-  .receipt-edge {
-    position: relative;
-    --receipt-fill: var(--card);
-  }
-
-  .receipt-edge::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    height: 7px;
-    background: conic-gradient(
-        from 135deg at 50% 0%,
-        var(--receipt-fill) 90deg,
-        transparent 0
-      )
-      0 0 / 14px 7px repeat-x;
-  }
-
-  /* Columna secundaria cuando hay dos columnas: separada por hairline vertical.
-     Container query, no viewport — mismo umbral que `@4xl/main:` de los grids */
-  @container main (width >= 56rem) {
-    .ledger-aside {
-      @apply border-l border-border/70 pl-8;
-    }
+    @apply font-ledger text-[2.75rem] leading-none font-bold text-label sm:text-[3.25rem];
   }
 
   .metric-cell {
@@ -584,7 +554,7 @@
   }
 
   .metric-cell-value {
-    @apply font-ledger text-lg font-semibold tracking-tight tabular-nums sm:text-xl;
+    @apply font-ledger text-title-3 font-semibold text-label;
   }
 
   /* ─── Listas agrupadas inset (iOS insetGrouped) ───────────────────────── */
@@ -593,6 +563,24 @@
     overflow: hidden;
     border-radius: var(--radius-xl);
     background-color: var(--group-surface);
+  }
+
+  /* Tarjeta de contenido (charts, métricas): la misma superficie y radio que
+     las listas agrupadas, para que el canvas tenga un solo tipo de bloque */
+  .surface-card {
+    border-radius: var(--radius-xl);
+    background-color: var(--group-surface);
+    padding: 1rem;
+  }
+
+  /* Dentro de un sheet las celdas suben un escalón: el sheet ya es el canvas */
+  :is([data-slot='sheet-content'], [data-slot='dialog-content']) :is(.list-group, .swipe-row__content) {
+    background-color: var(--sheet-cell);
+  }
+
+  /* La cápsula agrupa botones: se aprieta el botón, no la cápsula entera */
+  .glass-btn.glass-capsule:active {
+    transform: none;
   }
 
   .list-row {
@@ -729,6 +717,13 @@
     display: flex;
     align-items: stretch;
     perspective: 600px;
+    /* En reposo la puerta queda a -62° y su canto asomaba como un hilo rojo
+       en la esquina redondeada del grupo: aparece recién con el arrastre */
+    opacity: calc(var(--swipe-progress, 0) * 8);
+  }
+
+  .swipe-row:has([data-hint]) .swipe-row__actions {
+    opacity: 1;
   }
 
   .swipe-row__content {
@@ -799,6 +794,21 @@
     transition: transform 320ms var(--ease-spring);
   }
 
+  /*
+    Segmento elegido en dark: más claro que el riel, como iOS. Con la
+    superficie de celda quedaba más oscuro que el fondo y se leía al revés.
+  */
+  .dark .seg-thumb,
+  .dark .segment-on {
+    background-color: color-mix(in oklab, #fff 24%, transparent);
+    box-shadow: none;
+  }
+
+  .segment-on {
+    background-color: var(--sheet-cell);
+    box-shadow: 0 1px 3px var(--shadow);
+  }
+
   .dark .seg-thumb {
     background-color: var(--group-surface-raised);
     box-shadow:
@@ -809,10 +819,11 @@
   /* ─── Nav bar ─────────────────────────────────────────────────────────── */
 
   /*
-    La barra no tiene material en reposo. Con la status bar en estilo `default`
-    iOS pinta esa franja con theme-color (= --background); una barra tintada
-    arriba de todo dejaría una costura visible contra ella. Al scrollear el
-    material aparece, que además es el comportamiento HIG.
+    Sin barra: el "scroll edge effect" de iOS 26/27. Los controles flotan como
+    vidrio y el contenido se esfuma por debajo con un degradé difuminado que
+    aparece recién al scrollear. En reposo no hay nada pintado, así que la
+    status bar en estilo `default` (pintada con theme-color = --background)
+    no deja costura. Tampoco hay hairline: el degradé es la separación.
   */
   @property --nav-progress {
     syntax: '<number>';
@@ -821,36 +832,38 @@
   }
 
   .nav-bar {
-    background-color: color-mix(
-      in oklab,
-      var(--glass-tint) calc(var(--nav-progress) * 100%),
-      transparent
-    );
-    transition: background-color 120ms linear;
+    isolation: isolate;
   }
 
-  .nav-bar[data-materialized='true'] {
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  .nav-bar::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 -1.25rem;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      var(--background) 0%,
+      color-mix(in oklab, var(--background) 86%, transparent) 55%,
+      transparent 100%
+    );
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent);
+    mask-image: linear-gradient(to bottom, #000 60%, transparent);
+    opacity: var(--nav-progress);
+    transition: opacity 120ms linear;
   }
 
   @media (prefers-reduced-transparency: reduce) {
-    .nav-bar[data-materialized='true'] {
+    .nav-bar::before {
       -webkit-backdrop-filter: none;
       backdrop-filter: none;
-      background-color: var(--glass-tint-fallback);
+      background: var(--background);
+      -webkit-mask-image: none;
+      mask-image: none;
+      inset-block-end: 0;
     }
-  }
-
-  .nav-bar::after {
-    content: '';
-    position: absolute;
-    inset-inline: 0;
-    inset-block-end: 0;
-    block-size: var(--hairline);
-    background-color: var(--separator-opaque);
-    opacity: var(--nav-progress);
-    pointer-events: none;
   }
 
   /* Título inline: aparece a medida que el large title se va */
@@ -865,12 +878,6 @@
     transform-origin: left center;
   }
 
-  /* En compact la marca y el título inline ocupan el mismo rol: uno entra
-     cuando el otro sale. En regular la marca vive en el sidebar. */
-  .nav-brand {
-    opacity: calc(1 - var(--nav-progress) * 1.8);
-  }
-
   :root[data-nav-collapsed='true'] {
     --nav-collapsed: 1;
   }
@@ -878,12 +885,10 @@
   /* Sin @property el calc() sobre un número sin unidad no resuelve: se cae a
      un crossfade binario con el atributo que emite el mismo suscriptor. */
   @supports not (background: paint(x)) {
-    .nav-bar,
+    .nav-bar::before,
     .nav-inline-title,
     .nav-large-title {
-      transition:
-        opacity 200ms ease,
-        background-color 200ms ease;
+      transition: opacity 200ms ease;
     }
   }
 
@@ -919,25 +924,6 @@
     }
   }
 
-  /*
-    Botón flotante. iOS 26 sí tiene este idioma (el compose de Mail o Notas):
-    cápsula elevada en la esquina, concéntrica con el tab bar.
-  */
-  .fab {
-    @apply fixed z-[60] size-14 cursor-pointer rounded-full bg-primary text-primary-foreground;
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklab, #fff 30%, transparent),
-      0 0 0 1px color-mix(in oklab, var(--primary) 22%, transparent),
-      0 12px 28px color-mix(in oklab, var(--primary) 22%, transparent),
-      0 2px 8px var(--shadow);
-    transition:
-      transform 220ms var(--ease-spring),
-      background-color 200ms ease,
-      box-shadow 220ms ease;
-    right: max(1rem, env(safe-area-inset-right));
-    bottom: calc(var(--app-tabbar-space) + 0.85rem);
-  }
-
   /* ─── Tab bar Liquid Glass (iOS 26) ─────────────────────────────────────
      Cápsula flotante: material translúcido + specular highlight arriba,
      píldora activa que desliza y colapso al scrollear. */
@@ -954,7 +940,7 @@
 
   /*
     Material Liquid Glass compartido por toda la capa de navegación: tab bar,
-    nav bar, toolbar, menús y FAB. Solo va en la capa de navegación — nunca
+    toolbar y controles de barra. Solo va en la capa de navegación — nunca
     sobre tarjetas ni filas, y nunca glass sobre glass.
 
     El tint tira a gris, no a blanco: es lo que deja que el lozenge blanco del
@@ -1086,16 +1072,90 @@
     }
   }
 
+  /*
+    Controles de vidrio de iOS 26/27: los botones de las barras (cerrar,
+    confirmar, avatar, mes) son cápsulas de vidrio sueltas, no íconos sobre
+    una barra. Sombra corta — son controles, no superficies flotantes.
+  */
+  .glass-btn {
+    position: relative;
+    isolation: isolate;
+    background-color: var(--glass-tint);
+    -webkit-backdrop-filter: blur(16px) saturate(var(--glass-saturate));
+    backdrop-filter: blur(16px) saturate(var(--glass-saturate));
+    box-shadow:
+      inset 0 1px 0 var(--glass-specular),
+      inset 0 0 0 1px var(--glass-hairline),
+      0 0 0 0.5px var(--glass-edge),
+      0 2px 8px -2px var(--shadow);
+    transition:
+      transform 200ms var(--ease-spring),
+      background-color 200ms ease;
+  }
+
+  .glass-btn:active {
+    transform: scale(0.94);
+  }
+
+  /* Acción principal: vidrio teñido con el acento, como el confirmar de iOS */
+  .glass-btn--tinted {
+    background-color: color-mix(in oklab, var(--primary) 90%, transparent);
+    color: var(--primary-foreground);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, #fff 38%, transparent),
+      inset 0 0 0 1px color-mix(in oklab, #fff 12%, transparent),
+      0 0 0 0.5px color-mix(in oklab, var(--primary) 60%, #000),
+      0 6px 16px -4px color-mix(in oklab, var(--primary) 45%, transparent);
+  }
+
+  @media (hover: hover) {
+    .glass-btn--tinted:hover {
+      background-color: var(--primary);
+    }
+  }
+
+  /* Varios botones en una sola cápsula (el stepper de mes) */
+  .glass-capsule {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .glass-btn {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      background-color: var(--glass-tint-fallback);
+    }
+
+    .glass-btn--tinted {
+      background-color: var(--primary);
+    }
+  }
+
   /* Menús y popovers: material más denso porque se leen textos encima */
   .material-glass--thick {
     --glass-blur: 40px;
     --glass-saturate: 200%;
   }
 
+  /*
+    Cápsula de tabs + botón de acción suelto a la derecha: el patrón de iOS
+    26/27 para la acción principal (como Buscar en las apps de Apple). El
+    botón vive en el dock y no flota sobre la lista, así que no tapa montos.
+  */
+  .tab-dock-row {
+    display: flex;
+    max-width: 30rem;
+    align-items: flex-end;
+    gap: 0.625rem;
+    margin-inline: auto;
+  }
+
   .tab-glass {
     pointer-events: auto;
-    margin-inline: auto;
-    max-width: 26rem;
+    min-width: 0;
+    flex: 1 1 auto;
     height: var(--app-tabbar-h);
     border-radius: 999px;
     transition:
@@ -1104,8 +1164,30 @@
       box-shadow 300ms ease;
   }
 
-  .tab-dock[data-collapsed='true'] .tab-glass {
+  .tab-action {
+    pointer-events: auto;
+    display: flex;
+    width: var(--app-tabbar-h);
+    height: var(--app-tabbar-h);
+    flex-shrink: 0;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      width 340ms var(--ease-spring),
+      height 340ms var(--ease-spring),
+      transform 200ms var(--ease-spring);
+  }
+
+  .tab-dock[data-collapsed='true'] .tab-glass,
+  .tab-dock[data-collapsed='true'] .tab-action {
     height: 2.7rem;
+  }
+
+  .tab-dock[data-collapsed='true'] .tab-action {
+    width: 2.7rem;
   }
 
   .tab-track {
@@ -1221,7 +1303,7 @@
   .tab-label {
     font-size: 10px;
     line-height: 1;
-    /* 590 ≈ el medium de SF Pro; Geist es variable, aprovechemos el eje */
+    /* 590: el medium de los labels del tab bar de iOS */
     font-weight: 590;
     letter-spacing: 0.005em;
     max-height: 1rem;
@@ -1273,7 +1355,7 @@
   }
 
   /* ponytail: opacity only — animar transform acá convierte al wrapper en
-     containing block y el FAB portaleado deja de ser fixed */
+     containing block de cualquier `fixed` que viva adentro */
   @keyframes page-enter {
     from {
       opacity: 0;
@@ -1294,7 +1376,7 @@
      **`backwards`, nunca `both`**: con `both` el navegador deja aplicado el
      `transform: translateY(0)` final para siempre, y un transform (aunque sea
      la identidad) convierte al elemento en containing block de cualquier
-     `position: fixed` de adentro — el pitfall del FAB, ahora repartido por
+     `position: fixed` de adentro — el pitfall de siempre, ahora repartido por
      media app. Con `backwards` solo se pinta el estado inicial durante el
      delay y al terminar el elemento vuelve a sus propios estilos.
 
@@ -1536,21 +1618,6 @@
     animation: notice-in var(--dur-2) var(--ease-out-expo) backwards;
   }
 
-  /*
-    El FAB se acerca y se hunde en vez de escalar. Misma lista de funciones en
-    los tres estados para que interpolen componente a componente en vez de por
-    descomposición de matriz. A 600px de perspectiva, translateZ(23px) ≈ el
-    scale(1.04) de antes.
-  */
-  .fab:hover {
-    @apply bg-primary/90;
-    transform: perspective(600px) translate3d(0, 0, 23px) rotateX(0deg);
-  }
-
-  .fab:active {
-    transform: perspective(600px) translate3d(0, 0, -30px) rotateX(7deg);
-  }
-
   .input-amount {
     appearance: textfield;
     -moz-appearance: textfield;
@@ -1608,54 +1675,6 @@
   }
 
   /*
-    ─── Tarjeta de dos caras ───────────────────────────────────────────────
-    El único contexto 3D encadenado del proyecto (`perspective` en el ancestro
-    + `preserve-3d`). Ver `components/ui/flip-card.tsx` para por qué acá sí.
-
-    `.flip-card__inner` no puede llevar `overflow` distinto de `visible`: eso
-    aplana el `preserve-3d` y las dos caras quedan pegadas.
-  */
-  .flip-card {
-    perspective: 1400px;
-  }
-
-  .flip-card__inner {
-    display: grid;
-    transform-style: preserve-3d;
-    transform: rotateY(0deg);
-    transition: transform var(--dur-3) var(--ease-spring);
-  }
-
-  .flip-card__inner[data-flipped] {
-    transform: rotateY(180deg);
-  }
-
-  .flip-card__face {
-    grid-area: 1 / 1;
-    min-width: 0;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-  }
-
-  .flip-card__face--back {
-    transform: rotateY(180deg);
-  }
-
-  /* Sin giro las dos caras quedan apiladas: la que no toca se esconde. El
-     `inert` ya lo pone el componente para el lector de pantalla. */
-  @media (prefers-reduced-motion: reduce) {
-    .flip-card__inner,
-    .flip-card__inner[data-flipped],
-    .flip-card__face--back {
-      transform: none;
-    }
-
-    .flip-card__face[inert] {
-      visibility: hidden;
-    }
-  }
-
-  /*
     ─── Profundidad de modal ───────────────────────────────────────────────
     Con un sheet abierto la pantalla de atrás retrocede en Z, como la tarjeta
     que iOS empuja al fondo. Contesta la pregunta de siempre: esto que estás
@@ -1667,7 +1686,7 @@
     posicionado: su `bottom` dejaría de ser el borde de la pantalla. Por eso
     van los tres en paralelo. Transformar un `sticky`/`fixed` **a sí mismo** es
     válido; lo que rompe es tener un *ancestro* transformado — y ninguno de los
-    tres tiene nada `fixed` adentro (el FAB portalea a `document.body` y los
+    tres tiene nada `fixed` adentro (sheets y toasts van por portal y los
     headers de fecha dejaron de ser sticky).
 
     El atributo lo maneja `lib/modal-depth.ts` con refcount. Mientras existe,
@@ -1724,17 +1743,6 @@
   }
 
   /*
-    El FAB no retrocede: se va. Está portaleado a `body`, fuera de los tres, y
-    coordinar su origen sería frágil. Además es lo correcto de contar — el FAB
-    *es* lo que abrió el sheet.
-  */
-  html[data-modal='1'] .fab {
-    opacity: 0;
-    transform: perspective(600px) translate3d(0, 0, -30px) rotateX(0deg);
-    pointer-events: none;
-  }
-
-  /*
     ─── Navegación entre pantallas ─────────────────────────────────────────
     El mes ya entra desde el lado hacia el que fuiste (`.swap`). Las pantallas
     no: hasta acá las cuatro tabs fundían igual en las dos direcciones, que es
@@ -1743,7 +1751,7 @@
     `data-vt-dir` lo escribe `nav-direction.ts` con el orden de los tabs, justo
     antes de que React Router abra la view transition.
 
-    El chrome no viaja. Nav bar, dock y FAB llevan `view-transition-name`
+    El chrome no viaja. Nav bar, dock y sidebar llevan `view-transition-name`
     propio, así que quedan fuera del snapshot de `root` y se quedan quietos
     mientras el contenido se desliza por debajo — que es lo que hace iOS y lo
     que un cross-fade de página entera rompe.
@@ -1758,10 +1766,6 @@
 
   .app-sidebar {
     view-transition-name: sidebar;
-  }
-
-  .fab {
-    view-transition-name: fab;
   }
 
   /*
@@ -1891,32 +1895,6 @@
       animation: none;
     }
 
-    /*
-      El FAB sí entra y sale: existe en Resumen y Gastos, no en Análisis ni
-      Categorías. Que aparezca escalando contesta "acá se puede agregar algo".
-    */
-    @keyframes fab-vt-out {
-      to {
-        opacity: 0;
-        transform: scale(0.82);
-      }
-    }
-
-    @keyframes fab-vt-in {
-      from {
-        opacity: 0;
-        transform: scale(0.82);
-      }
-    }
-
-    ::view-transition-old(fab) {
-      animation: fab-vt-out var(--dur-1) var(--ease-out-expo) both;
-    }
-
-    ::view-transition-new(fab) {
-      animation: fab-vt-in var(--dur-2) var(--spring-land) both;
-    }
-
     /* El título y el total se mudan con la misma curva que el contenido */
     ::view-transition-group(page-title),
     ::view-transition-group(month-total) {
@@ -1925,10 +1903,4 @@
     }
   }
 
-  @media (min-width: 768px) {
-    .fab {
-      bottom: max(2rem, env(safe-area-inset-bottom));
-      right: max(2rem, env(safe-area-inset-right));
-    }
-  }
 }

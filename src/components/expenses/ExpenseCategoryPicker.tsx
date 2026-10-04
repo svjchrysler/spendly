@@ -67,10 +67,10 @@ export function ExpenseCategoryPicker({
             aria-pressed={isSelected}
             onClick={() => onChange(category.id)}
             className={cn(
-              'pressable inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium',
+              'pressable inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-1.5 text-subhead font-medium transition-colors',
               isSelected
-                ? 'border-primary/45 bg-primary/12 text-foreground'
-                : 'border-border/60 bg-muted/15 text-muted-foreground hover:border-border hover:bg-muted/30 hover:text-foreground',
+                ? 'bg-primary/15 text-label ring-1 ring-primary/45'
+                : 'bg-sheet-cell text-label-secondary hover:text-label',
             )}
           >
             <CategoryIcon

@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils'
 
 interface ExpenseAmountInputProps {
   id?: string
+  /** Rótulo visible sobre la cifra */
+  label?: string
   value?: number
   onChange: (value: number | undefined) => void
   onBlur?: () => void
@@ -17,6 +19,7 @@ interface ExpenseAmountInputProps {
 
 export function ExpenseAmountInput({
   id = 'amount',
+  label = 'Monto',
   value,
   onChange,
   onBlur,
@@ -33,22 +36,15 @@ export function ExpenseAmountInput({
     if (!focusedRef.current) setDraft(toAmountDraft(value))
   }, [value])
 
+  // Monto como protagonista del sheet, sin caja: la cifra grande en SF Pro
+  // Rounded es el campo, igual que en Wallet al mandar dinero
   return (
-    <div
-      className={cn(
-        'w-full min-w-0 rounded-2xl border px-4 py-3.5 transition-all duration-200',
-        hasError
-          ? 'border-destructive/40 bg-destructive/5'
-          : 'border-border/50 bg-muted/15 hover:border-border/70 focus-within:border-primary/40 focus-within:bg-muted/25 focus-within:ring-2 focus-within:ring-primary/20',
-      )}
-    >
-      <label htmlFor={id} className="stat-label mb-2 block cursor-text text-center">
-        Monto
+    <div className="flex w-full min-w-0 flex-col items-center gap-0.5 pt-1 pb-2">
+      <label htmlFor={id} className="cursor-text text-footnote text-label-secondary">
+        {label}
       </label>
       <div className="flex min-w-0 items-baseline justify-center gap-2">
-        <span className="shrink-0 text-lg font-medium text-muted-foreground">
-          {symbol}
-        </span>
+        <span className="shrink-0 font-ledger text-title-2 text-label-secondary">{symbol}</span>
         <input
           id={id}
           type="text"
@@ -71,9 +67,14 @@ export function ExpenseAmountInput({
             onBlur?.()
           }}
           className={cn(
-            'input-amount font-ledger w-full max-w-[12ch] min-w-0 border-0 bg-transparent text-center text-4xl font-semibold leading-none tracking-[-0.04em] text-foreground tabular-nums outline-none placeholder:text-muted-foreground/35 sm:text-5xl',
+            'input-amount font-ledger max-w-[10ch] min-w-[4ch] rounded-xl border-0 bg-transparent text-center text-[3.25rem] leading-tight font-bold caret-primary outline-none placeholder:text-label-quaternary focus-visible:bg-fill-quaternary',
+            hasError ? 'text-destructive' : 'text-label',
             className,
           )}
+          // El campo mide lo que mide la cifra: así el símbolo queda pegado al
+          // número y el conjunto centrado, como en Wallet. Cifras tabulares →
+          // cada dígito ocupa 1ch.
+          style={{ width: `${Math.max(draft.length, 4) + 0.5}ch` }}
           {...props}
         />
       </div>

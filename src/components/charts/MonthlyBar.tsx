@@ -51,10 +51,10 @@ export function MonthlyBar({ data }: Readonly<MonthlyBarProps>) {
   }
 
   return (
-    <section ref={revealRef} className="space-y-4">
+    <section ref={revealRef} className="surface-card space-y-4">
       <div className="flex items-end justify-between gap-3">
-        <p className="stat-label">Últimos 6 meses</p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-headline text-label">Últimos 6 meses</p>
+        <p className="text-footnote text-label-secondary">
           Máx. {formatCurrencyCompact(maxTotal)}
         </p>
       </div>
@@ -85,7 +85,7 @@ export function MonthlyBar({ data }: Readonly<MonthlyBarProps>) {
                 meses armándose, no seis rectángulos ya puestos */}
             <Bar
               dataKey="total"
-              radius={[4, 4, 0, 0]}
+              radius={[6, 6, 6, 6]}
               isAnimationActive={!reducedMotion}
               animationDuration={700}
               animationEasing="ease-out"

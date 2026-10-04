@@ -75,6 +75,41 @@ export function ListSection({
   )
 }
 
+/**
+ * Sección de contenido con header prominente (`headerProminence(.increased)`):
+ * título en bold y, a la derecha, un link "Ver todo" — el patrón de Salud y
+ * Wallet. Para grupos de formulario va `ListSection`, con el header chico.
+ */
+export function ContentSection({
+  title,
+  action,
+  className,
+  children,
+}: Readonly<{
+  title: ReactNode
+  action?: { label: string; to: string }
+  className?: string
+  children: ReactNode
+}>) {
+  return (
+    <section className={cn('min-w-0 space-y-2.5', className)}>
+      <div className="flex items-baseline justify-between gap-3 px-1">
+        <h2 className="section-title truncate">{title}</h2>
+        {action ? (
+          <Link
+            to={action.to}
+            className="pressable -my-3 inline-flex shrink-0 cursor-pointer items-center gap-0.5 py-3 text-subhead text-primary"
+          >
+            {action.label}
+            <ChevronRight className="size-4" aria-hidden />
+          </Link>
+        ) : null}
+      </div>
+      {children}
+    </section>
+  )
+}
+
 type ListRowProps = Readonly<{
   leading?: ReactNode
   title?: ReactNode

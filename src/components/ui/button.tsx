@@ -23,7 +23,10 @@ const buttonVariants = cva(
         tinted:
           "bg-primary/12 text-primary hover:bg-primary/18 dark:bg-primary/18 dark:hover:bg-primary/25",
         plain: "text-primary hover:bg-primary/10",
-        glass: "material-glass text-label",
+        // Controles de barra de iOS 26/27: cápsula de vidrio suelta, y su
+        // versión teñida para la acción principal (confirmar, agregar)
+        glass: "glass-btn rounded-full text-label hover:bg-[color-mix(in_oklab,var(--glass-tint),var(--foreground)_6%)]",
+        prominent: "glass-btn glass-btn--tinted rounded-full",
       },
       size: {
         // Touch-first: 44pt en táctil, densidad de escritorio solo con mouse en

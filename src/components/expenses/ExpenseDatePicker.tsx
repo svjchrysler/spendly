@@ -72,7 +72,8 @@ export function ExpenseDatePicker({ value, onChange }: Readonly<ExpenseDatePicke
 
   return (
     <div ref={rootRef} className="relative w-full min-w-0">
-      <div className="grid w-full min-w-0 grid-cols-3 gap-2">
+      {/* Segmented control de iOS: tres segmentos en un riel, el elegido sube */}
+      <div className="grid w-full min-w-0 grid-cols-3 gap-0.5 rounded-full bg-fill-quaternary p-0.5">
         <button
           type="button"
           onClick={() => {
@@ -80,10 +81,8 @@ export function ExpenseDatePicker({ value, onChange }: Readonly<ExpenseDatePicke
             onChange(toDateString(new Date()))
           }}
           className={cn(
-            'pressable h-11 min-w-0 cursor-pointer rounded-xl border text-sm font-medium',
-            todaySelected
-              ? 'border-primary/45 bg-primary/12 text-foreground'
-              : 'border-border/60 bg-muted/15 text-muted-foreground hover:bg-muted/30 hover:text-foreground',
+            'pressable h-10 min-w-0 cursor-pointer rounded-full text-subhead font-medium transition-colors',
+            todaySelected ? 'segment-on text-label' : 'text-label-secondary hover:text-label',
           )}
         >
           Hoy
@@ -95,10 +94,8 @@ export function ExpenseDatePicker({ value, onChange }: Readonly<ExpenseDatePicke
             onChange(toDateString(subDays(new Date(), 1)))
           }}
           className={cn(
-            'pressable h-11 min-w-0 cursor-pointer rounded-xl border text-sm font-medium',
-            yesterdaySelected
-              ? 'border-primary/45 bg-primary/12 text-foreground'
-              : 'border-border/60 bg-muted/15 text-muted-foreground hover:bg-muted/30 hover:text-foreground',
+            'pressable h-10 min-w-0 cursor-pointer rounded-full text-subhead font-medium transition-colors',
+            yesterdaySelected ? 'segment-on text-label' : 'text-label-secondary hover:text-label',
           )}
         >
           Ayer
@@ -110,10 +107,8 @@ export function ExpenseDatePicker({ value, onChange }: Readonly<ExpenseDatePicke
           aria-label="Elegir otra fecha"
           onClick={() => setOpen((v) => !v)}
           className={cn(
-            'pressable inline-flex h-11 min-w-0 cursor-pointer items-center justify-center gap-1 rounded-xl border px-1.5 text-sm font-medium capitalize',
-            otherSelected || open
-              ? 'border-primary/45 bg-primary/12 text-foreground'
-              : 'border-border/60 bg-muted/15 text-muted-foreground hover:bg-muted/30 hover:text-foreground',
+            'pressable inline-flex h-10 min-w-0 cursor-pointer items-center justify-center gap-1 rounded-full px-1.5 text-subhead font-medium capitalize transition-colors',
+            otherSelected || open ? 'segment-on text-label' : 'text-label-secondary hover:text-label',
           )}
         >
           <CalendarDays className="size-3.5 shrink-0 opacity-70" aria-hidden />
@@ -125,7 +120,7 @@ export function ExpenseDatePicker({ value, onChange }: Readonly<ExpenseDatePicke
         <div
           role="dialog"
           aria-label="Calendario"
-          className="absolute right-0 bottom-full z-50 mb-2 w-[17.5rem] rounded-2xl border border-border/80 bg-popover p-3 shadow-xl shadow-[0_20px_40px_var(--shadow-elevated)]"
+          className="absolute right-0 bottom-full z-50 mb-2 w-[17.5rem] rounded-[1.25rem] bg-sheet-cell p-3 shadow-[0_20px_48px_-12px_var(--shadow-elevated)] ring-1 ring-foreground/5"
         >
           <div className="mb-3 flex items-center justify-between gap-2">
             <button

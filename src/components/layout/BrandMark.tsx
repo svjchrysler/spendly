@@ -2,6 +2,8 @@ const boxBySize = {
   sm: 'size-5 rounded-[5px]',
   md: 'size-6 rounded-[6px]',
   lg: 'size-12 rounded-[10px]',
+  // Ícono de app (login): radio ~22% del lado, como la superelipse de iOS
+  xl: 'size-[4.5rem] rounded-[1rem]',
 } as const
 
 /** Marca: moneda mint con ranura sobre campo de tinta. */

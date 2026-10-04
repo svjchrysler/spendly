@@ -7,20 +7,42 @@ import {
   type ReactNode,
 } from 'react'
 import { flushSync } from 'react-dom'
-import { applyTheme, getStoredTheme, type Theme } from '@/lib/theme'
+import {
+  applyTheme,
+  getThemePreference,
+  resolveTheme,
+  storeThemePreference,
+  systemTheme,
+  type Theme,
+  type ThemePreference,
+} from '@/lib/theme'
 
 interface ThemeContextValue {
+  /** Tema efectivo, ya resuelto contra el sistema */
   theme: Theme
-  setTheme: (theme: Theme) => void
-  toggleTheme: () => void
+  preference: ThemePreference
+  setPreference: (preference: ThemePreference) => void
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
 export function ThemeProvider({ children }: Readonly<{ children: ReactNode }>) {
-  const [theme, setThemeState] = useState<Theme>(() =>
-    typeof window === 'undefined' ? 'dark' : getStoredTheme(),
+  const [preference, setPreferenceState] = useState<ThemePreference>(() =>
+    typeof window === 'undefined' ? 'system' : getThemePreference(),
   )
+  const [system, setSystem] = useState<Theme>(() =>
+    typeof window === 'undefined' ? 'light' : systemTheme(),
+  )
+  const theme = preference === 'system' ? system : preference
+
+  // En Automático el tema sigue al sistema en vivo (el cambio de iOS al
+  // atardecer), no solo al abrir la app
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+    const sync = () => setSystem(media.matches ? 'dark' : 'light')
+    media.addEventListener('change', sync)
+    return () => media.removeEventListener('change', sync)
+  }, [])
 
   useEffect(() => {
     applyTheme(theme)
@@ -29,7 +51,7 @@ export function ThemeProvider({ children }: Readonly<{ children: ReactNode }>) {
   const value = useMemo(
     () => ({
       theme,
-      setTheme: setThemeState,
+      preference,
       /*
         Cambiar de tema es un cambio de superficie, no de contenido: con View
         Transitions el fundido lo hace el compositor sobre un snapshot de la
@@ -40,25 +62,26 @@ export function ThemeProvider({ children }: Readonly<{ children: ReactNode }>) {
         "nuevo" se toma cuando el callback termina, y si la clase `.dark` se
         aplicara después (en el efecto) el fundido saldría hacia el tema viejo.
       */
-      toggleTheme: () => {
-        const next: Theme = theme === 'dark' ? 'light' : 'dark'
+      setPreference: (next: ThemePreference) => {
+        storeThemePreference(next)
+        const nextTheme = resolveTheme(next)
         const doc = document as Document & {
           startViewTransition?: (callback: () => void) => unknown
         }
         const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-        if (reduced || typeof doc.startViewTransition !== 'function') {
-          setThemeState(next)
+        if (nextTheme === theme || reduced || typeof doc.startViewTransition !== 'function') {
+          setPreferenceState(next)
           return
         }
 
         doc.startViewTransition(() => {
-          applyTheme(next)
-          flushSync(() => setThemeState(next))
+          applyTheme(nextTheme)
+          flushSync(() => setPreferenceState(next))
         })
       },
     }),
-    [theme],
+    [theme, preference],
   )
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

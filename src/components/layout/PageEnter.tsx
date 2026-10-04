@@ -4,7 +4,7 @@ import { navUsedViewTransition } from '@/hooks/useRouteTransition'
 
 /*
   ponytail: opacity only — animar transform acá convierte al wrapper en
-  containing block y el FAB portaleado deja de ser fixed.
+  containing block de cualquier `fixed` que viva adentro.
 */
 function PageFrame({ children }: Readonly<{ children: ReactNode }>) {
   /*

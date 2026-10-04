@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { SearchX } from 'lucide-react'
 import { MonthMasthead } from '@/components/layout/MonthPicker'
 import { AnimatedAmount } from '@/components/ui/animated-amount'
 import { Button } from '@/components/ui/button'
@@ -14,12 +15,7 @@ import { useMonth } from '@/contexts/MonthContext'
 import { useCategories } from '@/hooks/useCategories'
 import { useExpenses } from '@/hooks/useExpenses'
 import { useSessionState } from '@/hooks/useSessionState'
-import { foldForSearch, formatCurrency } from '@/lib/format'
-import {
-  activeExpenseDays,
-  averageTicket,
-  largestAmount,
-} from '@/lib/month-insights'
+import { foldForSearch } from '@/lib/format'
 
 export function ExpensesPage() {
   const { year, month } = useMonth()
@@ -56,67 +52,39 @@ export function ExpensesPage() {
     [expenses],
   )
 
-  const monthTotal = useMemo(
-    () => allExpenses.reduce((sum, item) => sum + Number(item.amount), 0),
-    [allExpenses],
-  )
-
   const selectedCategory = categories.find((category) => category.id === categoryId)
   const filtered = Boolean(search.trim() || categoryId)
-  const ticket = averageTicket(total, expenses.length)
-  const maxExpense = largestAmount(expenses.map((item) => Number(item.amount)))
-  const daysActive = activeExpenseDays(expenses.map((item) => item.expense_date))
+
+  function clearFilters() {
+    setSearch('')
+    setCategoryId(undefined)
+  }
 
   if (isLoading && categoriesLoading) {
     return <ExpensesPageSkeleton />
   }
 
-  const summary = (
-    <section className="min-w-0 space-y-3">
-      <div className="space-y-2">
-        <p className="stat-label">{filtered ? 'Total filtrado' : 'Total del mes'}</p>
-        {isLoading ? (
-          <Skeleton className="h-10 w-44" />
-        ) : (
-          <p className="stat-value vt-month-total text-[2.4rem] sm:text-[2.6rem] lg:text-[2.8rem]">
-            {/* Corto: acá el total se recalcula tecla a tecla al filtrar y el
-                conteo tiene que alcanzar a asentarse entre pulsaciones */}
-            <AnimatedAmount value={total} duration={450} />
-          </p>
-        )}
-        <p className="text-sm text-muted-foreground">
-          {selectedCategory ? selectedCategory.name : 'Todos los gastos'}
-          {' · '}
-          {expenses.length} {expenses.length === 1 ? 'gasto' : 'gastos'}
-        </p>
-        {filtered && !isLoading ? (
-          <p className="text-xs tabular-nums text-muted-foreground">
-            Mes completo: {formatCurrency(monthTotal)}
-          </p>
-        ) : null}
-      </div>
-
-      {!isLoading && expenses.length > 0 ? (
-        <div className="stagger grid grid-cols-3 divide-x divide-border/60 border-t border-border/70 pt-3 [&>*]:px-4 [&>*:first-child]:pl-0 [&>*:last-child]:pr-0">
-          <div className="metric-cell space-y-1">
-            <p className="metric-cell-label">Ticket medio</p>
-            <p className="font-ledger text-sm font-semibold tabular-nums">
-              {formatCurrency(ticket)}
-            </p>
-          </div>
-          <div className="metric-cell space-y-1">
-            <p className="metric-cell-label">Mayor</p>
-            <p className="font-ledger text-sm font-semibold tabular-nums">
-              {formatCurrency(maxExpense)}
-            </p>
-          </div>
-          <div className="metric-cell space-y-1">
-            <p className="metric-cell-label">Días activos</p>
-            <p className="font-ledger text-sm font-semibold tabular-nums">{daysActive}</p>
-          </div>
-        </div>
-      ) : null}
-    </section>
+  const countLabel = `${expenses.length} ${expenses.length === 1 ? 'gasto' : 'gastos'}`
+  // Una línea: el total del mes grande ya está en Resumen, y el detalle
+  // (ticket medio, mayor, días) es de Análisis
+  const summary = isLoading ? (
+    <div className="flex items-center justify-between px-1" aria-hidden>
+      <Skeleton className="h-3.5 w-28" />
+      <Skeleton className="h-5 w-24" />
+    </div>
+  ) : (
+    <div className="flex items-baseline justify-between gap-3 px-1">
+      <p className="min-w-0 truncate text-subhead text-label-secondary">
+        {filtered
+          ? `${countLabel} de ${allExpenses.length}${selectedCategory ? ` · ${selectedCategory.name}` : ''}`
+          : countLabel}
+      </p>
+      <p className="vt-month-total shrink-0 font-ledger text-headline text-label">
+        {/* Corto: acá el total se recalcula tecla a tecla al filtrar y el
+            conteo tiene que alcanzar a asentarse entre pulsaciones */}
+        <AnimatedAmount value={total} duration={450} />
+      </p>
+    </div>
   )
 
   const filters = categoriesLoading ? (
@@ -138,19 +106,20 @@ export function ExpensesPage() {
     list = (
       <>
         {expenses.length === 0 && filtered ? (
-          <div className="reveal flex flex-col items-start gap-3 py-8">
-            <p className="text-sm text-muted-foreground">
-              No hay gastos que coincidan con la búsqueda.
+          <div className="reveal flex flex-col items-center gap-2 px-6 py-10 text-center">
+            <span className="mb-1 flex size-14 items-center justify-center rounded-full bg-fill-quaternary text-label-secondary">
+              <SearchX className="size-7" aria-hidden />
+            </span>
+            <p className="text-headline text-label">Sin resultados</p>
+            <p className="max-w-[16rem] text-subhead text-label-secondary">
+              Ningún gasto de este mes coincide con la búsqueda.
             </p>
             <Button
               type="button"
-              variant="outline"
-              size="sm"
-              className="cursor-pointer"
-              onClick={() => {
-                setSearch('')
-                setCategoryId(undefined)
-              }}
+              variant="tinted"
+              size="touch"
+              className="mt-2 cursor-pointer rounded-full"
+              onClick={clearFilters}
             >
               Limpiar filtros
             </Button>
@@ -158,7 +127,6 @@ export function ExpensesPage() {
         ) : null}
         <ExpenseList
           expenses={expenses}
-          showFab
           emptyCta={filtered ? undefined : 'Agregar tu primer gasto'}
         />
       </>
@@ -166,14 +134,15 @@ export function ExpensesPage() {
   }
 
   return (
-    <div className="flex flex-col gap-3 pb-3 lg:gap-4 lg:pb-6">
-      <MonthMasthead eyebrow="Gastos" />
+    <div className="flex flex-col gap-4 pb-3">
+      <MonthMasthead title="Gastos" />
 
-      <div className="grid gap-5 pt-1 @4xl/main:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] @4xl/main:items-start @4xl/main:gap-8 @6xl/main:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] @6xl/main:gap-10">
-        {/* Riel sticky: resumen + filtros siempre a mano mientras scrolleas la lista */}
-        <aside className="ledger-aside order-1 min-w-0 space-y-4 @4xl/main:order-2 @4xl/main:sticky @4xl/main:top-[var(--sticky-top)]">
+      <div className="grid gap-5 @4xl/main:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] @4xl/main:items-start @4xl/main:gap-8 @6xl/main:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
+        {/* Riel sticky en dos columnas: búsqueda y filtros a mano mientras
+            scrolleás la lista */}
+        <aside className="order-1 min-w-0 space-y-4 @4xl/main:order-2 @4xl/main:sticky @4xl/main:top-[var(--sticky-top)]">
+          {filters}
           {summary}
-          <section className="min-w-0 border-t border-border/70 pt-4">{filters}</section>
         </aside>
 
         <div className="order-2 min-w-0 @4xl/main:order-1">{list}</div>

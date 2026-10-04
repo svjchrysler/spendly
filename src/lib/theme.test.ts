@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
-import { getStoredTheme } from '@/lib/theme'
+import { getStoredTheme, getThemePreference, storeThemePreference } from '@/lib/theme'
 
 describe('getStoredTheme', () => {
   const store: Record<string, string> = {}
@@ -36,5 +36,18 @@ describe('getStoredTheme', () => {
       matchMedia: vi.fn().mockReturnValue({ matches: false }),
     })
     expect(getStoredTheme()).toBe('light')
+  })
+
+  it('treats a missing or unknown value as Automático', () => {
+    expect(getThemePreference()).toBe('system')
+    store['spendly-theme'] = 'sepia'
+    expect(getThemePreference()).toBe('system')
+  })
+
+  it('stores fixed themes and clears the key for Automático', () => {
+    storeThemePreference('dark')
+    expect(store['spendly-theme']).toBe('dark')
+    storeThemePreference('system')
+    expect(store['spendly-theme']).toBeUndefined()
   })
 })

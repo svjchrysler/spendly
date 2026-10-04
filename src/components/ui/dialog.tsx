@@ -72,7 +72,7 @@ function DialogContent({
         className={cn(
           // Centrado sobre lo que el teclado deja libre: con 626px de alto
           // (iPhone Duo abierto) el teclado tapaba medio form
-          "fixed top-[calc((100dvh-var(--keyboard-inset,0px))/2)] left-1/2 z-50 flex max-h-[calc(100dvh-var(--keyboard-inset,0px)-2rem)] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 overflow-x-hidden overflow-y-auto rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "fixed top-[calc((100dvh-var(--keyboard-inset,0px))/2)] left-1/2 z-50 flex max-h-[calc(100dvh-var(--keyboard-inset,0px)-2rem)] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 overflow-x-hidden overflow-y-auto rounded-[1.75rem] bg-sheet p-4 text-sm text-popover-foreground shadow-[0_24px_64px_-16px_var(--shadow-elevated)] ring-1 ring-foreground/5 duration-100 outline-none sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className
         )}
         {...props}
@@ -149,7 +149,7 @@ function DialogTitle({
     <DialogPrimitive.Title
       data-slot="dialog-title"
       className={cn(
-        "font-heading text-base leading-none font-medium",
+        "text-headline text-label",
         className
       )}
       {...props}

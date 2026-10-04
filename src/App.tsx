@@ -20,9 +20,6 @@ const AnalisisPage = lazy(() =>
 const ExpensesPage = lazy(() =>
   import('@/pages/ExpensesPage').then((module) => ({ default: module.ExpensesPage })),
 )
-const CategoriesPage = lazy(() =>
-  import('@/pages/CategoriesPage').then((module) => ({ default: module.CategoriesPage })),
-)
 
 export default function App() {
   return (
@@ -53,7 +50,11 @@ export default function App() {
                     <Route index element={<DashboardPage />} />
                     <Route path="analisis" element={<AnalisisPage />} />
                     <Route path="gastos" element={<ExpensesPage />} />
-                    <Route path="categorias" element={<CategoriesPage />} />
+                    {/* Categorías ahora vive en Ajustes; el link viejo abre esa hoja */}
+                    <Route
+                      path="categorias"
+                      element={<Navigate to="/?ajustes=categorias" replace />}
+                    />
                   </Route>
                 </Route>
 

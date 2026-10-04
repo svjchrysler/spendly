@@ -14,15 +14,15 @@ export function MonthlyCapAlert({ spent }: Readonly<MonthlyCapAlertProps>) {
   const message = getMonthlyCapMessage(spent)
   if (!message) return null
 
-  // Línea de aviso dentro del recibo: sin caja propia, separada por hairline punteada
+  // Aviso tintado de iOS: debajo de la tarjeta, con el color del nivel
   return (
     <output
       // key por nivel: cruzar el umbral vuelve a disparar la entrada, así el
       // cambio de "vas justo" a "te pasaste" se nota aunque ya hubiera aviso
       key={level}
       className={cn(
-        'notice-in mt-4 flex items-start gap-2.5 border-t border-dashed border-border pt-3.5 text-sm leading-snug',
-        level === 'over' ? 'text-destructive' : 'text-warning',
+        'notice-in flex items-start gap-2.5 rounded-xl px-4 py-3 text-subhead',
+        level === 'over' ? 'bg-destructive/10 text-destructive' : 'bg-warning-muted text-warning',
       )}
     >
       <AlertTriangle className="mt-0.5 size-4 shrink-0 opacity-90" aria-hidden />

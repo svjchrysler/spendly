@@ -6,7 +6,7 @@ import {
 } from '@/components/layout/skeletons'
 import { CategoryAllocation } from '@/components/charts/CategoryAllocation'
 import { SegmentedControl } from '@/components/ui/segmented-control'
-import { List, ListRow, ListSection } from '@/components/ui/list'
+import { ContentSection, List, ListRow, ListSection } from '@/components/ui/list'
 import { MonthMasthead } from '@/components/layout/MonthPicker'
 import { useMonth } from '@/contexts/MonthContext'
 import { useExpenses } from '@/hooks/useExpenses'
@@ -59,6 +59,54 @@ function comparisonBase(item: HistoryMonth, previous: HistoryMonth) {
   return item.inProgress ? previous.totalToDay : previous.total
 }
 
+/*
+  Celdas de métricas en una sola tarjeta, separadas por hairlines: el gap de
+  1px deja ver el separador de fondo, igual que las celdas de una lista.
+*/
+function MetricGrid({
+  className,
+  children,
+}: Readonly<{ className?: string; children: ReactNode }>) {
+  return (
+    <section
+      className={cn(
+        'stagger grid grid-cols-2 gap-px overflow-hidden rounded-[1.25rem] bg-separator',
+        className,
+      )}
+    >
+      {children}
+    </section>
+  )
+}
+
+function MetricCell({
+  label,
+  value,
+  note,
+  tone,
+}: Readonly<{
+  label: string
+  value: ReactNode
+  note?: ReactNode
+  tone?: 'destructive' | 'positive'
+}>) {
+  return (
+    <div className="metric-cell bg-group-surface px-4 py-3">
+      <p className="metric-cell-label">{label}</p>
+      <p
+        className={cn(
+          'metric-cell-value',
+          tone === 'destructive' && 'text-destructive',
+          tone === 'positive' && 'text-primary',
+        )}
+      >
+        {value}
+      </p>
+      {note ? <p className="text-footnote text-label-secondary">{note}</p> : null}
+    </div>
+  )
+}
+
 function TrendStrip({ history }: Readonly<{ history: HistoryMonth[] }>) {
   const last = history.at(-1)
   const previous = history.at(-2)
@@ -69,144 +117,89 @@ function TrendStrip({ history }: Readonly<{ history: HistoryMonth[] }>) {
     history[0],
   )
 
-  let deltaCell: ReactNode = <p className="metric-cell-value">—</p>
+  let delta: ReactNode = '—'
+  let deltaTone: 'destructive' | 'positive' | undefined
   const base = last && previous ? comparisonBase(last, previous) : 0
   if (last && previous && base > 0) {
-    const delta = ((last.total - base) / base) * 100
-    const rising = delta > 0
-    deltaCell = (
-      <p
-        className={cn(
-          'metric-cell-value',
-          rising ? 'text-destructive' : 'text-primary',
-        )}
-      >
-        {rising ? '+' : ''}
-        {Math.round(delta)}%
-      </p>
-    )
+    const pct = ((last.total - base) / base) * 100
+    delta = `${pct > 0 ? '+' : ''}${Math.round(pct)}%`
+    deltaTone = pct > 0 ? 'destructive' : 'positive'
   }
 
   return (
-    <section className="stagger grid grid-cols-2 gap-x-4 gap-y-4 border-b border-border/70 pb-5 sm:grid-cols-4 sm:gap-x-0 sm:divide-x sm:divide-border/60 sm:[&>*]:px-5 sm:[&>*:first-child]:pl-0 sm:[&>*:last-child]:pr-0">
-      <div className="metric-cell space-y-1.5">
-        <p className="metric-cell-label">Promedio mensual</p>
-        <p className="metric-cell-value">{formatCurrency(average)}</p>
-      </div>
-      <div className="metric-cell space-y-1.5">
-        <p className="metric-cell-label">Vs. mes anterior</p>
-        {deltaCell}
-        {last?.inProgress && last.cutoffDay ? (
-          <p className="text-xs text-muted-foreground">al día {last.cutoffDay}</p>
-        ) : null}
-      </div>
-      <div className="metric-cell space-y-1.5">
-        <p className="metric-cell-label">Mes más alto</p>
-        <p className="metric-cell-value">
-          {formatCurrency(peak.total)}
-          <span className="ml-1.5 text-xs font-medium capitalize text-muted-foreground">
-            {capitalize(peak.label)}
-          </span>
-        </p>
-      </div>
-      <div className="metric-cell space-y-1.5">
-        <p className="metric-cell-label">Mes más bajo</p>
-        <p className="metric-cell-value">
-          {formatCurrency(trough.total)}
-          <span className="ml-1.5 text-xs font-medium capitalize text-muted-foreground">
-            {capitalize(trough.label)}
-          </span>
-        </p>
-      </div>
-    </section>
+    <MetricGrid className="@xl/main:grid-cols-4">
+      <MetricCell label="Promedio mensual" value={formatCurrency(average)} />
+      <MetricCell
+        label="Vs. mes anterior"
+        value={delta}
+        tone={deltaTone}
+        note={last?.inProgress && last.cutoffDay ? `al día ${last.cutoffDay}` : undefined}
+      />
+      <MetricCell
+        label="Mes más alto"
+        value={formatCurrency(peak.total)}
+        note={capitalize(peak.label)}
+      />
+      <MetricCell
+        label="Mes más bajo"
+        value={formatCurrency(trough.total)}
+        note={capitalize(trough.label)}
+      />
+    </MetricGrid>
   )
 }
 
 function MonthPulse({ report }: Readonly<{ report: MonthReport }>) {
-  const overBudget =
-    report.remaining != null && report.remaining < 0
+  const overBudget = report.remaining != null && report.remaining < 0
 
   return (
-    <section className="stagger grid grid-cols-2 gap-x-4 gap-y-4 border-b border-border/70 pb-5 @xl/main:grid-cols-3 @4xl/main:grid-cols-6 @4xl/main:gap-x-0 @4xl/main:divide-x @4xl/main:divide-border/60 @4xl/main:[&>*]:px-4 @4xl/main:[&>*:first-child]:pl-0 @4xl/main:[&>*:last-child]:pr-0">
-      <div className="metric-cell space-y-1.5">
-        <p className="metric-cell-label">Movimientos</p>
-        <p className="metric-cell-value">{report.count}</p>
-        <p className="text-xs text-muted-foreground">
-          {report.activeDays} días con gasto
-        </p>
-      </div>
-      <div className="metric-cell space-y-1.5">
-        <p className="metric-cell-label">Ticket medio</p>
-        <p className="metric-cell-value">
-          {report.ticket > 0 ? formatCurrency(report.ticket) : '—'}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          mediana {report.median > 0 ? formatCurrency(report.median) : '—'}
-        </p>
-      </div>
-      <div className="metric-cell space-y-1.5">
-        <p className="metric-cell-label">Mayor / menor</p>
-        <p className="metric-cell-value">
-          {report.largest > 0 ? formatCurrency(report.largest) : '—'}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          mín. {report.smallest > 0 ? formatCurrency(report.smallest) : '—'}
-        </p>
-      </div>
-      <div className="metric-cell space-y-1.5">
-        <p className="metric-cell-label">Fin de semana</p>
-        <p className="metric-cell-value">
-          {report.spent > 0 ? `${Math.round(report.weekendPct)}%` : '—'}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          pico {report.peakWeekday.total > 0 ? report.peakWeekday.label : '—'}
-        </p>
-      </div>
-      <div className="metric-cell space-y-1.5">
-        <p className="metric-cell-label">Proyección</p>
-        <p
-          className={cn(
-            'metric-cell-value',
-            report.budget != null &&
-              report.projection > report.budget &&
-              'text-destructive',
-          )}
-        >
-          {report.isCurrentMonth && report.spent > 0
-            ? formatCurrency(report.projection)
-            : '—'}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {report.isCurrentMonth
-            ? `día ${report.dayOfMonth}/${report.daysInMonth}`
-            : 'mes cerrado'}
-        </p>
-      </div>
-      <div className="metric-cell space-y-1.5">
-        <p className="metric-cell-label">Presupuesto</p>
-        <p
-          className={cn(
-            'metric-cell-value',
-            overBudget && 'text-destructive',
-          )}
-        >
-          {report.budget != null ? formatCurrency(report.budget) : '—'}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {report.budgetUsedPct != null
-            ? `${Math.round(report.budgetUsedPct)}% usado`
-            : 'sin cupo'}
-        </p>
-      </div>
-    </section>
+    <MetricGrid className="@xl/main:grid-cols-3">
+      <MetricCell
+        label="Movimientos"
+        value={report.count}
+        note={`${report.activeDays} días con gasto`}
+      />
+      <MetricCell
+        label="Ticket medio"
+        value={report.ticket > 0 ? formatCurrency(report.ticket) : '—'}
+        note={`mediana ${report.median > 0 ? formatCurrency(report.median) : '—'}`}
+      />
+      <MetricCell
+        label="Mayor gasto"
+        value={report.largest > 0 ? formatCurrency(report.largest) : '—'}
+        note={`menor ${report.smallest > 0 ? formatCurrency(report.smallest) : '—'}`}
+      />
+      <MetricCell
+        label="Fin de semana"
+        value={report.spent > 0 ? `${Math.round(report.weekendPct)}%` : '—'}
+        note={`pico ${report.peakWeekday.total > 0 ? report.peakWeekday.label : '—'}`}
+      />
+      <MetricCell
+        label="Proyección"
+        value={report.isCurrentMonth && report.spent > 0 ? formatCurrency(report.projection) : '—'}
+        tone={
+          report.budget != null && report.projection > report.budget ? 'destructive' : undefined
+        }
+        note={report.isCurrentMonth ? `día ${report.dayOfMonth} de ${report.daysInMonth}` : 'mes cerrado'}
+      />
+      <MetricCell
+        label="Presupuesto"
+        value={report.budget != null ? formatCurrency(report.budget) : '—'}
+        tone={overBudget ? 'destructive' : undefined}
+        note={
+          report.budgetUsedPct != null ? `${Math.round(report.budgetUsedPct)}% usado` : 'sin definir'
+        }
+      />
+    </MetricGrid>
   )
 }
 
 type AnalysisPanel = 'historial' | 'ritmo'
 
+// El mes que estás mirando primero: el subtítulo de la pantalla es ese mes
 const panelOptions: { id: AnalysisPanel; label: string }[] = [
+  { id: 'ritmo', label: 'Este mes' },
   { id: 'historial', label: 'Historial' },
-  { id: 'ritmo', label: 'Ritmo del mes' },
 ]
 
 function PanelSwitch({
@@ -227,7 +220,7 @@ function PanelSwitch({
 function TopExpensesList({ report }: Readonly<{ report: MonthReport }>) {
   if (report.top.length === 0) {
     return (
-      <ListSection header="Mayores gastos">
+      <ListSection>
         <p className="list-row text-callout text-label-secondary">
           Sin movimientos este mes
         </p>
@@ -236,14 +229,14 @@ function TopExpensesList({ report }: Readonly<{ report: MonthReport }>) {
   }
 
   return (
-    <ListSection header="Mayores gastos" stagger="on-enter">
+    <ListSection stagger="on-enter">
       {report.top.map((expense, index) => (
         <ListRow
           key={`${expense.expense_date}-${expense.amount}-${index}`}
           title={getExpenseLabel(expense.description, expense.category?.name)}
           subtitle={`${formatDayLabel(expense.expense_date)}${expense.category?.name ? ` · ${expense.category.name}` : ''}`}
           trailing={
-            <span className="font-ledger text-callout font-semibold tabular-nums">
+            <span className="font-ledger text-body font-semibold">
               {formatCurrency(Number(expense.amount))}
             </span>
           }
@@ -268,7 +261,7 @@ function MonthDetail({ history }: Readonly<{ history: HistoryMonth[] }>) {
           delta = (
             <span
               className={cn(
-                'w-12 text-right font-ledger text-caption-1 tabular-nums',
+                'w-12 text-right font-ledger text-footnote',
                 rising ? 'text-destructive' : 'text-primary',
               )}
             >
@@ -288,7 +281,7 @@ function MonthDetail({ history }: Readonly<{ history: HistoryMonth[] }>) {
             }
             trailing={
               <span className="flex items-baseline gap-2.5">
-                <span className="font-ledger text-callout font-semibold tabular-nums">
+                <span className="font-ledger text-body font-semibold">
                   {formatCurrency(item.total)}
                 </span>
                 {delta ?? <span className="w-12" aria-hidden />}
@@ -302,7 +295,7 @@ function MonthDetail({ history }: Readonly<{ history: HistoryMonth[] }>) {
 }
 
 export function AnalisisPage() {
-  const [panel, setPanel] = useState<AnalysisPanel>('historial')
+  const [panel, setPanel] = useState<AnalysisPanel>('ritmo')
   // El panel entra desde el lado del segmento que tocaste: el control y el
   // contenido quedan atados, en vez de ser un botón y una zona que parpadea
   const [panelDir, setPanelDir] = useState<'next' | 'prev'>('next')
@@ -339,7 +332,7 @@ export function AnalisisPage() {
   }
 
   let historyPanel: ReactNode = (
-    <p className="py-8 text-sm text-muted-foreground">Sin historial aún</p>
+    <p className="surface-card text-callout text-label-secondary">Sin historial aún</p>
   )
   if (historyLoading) {
     historyPanel = <ChartSkeleton />
@@ -352,13 +345,11 @@ export function AnalisisPage() {
   }
 
   return (
-    <div className="flex flex-col gap-3 pb-3 lg:gap-4 lg:pb-6">
-      <MonthMasthead eyebrow="Análisis" />
+    <div className="flex flex-col gap-4 pb-3">
+      <MonthMasthead title="Análisis" />
 
-      {!expensesLoading ? <MonthPulse report={report} /> : null}
-
-      <div className="grid gap-6 pt-1 @4xl/main:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] @4xl/main:items-start @4xl/main:gap-8 @6xl/main:gap-10">
-        <div className="flex min-w-0 flex-col gap-5">
+      <div className="grid gap-7 @4xl/main:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] @4xl/main:items-start @4xl/main:gap-8">
+        <div className="flex min-w-0 flex-col gap-4">
           <PanelSwitch
             value={panel}
             onChange={(next) => {
@@ -376,7 +367,7 @@ export function AnalisisPage() {
               role="tabpanel"
               id="panel-historial"
               aria-labelledby="tab-historial"
-              className="swap flex min-w-0 flex-col gap-5"
+              className="swap flex min-w-0 flex-col gap-4"
             >
               {history && history.length > 1 ? <TrendStrip history={history} /> : null}
               <section className="min-w-0">{historyPanel}</section>
@@ -393,8 +384,9 @@ export function AnalisisPage() {
               role="tabpanel"
               id="panel-ritmo"
               aria-labelledby="tab-ritmo"
-              className="swap flex min-w-0 flex-col gap-5"
+              className="swap flex min-w-0 flex-col gap-4"
             >
+              {!expensesLoading ? <MonthPulse report={report} /> : null}
               {report.spent > 0 ? (
                 <Suspense fallback={<ChartSkeleton />}>
                   <DailyPaceChart data={report.dailyPace} budget={report.budget} />
@@ -402,7 +394,7 @@ export function AnalisisPage() {
                   <WeekdayBarChart data={weekdayRows} />
                 </Suspense>
               ) : (
-                <p className="py-8 text-sm text-muted-foreground">
+                <p className="surface-card text-callout text-label-secondary">
                   Sin movimientos este mes para medir el ritmo.
                 </p>
               )}
@@ -410,30 +402,37 @@ export function AnalisisPage() {
           )}
         </div>
 
-        <section className="ledger-aside min-w-0 space-y-5 border-t border-border/70 pt-4 @4xl/main:sticky @4xl/main:top-[var(--sticky-top)] @4xl/main:border-t-0 @4xl/main:pt-0">
-          {statsLoading ? (
-            <CategoryAllocationSkeleton />
-          ) : (
-            <>
-              <Suspense fallback={<ChartSkeleton />}>
-                <CategoryDonut data={breakdown} total={spent} />
-              </Suspense>
-              <CategoryAllocation data={breakdown} total={spent} />
-              {spent > 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  Las 3 categorías top concentran{' '}
-                  <span className="font-semibold tabular-nums text-foreground">
-                    {Math.round(topThree)}%
-                  </span>{' '}
-                  del mes · {formatCurrency(spent)} en total
-                </p>
-              ) : null}
-              <List>
-                <TopExpensesList report={report} />
-              </List>
-            </>
-          )}
-        </section>
+        <div className="flex min-w-0 flex-col gap-7 @4xl/main:sticky @4xl/main:top-[var(--sticky-top)]">
+          <ContentSection title="Por categoría">
+            {statsLoading ? (
+              <CategoryAllocationSkeleton />
+            ) : (
+              <div className="space-y-3">
+                {spent > 0 ? (
+                  <div className="surface-card">
+                    <Suspense fallback={<div className="h-44" aria-hidden />}>
+                      <CategoryDonut data={breakdown} total={spent} />
+                    </Suspense>
+                  </div>
+                ) : null}
+                <CategoryAllocation data={breakdown} total={spent} />
+                {spent > 0 ? (
+                  <p className="px-4 text-footnote text-label-secondary">
+                    Las 3 categorías principales concentran el{' '}
+                    <span className="font-semibold text-label">{Math.round(topThree)}%</span> del
+                    mes.
+                  </p>
+                ) : null}
+              </div>
+            )}
+          </ContentSection>
+
+          <ContentSection title="Mayores gastos">
+            <List>
+              <TopExpensesList report={report} />
+            </List>
+          </ContentSection>
+        </div>
       </div>
     </div>
   )

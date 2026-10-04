@@ -1,9 +1,8 @@
 import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { createPortal } from 'react-dom'
-import { useSearchParams } from 'react-router-dom'
 import { useMutationState } from '@tanstack/react-query'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, ReceiptText, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { FormSheet, SheetConfirmButton } from '@/components/ui/form-sheet'
 import { List, ListRow, ListSection } from '@/components/ui/list'
 import {
   Sheet,
@@ -11,12 +10,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { useAddExpense } from '@/components/expenses/add-expense-context'
 import {
   ExpenseActionSheet,
   ExpenseRowActions,
@@ -27,22 +21,22 @@ import { getExpenseLabel } from '@/lib/expense-display'
 import { formatCurrency, formatDayLabel } from '@/lib/format'
 import { useCreateExpense, useDeleteExpense } from '@/hooks/useExpenses'
 import { useFreshItems } from '@/hooks/useFreshItems'
-import { useLatchedWhile } from '@/hooks/useLatchedWhile'
-import { useIsDesktop, useIsTouch } from '@/hooks/useMediaQuery'
+import { useIsTouch } from '@/hooks/useMediaQuery'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { useSwipeActions } from '@/hooks/useSwipeActions'
-import { tapFeedback, warnFeedback } from '@/lib/haptics'
+import { warnFeedback } from '@/lib/haptics'
 import { useMonth } from '@/contexts/MonthContext'
 import type { ExpenseWithCategory } from '@/types/database'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
-// react-hook-form + zod viven solo acá: fuera del chunk inicial de Resumen/Gastos.
-// Se precalienta al hover/press del FAB, así el sheet abre con el form ya listo.
+// Mismo chunk que el alta (AddExpenseProvider), que ya lo precarga en idle
 const importExpenseForm = () => import('@/components/expenses/ExpenseForm')
 const ExpenseForm = lazy(() =>
   importExpenseForm().then((module) => ({ default: module.ExpenseForm })),
 )
+
+const EDIT_FORM_ID = 'expense-form-edit'
 
 /** Una sola vez por instalación — ver el efecto de la pista de swipe */
 const SWIPE_HINT_KEY = 'spendly-swipe-hint'
@@ -51,7 +45,6 @@ const SWIPE_HINT_MS = 1800
 
 interface ExpenseListProps {
   expenses: ExpenseWithCategory[]
-  showFab?: boolean
   /** Filas planas sin headers de fecha (Resumen); la fecha va en el caption. */
   compact?: boolean
   /** Texto del CTA cuando no hay gastos (abre el form de nuevo gasto). */
@@ -112,7 +105,7 @@ function ExpenseRow({
       onPress={touch ? onOpenActions : undefined}
       trailing={
         <span className="flex items-center gap-0.5 sm:gap-1">
-          <span className="font-ledger text-body font-semibold whitespace-nowrap tabular-nums">
+          <span className="font-ledger text-body font-semibold whitespace-nowrap">
             {formatCurrency(Number(expense.amount))}
           </span>
           {touch ? null : <ExpenseRowActions onEdit={onEdit} onDelete={onDelete} />}
@@ -157,11 +150,11 @@ function DaySection({ arrived, children }: Readonly<{ arrived: boolean; children
 
 export function ExpenseList({
   expenses,
-  showFab = false,
   compact = false,
   emptyCta,
 }: Readonly<ExpenseListProps>) {
   const { monthKey } = useMonth()
+  const { openAdd } = useAddExpense()
   const deleteExpense = useDeleteExpense()
   const restoreExpense = useCreateExpense()
   // Ids con una mutation pausada por falta de red (alta o edición)
@@ -171,17 +164,12 @@ export function ExpenseList({
       select: (m) => (m.state.variables as { id?: string } | undefined)?.id,
     }),
   )
-  const [openAdd, setOpenAdd] = useState(false)
   const [editing, setEditing] = useState<ExpenseWithCategory | null>(null)
   const [actionExpense, setActionExpense] = useState<ExpenseWithCategory | null>(null)
   // Una sola fila abierta a la vez, como iOS
   const [swipeOpenId, setSwipeOpenId] = useState<string | null>(null)
-  const isDesktop = useIsDesktop()
   const touch = useIsTouch()
-  const addAsDialog = useLatchedWhile(openAdd, isDesktop)
-  const editAsDialog = useLatchedWhile(Boolean(editing), isDesktop)
   const reducedMotion = useReducedMotion()
-  const [searchParams, setSearchParams] = useSearchParams()
   // Filas que aparecieron después del primer render: el gasto que acabás de
   // guardar, o el que entró por realtime desde el otro dispositivo. `resetKey`
   // por mes — cambiar de mes trae otra lista entera, no llegadas.
@@ -216,30 +204,6 @@ export function ExpenseList({
       window.clearTimeout(hide)
     }
   }, [touch, reducedMotion, firstExpenseId])
-
-  // Atajo del manifest (long-press del icono → "Agregar gasto"): abre el form
-  // al arrancar y limpia el param para que un back no lo reabra.
-  useEffect(() => {
-    if (!showFab || !searchParams.has('nuevo')) return
-    void importExpenseForm()
-    setOpenAdd(true)
-    const next = new URLSearchParams(searchParams)
-    next.delete('nuevo')
-    setSearchParams(next, { replace: true })
-  }, [showFab, searchParams, setSearchParams])
-
-  // Precarga el form en idle tras el primer paint: sale del critical path del
-  // Resumen pero llega antes del primer tap. `import()` cachea, repetir es gratis.
-  useEffect(() => {
-    if (typeof window.requestIdleCallback !== 'function') {
-      const timer = window.setTimeout(() => void importExpenseForm(), 1200)
-      return () => window.clearTimeout(timer)
-    }
-    const handle = window.requestIdleCallback(() => void importExpenseForm(), {
-      timeout: 3000,
-    })
-    return () => window.cancelIdleCallback(handle)
-  }, [])
 
   const grouped = useMemo(() => {
     const map = new Map<string, ExpenseWithCategory[]>()
@@ -285,12 +249,8 @@ export function ExpenseList({
     })
   }
 
-  function warmForm() {
-    void importExpenseForm()
-  }
-
   function openActions(expense: ExpenseWithCategory) {
-    warmForm()
+    void importExpenseForm()
     setActionExpense(expense)
   }
 
@@ -299,23 +259,28 @@ export function ExpenseList({
     setEditing(expense)
   }
 
+  // ContentUnavailableView de iOS: símbolo, título, explicación y la acción
   const emptyState =
     expenses.length === 0 && emptyCta ? (
       <div
         className={cn(
-          'reveal flex flex-col items-start gap-3 py-8',
+          'reveal flex flex-col items-center gap-2 px-6 py-10 text-center',
           compact && 'flex-1 justify-center',
         )}
       >
-        <p className="text-callout text-label-secondary">
-          Sin movimientos este mes. Tu recibo está en blanco.
+        <span className="mb-1 flex size-14 items-center justify-center rounded-full bg-fill-quaternary text-label-secondary">
+          <ReceiptText className="size-7" aria-hidden />
+        </span>
+        <p className="text-headline text-label">Sin gastos este mes</p>
+        <p className="max-w-[16rem] text-subhead text-label-secondary">
+          Lo que registres aparece aquí, agrupado por día.
         </p>
         <Button
           type="button"
           variant="tinted"
           size="touch"
-          className="cursor-pointer rounded-full"
-          onClick={() => setOpenAdd(true)}
+          className="mt-2 cursor-pointer rounded-full"
+          onClick={openAdd}
         >
           <Plus className="size-4" aria-hidden />
           {emptyCta}
@@ -323,81 +288,18 @@ export function ExpenseList({
       </div>
     ) : null
 
-  const addForm = (
-    <Suspense fallback={<ExpenseFormSkeleton />}>
-      <ExpenseForm
-        onSuccess={() => {
-          setOpenAdd(false)
-        }}
-      />
-    </Suspense>
-  )
-
   const editForm = editing ? (
     <Suspense fallback={<ExpenseFormSkeleton />}>
-      <ExpenseForm expense={editing} onSuccess={() => setEditing(null)} />
+      <ExpenseForm
+        expense={editing}
+        formId={EDIT_FORM_ID}
+        onSuccess={() => setEditing(null)}
+      />
     </Suspense>
   ) : null
 
-  let addExpenseUi = null
-  if (showFab) {
-    // Portal: PageEnter's transform/filter otherwise traps position:fixed
-    const fab = createPortal(
-      <Button
-        type="button"
-        className="fab"
-        onClick={() => {
-          tapFeedback()
-          setOpenAdd(true)
-        }}
-        onPointerEnter={warmForm}
-        onFocus={warmForm}
-        aria-label="Agregar gasto"
-      >
-        <Plus className="size-6" />
-      </Button>,
-      document.body,
-    )
-
-    if (addAsDialog) {
-      addExpenseUi = (
-        <>
-          {fab}
-          <Dialog open={openAdd} onOpenChange={setOpenAdd}>
-            <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-md">
-              <DialogHeader className="pr-8">
-                <DialogTitle>Nuevo gasto</DialogTitle>
-              </DialogHeader>
-              {addForm}
-            </DialogContent>
-          </Dialog>
-        </>
-      )
-    } else {
-      addExpenseUi = (
-        <>
-          {fab}
-          <Sheet open={openAdd} onOpenChange={setOpenAdd}>
-            <SheetContent
-              side="bottom"
-              onOpenChange={setOpenAdd}
-              className="gap-0 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-1"
-            >
-              <SheetHeader className="pb-3">
-                <SheetTitle>Nuevo gasto</SheetTitle>
-              </SheetHeader>
-              {addForm}
-            </SheetContent>
-          </Sheet>
-        </>
-      )
-    }
-  }
-
   return (
     <>
-      {addExpenseUi}
-
       {emptyState}
 
       {compact && expenses.length > 0 ? (
@@ -423,42 +325,42 @@ export function ExpenseList({
 
       {!compact && expenses.length > 0 ? (
         <List>
-            {grouped.map(({ date, items, subtotal }) => (
-              <DaySection key={date} arrived={settledMonth === monthKey}>
-                {/*
-                  El header ya no es sticky: las listas agrupadas de iOS no
-                  pegan sus headers, eso es de las listas `plain`. Eso libera
-                  el transform del swipe, que antes rompía el sticky.
-                */}
-                <ListSection
-                  header={formatDayLabel(date)}
-                  headerTrailing={
-                    <span className="font-ledger text-footnote font-semibold tabular-nums text-label-secondary">
-                      {formatCurrency(subtotal)}
-                    </span>
-                  }
-                >
-                  {items.map((expense) => (
-                    <ExpenseRow
-                      key={expense.id}
-                      expense={expense}
-                      caption={expense.category?.name ?? ''}
-                      touch={touch}
-                      fresh={freshIds.has(expense.id)}
-                      hint={hintRowId === expense.id}
-                      pending={pendingIds.has(expense.id)}
-                      swipeOpen={swipeOpenId === expense.id}
-                      onSwipeOpenChange={(open) =>
-                        setSwipeOpenId(open ? expense.id : null)
-                      }
-                      onOpenActions={() => openActions(expense)}
-                      onEdit={() => openEdit(expense)}
-                      onDelete={() => handleDelete(expense)}
-                    />
-                  ))}
-                </ListSection>
-              </DaySection>
-            ))}
+          {grouped.map(({ date, items, subtotal }) => (
+            <DaySection key={date} arrived={settledMonth === monthKey}>
+              {/*
+                El header ya no es sticky: las listas agrupadas de iOS no
+                pegan sus headers, eso es de las listas `plain`. Eso libera
+                el transform del swipe, que antes rompía el sticky.
+              */}
+              <ListSection
+                header={formatDayLabel(date)}
+                headerTrailing={
+                  <span className="font-ledger text-footnote font-semibold text-label-secondary">
+                    {formatCurrency(subtotal)}
+                  </span>
+                }
+              >
+                {items.map((expense) => (
+                  <ExpenseRow
+                    key={expense.id}
+                    expense={expense}
+                    caption={expense.category?.name ?? ''}
+                    touch={touch}
+                    fresh={freshIds.has(expense.id)}
+                    hint={hintRowId === expense.id}
+                    pending={pendingIds.has(expense.id)}
+                    swipeOpen={swipeOpenId === expense.id}
+                    onSwipeOpenChange={(open) =>
+                      setSwipeOpenId(open ? expense.id : null)
+                    }
+                    onOpenActions={() => openActions(expense)}
+                    onEdit={() => openEdit(expense)}
+                    onDelete={() => handleDelete(expense)}
+                  />
+                ))}
+              </ListSection>
+            </DaySection>
+          ))}
         </List>
       ) : null}
 
@@ -468,9 +370,8 @@ export function ExpenseList({
       >
         <SheetContent
           side="bottom"
-          showCloseButton={false}
           onOpenChange={() => setActionExpense(null)}
-          className="gap-0 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-1"
+          className="gap-0 px-4 pt-1 pb-[max(1rem,calc(env(safe-area-inset-bottom)-0.25rem))]"
         >
           <SheetHeader className="sr-only">
             <SheetTitle>Acciones del gasto</SheetTitle>
@@ -485,30 +386,14 @@ export function ExpenseList({
         </SheetContent>
       </Sheet>
 
-      {editAsDialog ? (
-        <Dialog open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
-          <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-md">
-            <DialogHeader className="pr-8">
-              <DialogTitle>Editar gasto</DialogTitle>
-            </DialogHeader>
-            {editForm}
-          </DialogContent>
-        </Dialog>
-      ) : (
-        <Sheet open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
-          <SheetContent
-            side="bottom"
-            onOpenChange={() => setEditing(null)}
-            className="gap-0 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-1"
-          >
-            <SheetHeader className="pb-3">
-              <SheetTitle>Editar gasto</SheetTitle>
-            </SheetHeader>
-            {editForm}
-          </SheetContent>
-        </Sheet>
-      )}
-
+      <FormSheet
+        open={Boolean(editing)}
+        onOpenChange={(open) => !open && setEditing(null)}
+        title="Editar gasto"
+        trailing={<SheetConfirmButton label="Guardar cambios" form={EDIT_FORM_ID} />}
+      >
+        {editForm}
+      </FormSheet>
     </>
   )
 }
