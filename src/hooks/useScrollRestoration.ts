@@ -29,9 +29,11 @@ export function useScrollRestoration() {
     if (navigationType === 'POP') {
       const saved = positions.get(pathname) ?? 0
       // rAF: la ruta nueva todavía no pintó, y sin alto no hay dónde scrollear
-      requestAnimationFrame(() => window.scrollTo(0, saved))
+      requestAnimationFrame(() => window.scrollTo({ top: saved, behavior: 'instant' }))
     } else {
-      window.scrollTo(0, 0)
+      // `instant`: `html` lleva `scroll-smooth`, y sin esto la pantalla nueva
+      // entraba scrolleada y subía animada en vez de arrancar arriba
+      window.scrollTo({ top: 0, behavior: 'instant' })
     }
 
     const unsubscribe = subscribeScroll(({ y }) => {

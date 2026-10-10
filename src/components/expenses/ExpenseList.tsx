@@ -102,7 +102,8 @@ function ExpenseRow({
       subtitle={
         pending ? [caption, 'Sin sincronizar'].filter(Boolean).join(' · ') : caption
       }
-      onPress={touch ? onOpenActions : undefined}
+      // Con la acción asomada, tocar la fila la cierra — como en Mail
+      onPress={touch ? (swipeOpen ? () => onSwipeOpenChange(false) : onOpenActions) : undefined}
       trailing={
         <span className="flex items-center gap-0.5 sm:gap-1">
           <span className="font-ledger text-body font-semibold whitespace-nowrap">

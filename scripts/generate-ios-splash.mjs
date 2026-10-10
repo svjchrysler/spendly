@@ -23,20 +23,20 @@ const out = join(root, 'public', 'splash')
 // Espeja src/lib/palette.ts (no lo importamos: es TS y esto corre en node pelado)
 const themes = {
   light: {
-    background: '#f4f4f5',
-    foreground: '#09090b',
-    mark: '#09090b',
-    coin: '#16a34a',
-    slot: '#09090b',
+    background: '#f3efe7',
+    foreground: '#17160f',
+    mark: '#17160f',
+    coin: '#0f6b47',
+    slot: '#17160f',
     ring: null,
   },
   dark: {
-    background: '#000000',
-    foreground: '#ffffff',
-    mark: '#000000',
+    background: '#0c0d0b',
+    foreground: '#f5f2ea',
+    mark: '#0c0d0b',
     coin: '#4ade80',
-    slot: '#000000',
-    ring: '#ffffff',
+    slot: '#0c0d0b',
+    ring: '#f5f2ea',
   },
 }
 

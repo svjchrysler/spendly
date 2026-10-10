@@ -143,7 +143,11 @@ function AppShellInner() {
   */
   const goToTab = useCallback(
     (item: TabItem, index: number) => {
-      if (index === activeIndex) return
+      // Tocar el tab en el que ya estás sube al inicio, como en iOS
+      if (index === activeIndex) {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        return
+      }
       tapFeedback()
       void navigateToRoute(item.to, index > activeIndex ? 'next' : 'prev', item.prefetch)
     },

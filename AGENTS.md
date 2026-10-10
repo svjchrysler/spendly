@@ -25,6 +25,7 @@ No es un SaaS multi-tenant genérico: es una app chica, mobile-first, con shell 
 | Backend | `@supabase/supabase-js` (`src/lib/supabase.ts`) |
 | Forms | RHF + Zod |
 | Charts | Recharts (lazy donde ya esté lazy) |
+| Hápticos | `lib/haptics.ts`: `navigator.vibrate` en Android; en iOS 18+ el truco del `<input switch>` (única vía al Taptic Engine desde una PWA) |
 | Motion | CSS (sistema "Motion didáctico" en `index.css`) + `useCountUp`. Sin librería de animación: framer-motion se sacó, pesaba 40 kB gz por un solo uso |
 | Package manager | **pnpm** (no npm/yarn) |
 | Lint / test | `oxlint`, `vitest` |
@@ -127,7 +128,7 @@ Nav: 3 tabs (Resumen · Gastos · Análisis) + una acción global, **Agregar gas
 
 ## Lenguaje visual (iOS 27 / HIG)
 
-La app sigue la guía de iOS 27 y se ve como una app nativa: tipografía del sistema, estructura, materiales, motion y controles de iOS. La marca vive en el acento verde mint y en el ícono.
+La app sigue la guía de iOS 27 en estructura, materiales, motion y controles. La identidad es la de una **libreta**: lienzo color papel cálido (tinta cálida en oscuro, no negro OLED), títulos y montos en la serif del sistema, hojas con filete y un solo acento esmeralda (el mint del ícono en oscuro).
 
 - **Dos capas.** Contenido opaco que scrollea; navegación flotante con Liquid Glass. El glass va **solo** en la capa de navegación (`.material-glass`) y **nunca glass sobre glass**. Tarjetas y filas son opacas.
 - **Liquid Glass de iOS 27.**
@@ -138,12 +139,15 @@ La app sigue la guía de iOS 27 y se ve como una app nativa: tipografía del sis
 - **Listas `insetGrouped`.** Usar `List` / `ListSection` / `ListRow` de `@/components/ui/list`. Separador indentado al borde del label vía `--row-inset` — no reemplazar por `divide-y`, que no puede indentar.
 - **Nav bar.** `NavBar` de `@/components/layout/NavBar`. El large title es el nombre de la pantalla, el mes va como subtítulo de navegación (iOS 26) y el cambio de mes es una cápsula de vidrio (`MonthStepper`). Al colapsar, el header muestra título + subtítulo inline. **No hay barra**: es el "scroll edge effect" de iOS 26/27, un degradé difuminado que aparece recién al scrollear (`.nav-bar::before`). En reposo no pinta nada, así que no hay costura con la status bar `default`.
 - **Controles de vidrio.** Los botones de barra son cápsulas sueltas: `Button variant="glass"` (cerrar, volver, avatar) y `variant="prominent"` (vidrio teñido: confirmar, agregar). `size="icon-touch"`.
-- **Sheets.** `FormSheet` (`@/components/ui/form-sheet`): el sheet flota separado de los bordes (radio 2.25rem) sobre `--sheet-bg`, con barra de título centrada, `SheetCloseButton` (xmark) a la izquierda y `SheetConfirmButton` (✓ teñido) a la derecha. El ✓ envía el `<form id>` del cuerpo con el atributo `form`. Dentro de un sheet, `.list-group` usa `--sheet-cell` solo.
-- **Tipografía.** Fuente del sistema, sin descargas: `system-ui` (SF Pro en Apple) para todo y `ui-rounded` (SF Pro Rounded) en montos (`font-ledger`, siempre con cifras tabulares). Escala de iOS (`text-large-title` … `text-caption-2`), sin letter-spacing propio: WebKit aplica el tracking óptico de SF. Títulos en bold. Las etiquetas de datos van en caja normal (`.metric-cell-label`). Caja alta solo en los headers de grupos de form (`.list-section-header`).
+- **Sheets.** `FormSheet` (`@/components/ui/form-sheet`): el sheet flota separado de los bordes (radio 2.25rem) sobre `--sheet-bg`, con barra de título centrada, `SheetCloseButton` (xmark) a la izquierda y `SheetConfirmButton` (✓ teñido) a la derecha. El ✓ envía el `<form id>` del cuerpo con el atributo `form`. Dentro de un sheet, `.list-group` usa `--sheet-cell` solo. El bottom sheet entra y sale deslizando su alto completo, opaco (sin fade ni tilt), y al arrastrarlo para cerrar sigue bajando desde donde lo soltaste, con el backdrop aclarándose a la par (`useSheetDrag`). Los backdrops no llevan blur: a pantalla completa cuesta frames en iPhone.
+- **Alertas.** `AlertDialog` es la alerta de iOS 26/27: angosta, centrada, dos cápsulas lado a lado.
+- **Tipografía.** Fuentes del sistema, sin descargas: `system-ui` (SF Pro en Apple) para la interfaz y `ui-serif` (New York en Apple) para títulos (`font-display`: `.page-title`, `.section-title`) y montos (`font-ledger`, siempre con cifras tabulares). Texto chico de apoyo (ejes, captions) va en sans. Escala de iOS (`text-large-title` … `text-caption-2`), sin letter-spacing propio: WebKit aplica el tracking óptico de SF. Títulos en bold. Las etiquetas de datos van en caja normal (`.metric-cell-label`). Los headers de grupo (`.list-section-header`) van en caja normal, semibold.
+- **Superficies.** `.list-group` y `.surface-card` son hojas sobre el papel: casi el mismo tono que el lienzo, separadas por un filete (`--separator`) y radio 1.375rem. Las grillas de métricas llevan el mismo filete. Los íconos de categoría son círculos teñidos con el color de la categoría. El `body` es papel plano: sin degradés.
+- **Portada de Resumen.** `SpendingHero`: la cifra sobre el lienzo, una frase que interpreta el mes (`buildInsight`), barras por día (`.day-bars`, CSS puro, sin recharts) y el presupuesto con la marca de ritmo (`.pace-tick`: dónde deberías ir hoy).
 - **Secciones.** Contenido con header prominente: `ContentSection` (título bold + "Ver todo ›"). Charts y métricas en `.surface-card` / grillas de celdas con hairlines (gap de 1px sobre `bg-separator`): la misma superficie y radio que las listas.
 - **Color semántico.** Labels (`text-label`, `-secondary`, `-tertiary`, `-quaternary`), fills (`bg-fill-*`) y fondos agrupados (`--group-surface`). `--muted-foreground` y `--border` están re-apuntados a la jerarquía nueva: el código viejo migró solo.
 - **Tap targets** de 44pt en táctil (también en ancho regular: el Duo abierto): `size="touch"` / `size="icon-touch"` en `Button`. `default`/`icon` solo bajan a 32px con `md:pointer-fine:`.
-- **Motion.** Sistema en `index.css` → "Motion didáctico". Nada decora: cada animación contesta de dónde salió algo, hacia dónde navegaste, cuánto cambió un número o qué se puede tocar. Duraciones `--dur-1/2/3` + `--stagger-step`; utilidades `.reveal`, `.stagger`, `.swap[data-dir]`, `.row-landed`, `.shake`, `.notice-in`, `.icon-swap`. Los montos grandes usan `AnimatedAmount` (count-up); las barras crecen desde cero; el mes entra desde el lado hacia el que navegaste (`MonthContext.direction`). Los gestos (swipe, sheet, pull) conservan su propio timing físico. `useReducedMotion` para lo que anima JS (count-up, recharts, la pista de swipe); el CSS ya lo cubre la regla global.
+- **Motion.** Sistema en `index.css` → "Motion didáctico". Nada decora: cada animación contesta de dónde salió algo, hacia dónde navegaste, cuánto cambió un número o qué se puede tocar. Duraciones `--dur-1/2/3` + `--stagger-step`; utilidades `.reveal`, `.stagger`, `.swap[data-dir]`, `.row-landed`, `.shake`, `.notice-in`, `.icon-swap`. Los montos grandes usan `AnimatedAmount` (count-up); las barras crecen desde cero; el mes entra desde el lado hacia el que navegaste (`MonthContext.direction`). Los gestos (swipe, sheet, pull) conservan su propio timing físico. El cambio de tab es el de iOS 18+: la pantalla se funde y se asienta, sin deslizar ni girar — la dirección queda para lo que es una cinta (meses, stack de Ajustes). Tocar el tab activo sube al inicio. `useReducedMotion` para lo que anima JS (count-up, recharts, la pista de swipe); el CSS ya lo cubre la regla global.
 - Status bar: se mantiene `apple-mobile-web-app-status-bar-style: default`. **No** cambiar a `black-translucent`: fuerza texto blanco e ilegible en modo claro. Consecuencia: `env(safe-area-inset-top)` vale 0 en standalone.
 
 ## UI / layout (reglas del producto)
@@ -156,6 +160,7 @@ La app sigue la guía de iOS 27 y se ve como una app nativa: tipografía del sis
   Los paddings del shell siguen por viewport.
 - iPhone Duo: no hay Viewport Segments en WebKit y el pliegue es suave, así que no se esquiva. Plegar/desplegar cambia el viewport sin recargar (≈466 ↔ 890px de ancho; Split View ≈445). Por eso el layout se hace con media/container queries y no se ramifica por dispositivo.
 - Manifest `orientation: 'any'`: la pantalla interior del Duo es apaisada. En landscape manda el sidebar.
+- La paleta vive en cuatro lugares que se espejan: `src/index.css`, `src/lib/palette.ts`, `scripts/generate-ios-splash.mjs` y los PNG de `public/splash/`. Si cambia el fondo o el acento, tocar los tres primeros y re-generar el splash.
 - Tokens semánticos (`bg-background`, `text-muted-foreground`, `border-border`, `primary`…). Evitar hex sueltos salvo colores de categoría.
 - Tema: `ThemeContext` + clase `.dark` en `<html>`; FOUC script en `index.html`. Ajustes → Apariencia: Automático / Claro / Oscuro. Sin clave `spendly-theme` guardada = Automático, que sigue al sistema en vivo; `theme-boot.js` lee la misma clave.
 - Bottom sheets: usan `--keyboard-inset` (`useKeyboardInset` + `visualViewport`). No poner `bottom-0` fijo que ignore el teclado.
@@ -177,6 +182,7 @@ La app sigue la guía de iOS 27 y se ve como una app nativa: tipografía del sis
 | El ✓ de un sheet no hace nada | El confirmar de la barra envía el form por `form="<id>"`: el `<form>` del cuerpo necesita ese `id` (único: alta y edición usan ids distintos) |
 | Teclado tapa el form mobile | Sheet bottom debe usar `--keyboard-inset` |
 | Logout al reabrir offline | Ignorar `SIGNED_OUT` sin red; persist session |
+| Pantalla nueva que entra scrolleada y sube animada | `html` lleva `scroll-smooth`: todo `scrollTo` programático que deba ser inmediato necesita `behavior: 'instant'` |
 | Cache vieja post-cambio de keys | Subir `buster` en `queryPersistOptions` |
 | Desktop vacío abajo (Resumen) | No estirar con `justify-between`/`min-h` — empaquetar contenido arriba |
 | recharts en el arranque | Un util compartido (`clsx`, `use-sync-external-store`) cae en el chunk de un grupo pesado y el entry lo importa estático. Los grupos `ui-vendor`/`react-vendor` de `vite.config.ts` van **antes** que `recharts` y llevan `/` final. Verificar con `grep -c recharts- dist/assets/index-*.js` → 0 |
@@ -209,7 +215,7 @@ Variables `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, opcionales `VITE_CURREN
 
 ## Qué no hacer
 
-- No volver a cargar web fonts ni usar Inter/Roboto como “rediseño”: la tipografía es la del sistema. Tampoco temas purple-on-white genéricos — respetar tokens actuales.
+- No volver a cargar web fonts ni usar Inter/Roboto como “rediseño”: la tipografía es la del sistema (sans + serif). Tampoco temas purple-on-white genéricos — respetar tokens actuales.
 - No volver a filas planas a sangre completa con hairlines: el lenguaje es `insetGrouped` de iOS. Tampoco cards decorativas fuera de ese sistema.
 - No barrels innecesarios; imports directos `@/components/...`.
 - No `service_role` ni secretos en el front.

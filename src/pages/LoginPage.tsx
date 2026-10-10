@@ -49,7 +49,7 @@ export function LoginPage() {
             que hay que leerla. */}
         <section className="stagger flex flex-col items-center text-center">
           <BrandMark size="xl" />
-          <h1 className="mt-5 text-large-title text-label">Spendly</h1>
+          <h1 className="mt-5 font-display text-large-title text-label">Spendly</h1>
           <p className="mt-1 text-subhead text-label-secondary">Tu registro personal de gastos</p>
 
           <form onSubmit={handleLogin} className="mt-9 w-full space-y-3 text-left">
@@ -88,6 +88,7 @@ export function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   placeholder="Requerida"
+                  enterKeyHint="go"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required

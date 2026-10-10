@@ -40,7 +40,7 @@ export function DashboardPage() {
           ) : (
             <SpendingHero
               spent={spent}
-              transactionCount={expenses.length}
+              expenses={expenses}
               budget={budgetAmount}
             />
           )}

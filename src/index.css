@@ -13,13 +13,13 @@
   */
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto,
     "Helvetica Neue", sans-serif;
-  --font-display: var(--font-sans);
+  /* Títulos y montos: la serif del sistema (New York en Apple), sin descargas.
+     Es la voz de "libreta": el texto de interfaz sigue en SF. */
+  --font-display: ui-serif, "New York", "Iowan Old Style", Charter, Cambria, Georgia, serif;
   /* Los primitivos shadcn piden `font-heading` */
   --font-heading: var(--font-sans);
-  /* Montos: SF Pro Rounded, como Wallet y Fitness. `ui-rounded` solo existe
-     en Apple; afuera cae a la sans del sistema con cifras tabulares */
-  --font-ledger: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, sans-serif;
+  /* Montos: la misma serif, siempre con cifras tabulares y alineadas */
+  --font-ledger: var(--font-display);
 
   /* Jerarquía de labels de iOS: opacidades sobre el foreground, no grises
      opacos. Así se leen bien sobre cualquier superficie agrupada. */
@@ -144,36 +144,34 @@
 }
 
 /*
-  Light: zinc frío + verde mint.
+  Light: papel cálido + tinta + esmeralda.
   Hex canónicos también en src/lib/palette.ts.
 */
 :root {
-  /* Congelado a propósito: alimenta palette.ts → theme.ts → el CSS crítico de
-     index.html → generate-ios-splash.mjs → los 34 PNG de splash. Cambiarlo
-     obliga a tocar los cuatro y re-generar. */
-  --background: #f4f4f5;
-  --foreground: #09090b;
+  /* Alimenta palette.ts → theme.ts → el CSS crítico de index.html →
+     generate-ios-splash.mjs → los 34 PNG de splash. Cambiarlo obliga a tocar
+     los cuatro y re-generar. */
+  --background: #f3efe7;
+  --foreground: #17160f;
 
   /* Labels por opacidad, como iOS */
   --label: var(--foreground);
-  --label-secondary: color-mix(in oklab, var(--foreground) 60%, transparent);
-  --label-tertiary: color-mix(in oklab, var(--foreground) 30%, transparent);
+  --label-secondary: color-mix(in oklab, var(--foreground) 62%, transparent);
+  --label-tertiary: color-mix(in oklab, var(--foreground) 34%, transparent);
   --label-quaternary: color-mix(in oklab, var(--foreground) 18%, transparent);
 
   /* Fills */
   --fill: color-mix(in oklab, var(--foreground) 20%, transparent);
   --fill-secondary: color-mix(in oklab, var(--foreground) 16%, transparent);
-  --fill-tertiary: color-mix(in oklab, var(--foreground) 12%, transparent);
-  --fill-quaternary: color-mix(in oklab, var(--foreground) 8%, transparent);
+  --fill-tertiary: color-mix(in oklab, var(--foreground) 11%, transparent);
+  --fill-quaternary: color-mix(in oklab, var(--foreground) 7%, transparent);
 
-  /* Fondos agrupados */
+  /* Fondos agrupados: hojas apenas más claras que el lienzo, con filete */
   --group-bg: var(--background);
-  --group-surface: #ffffff;
-  --group-surface-raised: #f7f7f8;
-  /* Sheets: canvas agrupado propio con celdas blancas encima, como un form
-     sheet de iOS. En dark el sheet sube a #1C1C1E y sus celdas a #2C2C2E. */
+  --group-surface: #fcfaf5;
+  --group-surface-raised: #f7f3eb;
   --sheet-bg: var(--background);
-  --sheet-cell: #ffffff;
+  --sheet-cell: #fcfaf5;
   /* Colores de sistema de iOS, solo para los glifos de Ajustes */
   --tint-orange: #ff9500;
   --tint-blue: #007aff;
@@ -181,44 +179,41 @@
   --tint-red: #ff3b30;
 
   /* Separadores. El hairline baja a 0.5px en pantallas retina. */
-  --separator: color-mix(in oklab, var(--foreground) 12%, transparent);
-  --separator-opaque: #d8d8dc;
+  --separator: color-mix(in oklab, var(--foreground) 13%, transparent);
+  --separator-opaque: #d9d3c6;
   --hairline: 1px;
 
   --card: var(--group-surface);
-  --card-foreground: #09090b;
+  --card-foreground: var(--foreground);
   --popover: var(--group-surface);
-  --popover-foreground: #09090b;
-  --primary: #16a34a;
-  --primary-foreground: #f0fdf4;
-  --secondary: #e4e4e7;
-  --secondary-foreground: #09090b;
-  --muted: #e4e4e7;
-  /* Re-apuntado: 86 call sites de text-muted-foreground migran a la jerarquía
-     de iOS sin editar un archivo, y pasan a leerse bien sobre cualquier fondo */
+  --popover-foreground: var(--foreground);
+  --primary: #0f6b47;
+  --primary-foreground: #f1fbf4;
+  --secondary: #e7e1d5;
+  --secondary-foreground: var(--foreground);
+  --muted: #e7e1d5;
   --muted-foreground: var(--label-secondary);
-  --accent: #16a34a;
-  --accent-foreground: #f0fdf4;
-  --destructive: #dc2626;
-  --destructive-foreground: #fef2f2;
-  --warning: #a16207;
-  --warning-foreground: #713f12;
-  --warning-muted: #fef3c7;
-  /* Idem: 68 border-border + 12 divide-border */
+  --accent: #0f6b47;
+  --accent-foreground: #f1fbf4;
+  --destructive: #c0392b;
+  --destructive-foreground: #fdf3f1;
+  --warning: #96600a;
+  --warning-foreground: #5f3d07;
+  --warning-muted: #f7ead0;
   --border: var(--separator);
   --input: color-mix(in oklab, var(--foreground) 12%, transparent);
-  --ring: #16a34a;
-  --overlay: color-mix(in oklab, #000 10%, transparent);
-  --overlay-strong: color-mix(in oklab, #000 20%, transparent);
-  --shadow: color-mix(in oklab, #000 18%, transparent);
-  --shadow-elevated: color-mix(in oklab, #000 40%, transparent);
-  --brand-mark: #09090b;
-  --brand-mark-accent: #f4f4f5;
-  --chart-1: #16a34a;
-  --chart-2: #4ade80;
-  --chart-3: #a1a1aa;
-  --chart-4: #f87171;
-  --chart-5: #71717a;
+  --ring: #0f6b47;
+  --overlay: color-mix(in oklab, #1c1810 14%, transparent);
+  --overlay-strong: color-mix(in oklab, #1c1810 28%, transparent);
+  --shadow: color-mix(in oklab, #2a2414 16%, transparent);
+  --shadow-elevated: color-mix(in oklab, #2a2414 36%, transparent);
+  --brand-mark: #17160f;
+  --brand-mark-accent: #f3efe7;
+  --chart-1: #0f6b47;
+  --chart-2: #4fae84;
+  --chart-3: #a8a294;
+  --chart-4: #d9614f;
+  --chart-5: #7a7568;
   --radius: 0.5rem;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
@@ -336,53 +331,52 @@
 
 .dark {
   color-scheme: dark;
-  --background: #000000;
-  --foreground: #ffffff;
+  /* Tinta cálida, no negro OLED: las hojas se despegan sin subir a gris */
+  --background: #0c0d0b;
+  --foreground: #f5f2ea;
 
   --label: var(--foreground);
-  --label-secondary: color-mix(in oklab, var(--foreground) 58%, transparent);
-  --label-tertiary: color-mix(in oklab, var(--foreground) 30%, transparent);
-  --label-quaternary: color-mix(in oklab, var(--foreground) 16%, transparent);
+  --label-secondary: color-mix(in oklab, var(--foreground) 60%, transparent);
+  --label-tertiary: color-mix(in oklab, var(--foreground) 32%, transparent);
+  --label-quaternary: color-mix(in oklab, var(--foreground) 17%, transparent);
 
-  --fill: color-mix(in oklab, var(--foreground) 36%, transparent);
-  --fill-secondary: color-mix(in oklab, var(--foreground) 32%, transparent);
-  --fill-tertiary: color-mix(in oklab, var(--foreground) 24%, transparent);
-  --fill-quaternary: color-mix(in oklab, var(--foreground) 18%, transparent);
+  --fill: color-mix(in oklab, var(--foreground) 34%, transparent);
+  --fill-secondary: color-mix(in oklab, var(--foreground) 28%, transparent);
+  --fill-tertiary: color-mix(in oklab, var(--foreground) 20%, transparent);
+  --fill-quaternary: color-mix(in oklab, var(--foreground) 12%, transparent);
 
-  /* Los grises agrupados de iOS: secondary (#1C1C1E) para las celdas sobre el
-     negro del canvas, tertiary (#2C2C2E) para celdas dentro de un sheet, que
-     ya flota un escalón más arriba. */
   --group-bg: var(--background);
-  --group-surface: #1c1c1e;
-  --group-surface-raised: #2c2c2e;
-  --sheet-bg: #1c1c1e;
-  --sheet-cell: #2c2c2e;
+  --group-surface: #181916;
+  --group-surface-raised: #22231f;
+  --sheet-bg: #181916;
+  --sheet-cell: #22231f;
   --tint-orange: #ff9f0a;
   --tint-blue: #0a84ff;
   --tint-gray: #98989d;
   --tint-red: #ff453a;
 
-  --separator: color-mix(in oklab, var(--foreground) 14%, transparent);
-  --separator-opaque: #38383a;
+  --separator: color-mix(in oklab, var(--foreground) 13%, transparent);
+  --separator-opaque: #33342f;
 
   --card: var(--group-surface);
-  --card-foreground: #ffffff;
+  --card-foreground: var(--foreground);
   /* Los sheets y menús flotan sobre el canvas: superficie un escalón más alta */
   --popover: var(--group-surface-raised);
-  --popover-foreground: #ffffff;
+  --popover-foreground: var(--foreground);
+  /* El mint del ícono instalado: la marca no cambia de color en oscuro */
   --primary: #4ade80;
   --primary-foreground: #052e16;
-  --secondary: #18181b;
-  --secondary-foreground: #ffffff;
-  --muted: #18181b;
+  --secondary: #1b1c18;
+  --secondary-foreground: var(--foreground);
+  --muted: #1b1c18;
   --muted-foreground: var(--label-secondary);
   --accent: #4ade80;
   --accent-foreground: #052e16;
-  --destructive: #f87171;
-  --destructive-foreground: #1c0a0a;
-  --warning: #fbbf24;
-  --warning-foreground: #fef3c7;
-  --warning-muted: #1c1508;
+  --destructive: #ff8674;
+  --destructive-foreground: #2a0d08;
+  --warning: #f2c14e;
+  --warning-foreground: #fbeecb;
+  --warning-muted: #211a08;
   --border: var(--separator);
   --input: color-mix(in oklab, var(--foreground) 10%, transparent);
   --ring: #4ade80;
@@ -390,13 +384,13 @@
   --overlay-strong: color-mix(in oklab, #000 70%, transparent);
   --shadow: color-mix(in oklab, #000 60%, transparent);
   --shadow-elevated: color-mix(in oklab, #000 70%, transparent);
-  --brand-mark: #000000;
-  --brand-mark-accent: #ffffff;
+  --brand-mark: #0c0d0b;
+  --brand-mark-accent: #f5f2ea;
   --chart-1: #4ade80;
-  --chart-2: #86efac;
-  --chart-3: #a1a1aa;
-  --chart-4: #f87171;
-  --chart-5: #71717a;
+  --chart-2: #8eeab0;
+  --chart-3: #9b978b;
+  --chart-4: #ff8674;
+  --chart-5: #6f6c63;
 
   /* Glass oscuro: se construye tintando con blanco, no bajando la opacidad de
      una superficie oscura — sobre negro puro no hay nada que aclarar. */
@@ -434,26 +428,6 @@
     font-feature-settings: "tnum" on;
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
-    /* Soft ledger wash — tokens, no hex sueltos */
-    background-image:
-      radial-gradient(
-        ellipse 70% 45% at 15% -10%,
-        color-mix(in oklab, var(--primary) 9%, transparent),
-        transparent 50%
-      ),
-      radial-gradient(
-        ellipse 50% 35% at 100% 0%,
-        color-mix(in oklab, var(--chart-3) 6%, transparent),
-        transparent 45%
-      );
-    /* ponytail: scroll on phone — fixed bg paints jank in iOS standalone */
-    background-attachment: scroll;
-  }
-
-  @media (min-width: 1024px) {
-    body {
-      background-attachment: fixed;
-    }
   }
 
   @media (display-mode: standalone), (display-mode: fullscreen) {
@@ -463,6 +437,12 @@
       user-select: none;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
+    }
+
+    /* Instalada es una app: el contenido no se pellizca. En el navegador el
+       zoom queda intacto. */
+    html {
+      touch-action: pan-x pan-y;
     }
 
     input,
@@ -510,7 +490,7 @@
   /* Cifras tabulares siempre: una columna de montos no baila al cambiar */
   .font-ledger {
     font-family: var(--font-ledger);
-    font-variant-numeric: tabular-nums;
+    font-variant-numeric: tabular-nums lining-nums;
   }
 
   .font-display {
@@ -528,7 +508,7 @@
 
   /* Header de sección de una lista agrupada: el default de iOS, caja alta */
   .list-section-header {
-    @apply text-footnote uppercase text-label-secondary;
+    @apply text-subhead font-semibold text-label-secondary;
   }
 
   /*
@@ -537,16 +517,19 @@
   */
   .section-title {
     @apply text-title-3 font-bold text-label;
+    font-family: var(--font-display);
   }
 
   .page-title {
     @apply text-large-title text-label;
+    font-family: var(--font-display);
     text-wrap: balance;
   }
 
-  /* Montos grandes: SF Pro Rounded bold, como el saldo de Wallet */
+  /* El total del mes: la cifra más grande de la app, en serif */
   .stat-value {
-    @apply font-ledger text-[2.75rem] leading-none font-bold text-label sm:text-[3.25rem];
+    @apply font-ledger text-[3.25rem] leading-none font-bold text-label sm:text-[3.75rem];
+    letter-spacing: -0.02em;
   }
 
   .metric-cell {
@@ -557,18 +540,81 @@
     @apply font-ledger text-title-3 font-semibold text-label;
   }
 
+  /* ─── Portada del mes ─────────────────────────────────────────────────── */
+
+  .day-bars {
+    display: flex;
+    height: 4.75rem;
+    align-items: flex-end;
+    gap: 2px;
+  }
+
+  /*
+    Cada barra crece desde la base, en cascada de izquierda a derecha: el mes
+    se dibuja en el orden en que pasó. `scaleY` y no `height`: no hay layout
+    por frame. Las barras son hojas del árbol, así que el transform no puede
+    atrapar nada `fixed`.
+  */
+  @keyframes day-bar-grow {
+    from {
+      transform: scaleY(0);
+    }
+  }
+
+  .day-bar {
+    flex: 1 1 0;
+    min-width: 0;
+    height: max(3px, calc(var(--bar, 0) * 100%));
+    border-radius: 3px 3px 1px 1px;
+    background-color: color-mix(in oklab, var(--foreground) 26%, transparent);
+    transform-origin: 50% 100%;
+    animation: day-bar-grow var(--dur-3) var(--ease-out-expo) backwards;
+    animation-delay: calc(var(--bar-i, 0) * 12ms);
+  }
+
+  .day-bar[data-state='today'] {
+    background-color: var(--primary);
+  }
+
+  .day-bar[data-state='empty'] {
+    background-color: var(--fill-tertiary);
+  }
+
+  /* Los días que faltan todavía no son datos: un punto, no una barra */
+  .day-bar[data-state='future'] {
+    height: 3px;
+    border-radius: 999px;
+    background-color: var(--fill-quaternary);
+    animation: none;
+  }
+
+  /* Dónde debería ir el gasto hoy: una marca sobre la barra del presupuesto */
+  .pace-tick {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    width: 2px;
+    margin-left: -1px;
+    border-radius: 999px;
+    background-color: var(--foreground);
+    box-shadow: 0 0 0 2px var(--group-surface);
+  }
+
   /* ─── Listas agrupadas inset (iOS insetGrouped) ───────────────────────── */
 
+  /* Hoja sobre el papel: casi el mismo tono, la separa el filete */
   .list-group {
     overflow: hidden;
-    border-radius: var(--radius-xl);
+    border: var(--hairline) solid var(--separator);
+    border-radius: 1.375rem;
     background-color: var(--group-surface);
   }
 
   /* Tarjeta de contenido (charts, métricas): la misma superficie y radio que
      las listas agrupadas, para que el canvas tenga un solo tipo de bloque */
   .surface-card {
-    border-radius: var(--radius-xl);
+    border: var(--hairline) solid var(--separator);
+    border-radius: 1.375rem;
     background-color: var(--group-surface);
     padding: 1rem;
   }
@@ -653,43 +699,22 @@
   /* ─── Sheet arrastrable ───────────────────────────────────────────────── */
 
   /*
-    El sheet no sube plano: se despliega sobre su borde inferior, como una
-    tarjeta que se acuesta contra la pantalla. La bisagra abajo es lo que
-    contesta "esto salió de ahí" en vez de "esto apareció".
-
-    El `rotateX` va en la misma cadena que el arrastre — son un solo
-    `transform` — mientras el `translate` de entrada/salida de Base UI sigue
-    componiendo aparte. `--sheet-tilt` no necesita `@property`: lo que
-    transiciona es `transform` (declarado en `sheet.tsx`), que se recomputa
-    cuando la variable cambia.
+    El arrastre va en `transform` y la entrada/salida de Base UI en
+    `translate`: son propiedades distintas y componen en vez de pisarse.
   */
   .sheet-draggable[data-side='bottom'] {
-    transform: translateY(var(--sheet-y, 0px)) perspective(1000px)
-      rotateX(var(--sheet-tilt, 0deg));
-    transform-origin: 50% 100%;
-    backface-visibility: hidden;
+    transform: translateY(var(--sheet-y, 0px));
   }
 
-  .sheet-draggable[data-side='bottom'][data-starting-style],
-  .sheet-draggable[data-side='bottom'][data-ending-style] {
-    --sheet-tilt: 6deg;
-  }
-
-  .sheet-draggable[data-dragging='true'] {
+  /* Arrastrando manda el dedo, sin transición de por medio */
+  .sheet-draggable[data-dragging='true'],
+  [data-slot='sheet-overlay'][data-dragging='true'] {
     transition: none;
   }
 
-  /* Arrastrando manda el dedo: el pliegue ya se resolvió al abrir */
-  .sheet-draggable[data-dragging='true'][data-side='bottom'] {
-    --sheet-tilt: 0deg;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .sheet-draggable[data-side='bottom'],
-    .sheet-draggable[data-side='bottom'][data-starting-style],
-    .sheet-draggable[data-side='bottom'][data-ending-style] {
-      --sheet-tilt: 0deg;
-    }
+  /* El fondo se aclara a medida que el sheet baja */
+  [data-slot='sheet-overlay'][data-dragging='true'] {
+    opacity: var(--sheet-progress, 1);
   }
 
   /* ─── Swipe actions ───────────────────────────────────────────────────── */
@@ -1321,32 +1346,24 @@
   }
 
   /*
-    Rebote del símbolo al seleccionar, como SF Symbols, ahora sobre su propio
-    eje: el set de iconos es de dos caras (outline / filled) y el wrap ya se
-    remonta al activarse, así que el cambio se lee como el símbolo dándose
-    vuelta y no como un reemplazo.
-
-    Un solo keyframe con las dos cosas: dos `animation` sobre la misma
-    propiedad no componen, la última gana.
-
-    Perspectiva autocontenida — el dock es `backdrop-filter` y aplanaría
-    cualquier contexto 3D heredado de un ancestro.
+    Rebote del símbolo al seleccionar, el `.bounce` de SF Symbols: crece y se
+    asienta. El wrap se remonta al activarse (cambia de outline a filled), así
+    que el keyframe vuelve a correr en cada selección.
   */
   @keyframes tab-symbol-bounce {
     0% {
-      transform: perspective(420px) rotateY(-72deg) scale(0.9);
+      transform: scale(0.86);
     }
-    38% {
-      transform: perspective(420px) rotateY(0deg) scale(1.22);
+    45% {
+      transform: scale(1.14);
     }
     100% {
-      transform: perspective(420px) rotateY(0deg) scale(1);
+      transform: scale(1);
     }
   }
 
   .tab-item[aria-current='page'] .tab-icon-wrap {
-    animation: tab-symbol-bounce 420ms var(--ease-spring);
-    backface-visibility: hidden;
+    animation: tab-symbol-bounce 380ms var(--ease-spring);
   }
 
   .list-section {
@@ -1744,17 +1761,13 @@
 
   /*
     ─── Navegación entre pantallas ─────────────────────────────────────────
-    El mes ya entra desde el lado hacia el que fuiste (`.swap`). Las pantallas
-    no: hasta acá las cuatro tabs fundían igual en las dos direcciones, que es
-    la gramática de "cuatro destinos sueltos" y no la de una cinta.
-
-    `data-vt-dir` lo escribe `nav-direction.ts` con el orden de los tabs, justo
-    antes de que React Router abra la view transition.
+    `data-vt-dir` lo escribe `useRouteTransition` justo antes de abrir la view
+    transition: marca que el cambio es de tab y no de tema.
 
     El chrome no viaja. Nav bar, dock y sidebar llevan `view-transition-name`
     propio, así que quedan fuera del snapshot de `root` y se quedan quietos
-    mientras el contenido se desliza por debajo — que es lo que hace iOS y lo
-    que un cross-fade de página entera rompe.
+    mientras el contenido cambia por debajo — que es lo que hace iOS y lo que
+    un cross-fade de página entera rompe.
   */
   .nav-bar {
     view-transition-name: nav-bar;
@@ -1784,59 +1797,22 @@
   }
 
   /*
-    Push/pop con eje Z. Las pantallas dejan de ser dos láminas que se cruzan y
-    pasan a ser dos tarjetas apiladas: la que se va cae al fondo girando sobre
-    el borde por el que se va, la que llega entra desde el borde contrario y se
-    endereza contra la pantalla.
-
-    Es el lugar más seguro del proyecto para 3D: los pseudos de view transition
-    viven en un árbol overlay aparte del documento, así que ninguna perspectiva
-    de acá puede atrapar un `position: fixed` real.
-
-    Los dos extremos declaran la misma lista de funciones para que interpolen
-    componente a componente y no por descomposición de matriz.
+    Cambio de tab como en iOS 18+: sin deslizar ni girar. La pantalla que se
+    va se apaga en su lugar y la que llega se asienta desde apenas más chica.
+    Los tabs son destinos hermanos, no una pila: no hay lado desde el que
+    entrar. La dirección queda para lo que sí es una cinta (los meses, el
+    stack de Ajustes).
   */
-  @keyframes vt-exit-start {
-    from {
-      opacity: 1;
-      transform: perspective(1400px) translate3d(0, 0, 0) rotateY(0deg);
-    }
+  @keyframes vt-tab-out {
     to {
       opacity: 0;
-      transform: perspective(1400px) translate3d(-14%, 0, -170px) rotateY(5deg);
     }
   }
 
-  @keyframes vt-enter-end {
+  @keyframes vt-tab-in {
     from {
       opacity: 0;
-      transform: perspective(1400px) translate3d(32%, 0, -60px) rotateY(-8deg);
-    }
-    to {
-      opacity: 1;
-      transform: perspective(1400px) translate3d(0, 0, 0) rotateY(0deg);
-    }
-  }
-
-  @keyframes vt-exit-end {
-    from {
-      opacity: 1;
-      transform: perspective(1400px) translate3d(0, 0, 0) rotateY(0deg);
-    }
-    to {
-      opacity: 0;
-      transform: perspective(1400px) translate3d(14%, 0, -170px) rotateY(-5deg);
-    }
-  }
-
-  @keyframes vt-enter-start {
-    from {
-      opacity: 0;
-      transform: perspective(1400px) translate3d(-32%, 0, -60px) rotateY(8deg);
-    }
-    to {
-      opacity: 1;
-      transform: perspective(1400px) translate3d(0, 0, 0) rotateY(0deg);
+      transform: scale(0.985);
     }
   }
 
@@ -1845,37 +1821,16 @@
     ::view-transition-old(root),
     ::view-transition-new(root) {
       animation-duration: 180ms;
-      /*
-        El UA las pinta con `plus-lighter` para que un cross-fade no baje de
-        brillo en el cruce. Con dos tarjetas en profundidad el solape deja de
-        ser un cross-fade y `plus-lighter` lo lava.
-      */
-      mix-blend-mode: normal;
-      /* Que no asome el reverso del snapshot al pasar el filo */
-      backface-visibility: hidden;
     }
 
-    :root[data-vt-dir='next']::view-transition-old(root) {
-      /* Bisagra en el borde por el que se va */
-      transform-origin: left center;
-      animation: vt-exit-start var(--dur-2) var(--ease-out-expo) both;
+    :root[data-vt-dir]::view-transition-old(root) {
+      animation: vt-tab-out var(--dur-0) ease-out both;
     }
-    :root[data-vt-dir='next']::view-transition-new(root) {
-      transform-origin: right center;
-      animation: vt-enter-end var(--dur-2) var(--ease-out-expo) both;
-    }
-    :root[data-vt-dir='prev']::view-transition-old(root) {
-      transform-origin: right center;
-      /*
-        En el pop la saliente va **encima**: es lo único que distingue volver
-        de avanzar cuando las dos pantallas son del mismo tamaño.
-      */
-      z-index: 1;
-      animation: vt-exit-end var(--dur-2) var(--ease-out-expo) both;
-    }
-    :root[data-vt-dir='prev']::view-transition-new(root) {
-      transform-origin: left center;
-      animation: vt-enter-start var(--dur-2) var(--ease-out-expo) both;
+
+    :root[data-vt-dir]::view-transition-new(root) {
+      /* Hacia el centro de lo visible, no del documento entero */
+      transform-origin: 50% 50vh;
+      animation: vt-tab-in var(--dur-2) var(--ease-out-expo) both;
     }
 
     /*

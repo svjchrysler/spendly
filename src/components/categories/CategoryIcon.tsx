@@ -32,6 +32,11 @@ export function CategoryIcon({
   const emoji = emojiProp ?? resolveCategoryEmoji(icon, name)
   const sizes = sizeMap[size]
   const Icon = getCategoryIcon(icon && !emoji ? icon : 'receipt')
+  // El color de la categoría tiñe el fondo: la lista se lee por color antes
+  // que por texto
+  const tintStyle = color
+    ? { backgroundColor: `color-mix(in oklab, ${color} 18%, transparent)` }
+    : undefined
 
   if (size === 'pill') {
     if (emoji) {
@@ -53,13 +58,11 @@ export function CategoryIcon({
     return (
       <div
         className={cn(
-          'flex shrink-0 items-center justify-center rounded-lg bg-secondary',
+          'flex shrink-0 items-center justify-center rounded-full bg-fill-quaternary',
           sizes.box,
           className,
         )}
-        style={{
-          boxShadow: color ? `inset 0 0 0 1px ${color}33` : undefined,
-        }}
+        style={tintStyle}
       >
         <span className={sizes.emoji} role="img" aria-hidden>
           {emoji}
@@ -71,13 +74,11 @@ export function CategoryIcon({
   return (
     <div
       className={cn(
-        'flex shrink-0 items-center justify-center rounded-lg bg-secondary',
+        'flex shrink-0 items-center justify-center rounded-full bg-fill-quaternary',
         sizes.box,
         className,
       )}
-      style={{
-        boxShadow: color ? `inset 0 0 0 1px ${color}33` : undefined,
-      }}
+      style={tintStyle}
     >
       <Icon
         className={cn(sizes.icon, !color && 'text-primary')}

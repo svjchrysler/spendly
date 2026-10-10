@@ -54,7 +54,7 @@ export function CategoryAllocationSkeleton({ rows = 5 }: Readonly<{ rows?: numbe
     <div className="list-group" aria-hidden>
       {Array.from({ length: rows }, (_, i) => (
         <div key={i} className="list-row">
-          <Bone className="size-8 shrink-0 rounded-lg" />
+          <Bone className="size-8 shrink-0 rounded-full" />
           <div className="list-row__body gap-2">
             <div className="flex items-center justify-between gap-3">
               <Bone className={`h-3.5 ${i % 2 === 0 ? 'w-24' : 'w-16'}`} />
@@ -70,17 +70,21 @@ export function CategoryAllocationSkeleton({ rows = 5 }: Readonly<{ rows?: numbe
 
 export function SpendingHeroSkeleton() {
   return (
-    <div className="overflow-hidden rounded-[1.25rem] bg-group-surface" aria-hidden>
-      <div className="space-y-3 p-4">
+    <div className="space-y-5" aria-hidden>
+      <div className="space-y-3 px-1">
         <Bone className="h-3.5 w-32" />
-        <Bone className="h-11 w-[70%] sm:h-12" />
-        <Bone className="mt-2 h-2 w-full rounded-full" />
+        <Bone className="h-[3.25rem] w-[75%] sm:h-[3.75rem]" />
+        <Bone className="h-4 w-[85%]" />
+      </div>
+      <div className="surface-card space-y-4">
+        <Bone className="h-[4.75rem] w-full rounded-lg" />
+        <Bone className="h-2 w-full rounded-full" />
         <Bone className="h-3.5 w-40" />
       </div>
-      <div className="grid grid-cols-2 gap-px border-t border-separator bg-separator">
-        {Array.from({ length: 4 }, (_, i) => (
-          <div key={i} className="space-y-2 bg-group-surface px-4 py-3">
-            <Bone className="h-3 w-20" />
+      <div className="grid grid-cols-3 gap-px overflow-hidden rounded-[1.375rem] border-[length:var(--hairline)] border-separator bg-separator">
+        {Array.from({ length: 3 }, (_, i) => (
+          <div key={i} className="space-y-2 bg-group-surface px-3.5 py-3">
+            <Bone className="h-3 w-14" />
             <Bone className="h-5 w-[65%]" />
           </div>
         ))}
@@ -150,7 +154,7 @@ export function AnalisisPageSkeleton() {
       <div className="grid gap-7 @4xl/main:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] @4xl/main:items-start @4xl/main:gap-8">
         <div className="flex min-w-0 flex-col gap-4">
           <Bone className="h-9 w-full rounded-full" />
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[1.25rem] bg-separator @xl/main:grid-cols-3">
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[1.375rem] border-[length:var(--hairline)] border-separator bg-separator @xl/main:grid-cols-3">
             {Array.from({ length: 6 }, (_, i) => (
               <div key={i} className="space-y-2 bg-group-surface px-4 py-3">
                 <Bone className="h-3 w-20" />
@@ -202,7 +206,7 @@ export function CategoryListSkeleton({ rows = 8 }: Readonly<{ rows?: number }>) 
             key={i}
             loading
             separatorInset="4rem"
-            leading={<Bone className="size-9 rounded-lg" />}
+            leading={<Bone className="size-9 rounded-full" />}
             // La fila real lleva el uso del mes debajo del nombre
             subtitle=""
           />

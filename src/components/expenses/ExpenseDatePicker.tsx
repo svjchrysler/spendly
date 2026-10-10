@@ -120,27 +120,29 @@ export function ExpenseDatePicker({ value, onChange }: Readonly<ExpenseDatePicke
         <div
           role="dialog"
           aria-label="Calendario"
-          className="absolute right-0 bottom-full z-50 mb-2 w-[17.5rem] rounded-[1.25rem] bg-sheet-cell p-3 shadow-[0_20px_48px_-12px_var(--shadow-elevated)] ring-1 ring-foreground/5"
+          // Ancho del form con tope: las celdas quedan de ~42px, tocables con el
+          // dedo, sin crecer de más en el form sheet de ancho regular
+          className="reveal absolute right-0 bottom-full z-50 mb-2 w-full max-w-[21rem] rounded-[1.25rem] bg-sheet-cell p-3 shadow-[0_20px_48px_-12px_var(--shadow-elevated)] ring-1 ring-foreground/5"
         >
           <div className="mb-3 flex items-center justify-between gap-2">
             <button
               type="button"
               aria-label="Mes anterior"
               onClick={() => setView((d) => subMonths(d, 1))}
-              className="pressable inline-flex size-8 cursor-pointer items-center justify-center rounded-lg text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+              className="pressable inline-flex size-10 cursor-pointer items-center justify-center rounded-full text-primary hover:bg-fill-quaternary"
             >
-              <ChevronLeft className="size-4" />
+              <ChevronLeft className="size-5" strokeWidth={2.25} />
             </button>
-            <p className="text-sm font-medium capitalize">
+            <p className="text-headline text-label capitalize">
               {format(view, 'MMMM yyyy', { locale: es })}
             </p>
             <button
               type="button"
               aria-label="Mes siguiente"
               onClick={() => setView((d) => addMonths(d, 1))}
-              className="pressable inline-flex size-8 cursor-pointer items-center justify-center rounded-lg text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+              className="pressable inline-flex size-10 cursor-pointer items-center justify-center rounded-full text-primary hover:bg-fill-quaternary"
             >
-              <ChevronRight className="size-4" />
+              <ChevronRight className="size-5" strokeWidth={2.25} />
             </button>
           </div>
 
@@ -148,7 +150,7 @@ export function ExpenseDatePicker({ value, onChange }: Readonly<ExpenseDatePicke
             {WEEKDAYS.map((day) => (
               <div
                 key={day}
-                className="py-1 text-center text-[10px] font-medium tracking-wide text-muted-foreground"
+                className="py-1 text-center text-caption-2 font-semibold text-label-tertiary"
               >
                 {day}
               </div>
@@ -166,11 +168,11 @@ export function ExpenseDatePicker({ value, onChange }: Readonly<ExpenseDatePicke
                   type="button"
                   onClick={() => pick(day)}
                   className={cn(
-                    'pressable flex size-8 cursor-pointer items-center justify-center rounded-lg text-sm tabular-nums',
-                    !inMonth && 'text-muted-foreground/35',
-                    inMonth && !selectedDay && 'text-foreground hover:bg-muted/40',
+                    'pressable flex aspect-square w-full cursor-pointer items-center justify-center rounded-full text-callout tabular-nums',
+                    !inMonth && 'text-label-quaternary',
+                    inMonth && !selectedDay && 'text-label hover:bg-fill-quaternary',
                     selectedDay && 'bg-primary font-semibold text-primary-foreground',
-                    today && !selectedDay && 'ring-1 ring-primary/40',
+                    today && !selectedDay && 'font-semibold text-primary',
                   )}
                 >
                   {format(day, 'd')}

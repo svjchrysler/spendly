@@ -70,7 +70,7 @@ function MetricGrid({
   return (
     <section
       className={cn(
-        'stagger grid grid-cols-2 gap-px overflow-hidden rounded-[1.25rem] bg-separator',
+        'stagger grid grid-cols-2 gap-px overflow-hidden rounded-[1.375rem] border-[length:var(--hairline)] border-separator bg-separator',
         className,
       )}
     >

@@ -12,6 +12,8 @@ export const ExpenseNoteInput = forwardRef<HTMLInputElement, ExpenseNoteInputPro
         ref={ref}
         type="text"
         placeholder="Cena, Uber, supermercado…"
+        enterKeyHint="done"
+        autoCapitalize="sentences"
         className={cn(
           // Celda agrupada de iOS: superficie de celda, sin borde. 17px: bajo
           // 16px iOS hace zoom al enfocar y descuadra la PWA
