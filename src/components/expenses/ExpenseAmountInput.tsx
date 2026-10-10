@@ -39,7 +39,7 @@ export function ExpenseAmountInput({
   // Monto como protagonista del sheet, sin caja: la cifra grande en SF Pro
   // Rounded es el campo, igual que en Wallet al mandar dinero
   return (
-    <div className="flex w-full min-w-0 flex-col items-center gap-0.5 pt-1 pb-2">
+    <div className="flex w-full min-w-0 flex-col items-center gap-0.5 pb-1">
       <label htmlFor={id} className="cursor-text text-footnote text-label-secondary">
         {label}
       </label>
@@ -67,7 +67,7 @@ export function ExpenseAmountInput({
             onBlur?.()
           }}
           className={cn(
-            'input-amount font-ledger max-w-[10ch] min-w-[4ch] rounded-xl border-0 bg-transparent text-center text-[3.25rem] leading-tight font-bold caret-primary outline-none placeholder:text-label-quaternary focus-visible:bg-fill-quaternary',
+            'input-amount font-ledger max-w-[10ch] min-w-[4ch] border-0 bg-transparent text-center text-[3rem] leading-[1.15] font-bold caret-primary outline-none placeholder:text-label-quaternary',
             hasError ? 'text-destructive' : 'text-label',
             className,
           )}

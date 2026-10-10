@@ -23,6 +23,9 @@ export function useKeyboardInset() {
       lastInset = inset
 
       document.documentElement.style.setProperty('--keyboard-inset', `${inset}px`)
+      // Para el CSS que solo aplica con teclado (el sheet suelta el aire del
+      // home indicator, que ahí ya no hace falta)
+      document.documentElement.toggleAttribute('data-keyboard', inset > 0)
 
       // Keep focused field visible inside scrollable sheets after the lift
       if (!justOpened) return
@@ -45,6 +48,7 @@ export function useKeyboardInset() {
       vv.removeEventListener('resize', sync)
       vv.removeEventListener('scroll', sync)
       document.documentElement.style.removeProperty('--keyboard-inset')
+      document.documentElement.removeAttribute('data-keyboard')
     }
   }, [])
 }

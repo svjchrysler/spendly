@@ -99,7 +99,9 @@ function SheetBar({
   trailing?: ReactNode
 }>) {
   return (
-    <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2 px-3 pt-3 pb-2">
+    // Sticky: si el form no entra sobre el teclado y hay que scrollear, cerrar
+    // y confirmar siguen a mano
+    <div className="sticky top-0 z-10 grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2 bg-sheet px-3 pt-3 pb-2">
       <div className="flex justify-start">{leading}</div>
       <Title className="truncate text-center">{title}</Title>
       <div className="flex justify-end">{trailing}</div>
@@ -156,7 +158,7 @@ export function FormSheet({
       <SheetContent
         side="bottom"
         onOpenChange={onOpenChange}
-        className="gap-0 pb-[max(1rem,calc(env(safe-area-inset-bottom)-0.25rem))]"
+        className="gap-0 pb-[max(1rem,calc(env(safe-area-inset-bottom)-0.25rem))] [html[data-keyboard]_&]:pb-3"
       >
         <SheetBar title={title} Title={SheetTitle} leading={leading ?? close} trailing={trailing} />
         <div className={cn('px-4', bodyClassName)}>{children}</div>

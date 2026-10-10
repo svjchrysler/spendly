@@ -218,8 +218,8 @@ export function CategoryListSkeleton({ rows = 8 }: Readonly<{ rows?: number }>) 
 
 export function ExpenseFormSkeleton() {
   return (
-    <div className="flex flex-col gap-5 pb-1" aria-busy="true" aria-label="Cargando formulario">
-      <div className="flex flex-col items-center gap-2 pt-1 pb-2">
+    <div className="flex flex-col gap-3.5 pb-1" aria-busy="true" aria-label="Cargando formulario">
+      <div className="flex flex-col items-center gap-2 pb-1">
         <Bone className="h-3 w-12" />
         <Bone className="h-14 w-44" />
       </div>

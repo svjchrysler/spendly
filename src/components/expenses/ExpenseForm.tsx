@@ -215,7 +215,9 @@ export function ExpenseForm({ expense, onSuccess, formId }: Readonly<ExpenseForm
       // del browser) y tapa el mensaje y la sacudida del campo. Los `required`
       // se quedan: siguen exponiendo aria-required.
       noValidate
-      className="flex w-full min-w-0 max-w-full flex-col gap-5 overflow-x-hidden pb-1"
+      // `gap-3.5` y sin rótulo visible en Fecha: con el teclado numérico arriba
+      // el form entero tiene que entrar en lo que queda de pantalla
+      className="flex w-full min-w-0 max-w-full flex-col gap-3.5 overflow-x-hidden pb-1"
     >
       <div className={cn('min-w-0', shaking && 'shake')}>
         <ExpenseAmountInput
@@ -286,7 +288,7 @@ export function ExpenseForm({ expense, onSuccess, formId }: Readonly<ExpenseForm
       </div>
 
       <div className="min-w-0 space-y-1.5">
-        <p className="list-section-header px-4">Fecha</p>
+        <p className="sr-only">Fecha</p>
         <ExpenseDatePicker
           value={expenseDate}
           onChange={(date) => setValue('expense_date', date)}
