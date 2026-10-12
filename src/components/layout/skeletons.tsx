@@ -154,8 +154,15 @@ export function AnalisisPageSkeleton() {
       <div className="grid gap-7 @4xl/main:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] @4xl/main:items-start @4xl/main:gap-8">
         <div className="flex min-w-0 flex-col gap-4">
           <Bone className="h-9 w-full rounded-full" />
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[1.375rem] border-[length:var(--hairline)] border-separator bg-separator @xl/main:grid-cols-3">
-            {Array.from({ length: 6 }, (_, i) => (
+          <div className="surface-card space-y-3">
+            <Bone className="h-4 w-36" />
+            {['w-[90%]', 'w-[70%]', 'w-[80%]'].map((w) => (
+              <Bone key={w} className={`h-3.5 ${w}`} />
+            ))}
+          </div>
+          <ChartSkeleton />
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[1.375rem] border-[length:var(--hairline)] border-separator bg-separator @xl/main:grid-cols-4">
+            {Array.from({ length: 4 }, (_, i) => (
               <div key={i} className="space-y-2 bg-group-surface px-4 py-3">
                 <Bone className="h-3 w-20" />
                 <Bone className="h-5 w-[70%]" />
@@ -163,7 +170,6 @@ export function AnalisisPageSkeleton() {
               </div>
             ))}
           </div>
-          <ChartSkeleton />
         </div>
         <div className="space-y-2.5">
           <Bone className="mx-1 h-5 w-32" />
@@ -184,6 +190,7 @@ export function ExpensesPageSkeleton() {
       <div className="grid gap-5 @4xl/main:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] @4xl/main:items-start @4xl/main:gap-8 @6xl/main:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
         <div className="order-1 space-y-4 @4xl/main:order-2">
           <ExpenseFiltersSkeleton />
+          <Bone className="h-9 w-full rounded-full" />
           <div className="flex items-center justify-between px-1">
             <Bone className="h-3.5 w-28" />
             <Bone className="h-5 w-24" />
@@ -220,8 +227,13 @@ export function ExpenseFormSkeleton() {
   return (
     <div className="flex flex-col gap-3.5 pb-1" aria-busy="true" aria-label="Cargando formulario">
       <div className="flex flex-col items-center gap-2 pb-1">
-        <Bone className="h-3 w-12" />
+        <Bone className="h-9 w-24 rounded-full" />
         <Bone className="h-14 w-44" />
+      </div>
+      <div className="flex gap-2 overflow-hidden">
+        {['w-28', 'w-20', 'w-24', 'w-28'].map((w, i) => (
+          <Bone key={`${w}-${i}`} className={`h-9 ${w} shrink-0 rounded-full`} />
+        ))}
       </div>
       <Bone className="h-12 w-full rounded-xl" />
       <div className="flex gap-2 overflow-hidden">
@@ -229,9 +241,7 @@ export function ExpenseFormSkeleton() {
           <Bone key={i} className="h-11 w-28 shrink-0 rounded-full" />
         ))}
       </div>
-      <Bone className="h-11 w-full rounded-full" />
       <Bone className="h-12 w-full rounded-full" />
     </div>
   )
 }
-

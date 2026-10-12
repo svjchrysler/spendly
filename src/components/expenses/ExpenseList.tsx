@@ -16,6 +16,7 @@ import {
   ExpenseRowActions,
 } from '@/components/expenses/ExpenseActionSheet'
 import { ExpenseIcon } from '@/components/expenses/ExpenseIcon'
+import { CategoryIcon } from '@/components/categories/CategoryIcon'
 import { ExpenseFormSkeleton } from '@/components/layout/skeletons'
 import { getExpenseLabel } from '@/lib/expense-display'
 import { formatCurrency, formatDayLabel } from '@/lib/format'
@@ -49,7 +50,12 @@ interface ExpenseListProps {
   compact?: boolean
   /** Texto del CTA cuando no hay gastos (abre el form de nuevo gasto). */
   emptyCta?: string
+  /** Cómo se arman las secciones del listado completo: cuándo o en qué */
+  groupBy?: ExpenseGrouping
 }
+
+export type ExpenseGrouping = 'day' | 'category'
+
 
 function ExpenseRow({
   expense,
@@ -153,6 +159,7 @@ export function ExpenseList({
   expenses,
   compact = false,
   emptyCta,
+  groupBy = 'day',
 }: Readonly<ExpenseListProps>) {
   const { monthKey } = useMonth()
   const { openAdd } = useAddExpense()
@@ -207,19 +214,24 @@ export function ExpenseList({
   }, [touch, reducedMotion, firstExpenseId])
 
   const grouped = useMemo(() => {
+    const byCategory = groupBy === 'category'
     const map = new Map<string, ExpenseWithCategory[]>()
     for (const expense of expenses) {
-      const key = expense.expense_date
+      const key = byCategory ? expense.category_id : expense.expense_date
       const list = map.get(key) ?? []
       list.push(expense)
       map.set(key, list)
     }
-    return Array.from(map.entries()).map(([date, items]) => ({
-      date,
+    const groups = Array.from(map.entries()).map(([key, items]) => ({
+      key,
       items,
+      category: byCategory ? (items[0]?.category ?? null) : null,
       subtotal: items.reduce((sum, item) => sum + Number(item.amount), 0),
     }))
-  }, [expenses])
+    // Por día respeta el orden de llegada (más reciente primero); por
+    // categoría manda el peso: la que más se lleva va arriba
+    return byCategory ? groups.sort((a, b) => b.subtotal - a.subtotal) : groups
+  }, [expenses, groupBy])
 
   /*
     Borrar es inmediato y reversible, como en Mail: un swipe completo ya es la
@@ -326,15 +338,29 @@ export function ExpenseList({
 
       {!compact && expenses.length > 0 ? (
         <List>
-          {grouped.map(({ date, items, subtotal }) => (
-            <DaySection key={date} arrived={settledMonth === monthKey}>
+          {grouped.map(({ key, items, category, subtotal }) => (
+            <DaySection key={key} arrived={settledMonth === monthKey}>
               {/*
                 El header ya no es sticky: las listas agrupadas de iOS no
                 pegan sus headers, eso es de las listas `plain`. Eso libera
                 el transform del swipe, que antes rompía el sticky.
               */}
               <ListSection
-                header={formatDayLabel(date)}
+                header={
+                  groupBy === 'category' ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <CategoryIcon
+                        icon={category?.icon}
+                        color={category?.color}
+                        name={category?.name}
+                        size="pill"
+                      />
+                      {category?.name ?? 'Sin categoría'}
+                    </span>
+                  ) : (
+                    formatDayLabel(key)
+                  )
+                }
                 headerTrailing={
                   <span className="font-ledger text-footnote font-semibold text-label-secondary">
                     {formatCurrency(subtotal)}
@@ -345,7 +371,11 @@ export function ExpenseList({
                   <ExpenseRow
                     key={expense.id}
                     expense={expense}
-                    caption={expense.category?.name ?? ''}
+                    caption={
+                      groupBy === 'category'
+                        ? formatDayLabel(expense.expense_date)
+                        : (expense.category?.name ?? '')
+                    }
                     touch={touch}
                     fresh={freshIds.has(expense.id)}
                     hint={hintRowId === expense.id}

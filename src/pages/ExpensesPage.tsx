@@ -4,7 +4,8 @@ import { MonthMasthead } from '@/components/layout/MonthPicker'
 import { AnimatedAmount } from '@/components/ui/animated-amount'
 import { Button } from '@/components/ui/button'
 import { ExpenseFilters } from '@/components/expenses/ExpenseFilters'
-import { ExpenseList } from '@/components/expenses/ExpenseList'
+import { ExpenseList, type ExpenseGrouping } from '@/components/expenses/ExpenseList'
+import { SegmentedControl } from '@/components/ui/segmented-control'
 import {
   ExpenseFiltersSkeleton,
   ExpenseListSkeleton,
@@ -17,6 +18,11 @@ import { useExpenses } from '@/hooks/useExpenses'
 import { useSessionState } from '@/hooks/useSessionState'
 import { foldForSearch } from '@/lib/format'
 
+const groupItems = [
+  { value: 'day', label: 'Por día' },
+  { value: 'category', label: 'Por categoría' },
+] as const satisfies readonly { value: ExpenseGrouping; label: string }[]
+
 export function ExpensesPage() {
   const { year, month } = useMonth()
   // Persisten al ir y volver de otro tab: filtrar, mirar Resumen y volver
@@ -26,6 +32,7 @@ export function ExpensesPage() {
     'spendly-expenses-category',
     undefined,
   )
+  const [groupBy, setGroupBy] = useSessionState<ExpenseGrouping>('spendly-expenses-group', 'day')
   const { data: categories = [], isLoading: categoriesLoading } = useCategories()
   const { data: allExpenses = [], isLoading } = useExpenses(year, month)
   // Un filtro guardado de una categoría que ya no existe no debe dejar la
@@ -127,6 +134,7 @@ export function ExpensesPage() {
         ) : null}
         <ExpenseList
           expenses={expenses}
+          groupBy={groupBy}
           emptyCta={filtered ? undefined : 'Agregar tu primer gasto'}
         />
       </>
@@ -142,6 +150,13 @@ export function ExpensesPage() {
             scrolleás la lista */}
         <aside className="order-1 min-w-0 space-y-4 @4xl/main:order-2 @4xl/main:sticky @4xl/main:top-[var(--sticky-top)]">
           {filters}
+          {/* Dos lecturas del mismo mes: cuándo gastaste o en qué */}
+          <SegmentedControl
+            ariaLabel="Agrupar gastos"
+            value={groupBy}
+            onValueChange={setGroupBy}
+            items={groupItems}
+          />
           {summary}
         </aside>
 

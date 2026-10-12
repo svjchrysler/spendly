@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Download, FileDown, Plus, Tag, Trash2, Wallet } from 'lucide-react'
+import { Download, FileDown, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -19,6 +19,7 @@ import {
   SheetConfirmButton,
 } from '@/components/ui/form-sheet'
 import { List, ListRow, ListSection } from '@/components/ui/list'
+import { Progress } from '@/components/ui/progress'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { CategoryForm } from '@/components/categories/CategoryForm'
 import { CategoryIcon } from '@/components/categories/CategoryIcon'
@@ -33,7 +34,7 @@ import { useInstallPrompt } from '@/hooks/useInstallPrompt'
 import { useMonthlyBudget, useMonthlyStats } from '@/hooks/useMonthlyStats'
 import { appCurrency } from '@/lib/currency-config'
 import { dbErrorMessage } from '@/lib/db-errors'
-import { capitalize, formatCurrency, formatMonthYear } from '@/lib/format'
+import { formatCurrency, formatMonthYear } from '@/lib/format'
 import { isSupabaseConfigured } from '@/lib/supabase'
 import type { ThemePreference } from '@/lib/theme'
 import { cn } from '@/lib/utils'
@@ -77,9 +78,9 @@ function RootPanel({ onPush }: Readonly<{ onPush: (panel: Panel) => void }>) {
   const { year, month } = useMonth()
   const { data: categories = [] } = useCategories()
   const { data: budget } = useMonthlyBudget(year, month)
+  const { data: stats } = useMonthlyStats(year, month)
   const navigate = useNavigate()
   const [exporting, setExporting] = useState(false)
-  const initial = user?.email?.charAt(0).toUpperCase() ?? 'S'
   const monthLabel = formatMonthYear(year, month)
 
   // El export (y su query paginada) se baja recién al tocarlo
@@ -101,106 +102,129 @@ function RootPanel({ onPush }: Readonly<{ onPush: (panel: Panel) => void }>) {
     navigate('/login')
   }
 
+  const spent = stats?.total ?? 0
+  const hasBudget = budget != null && budget.amount > 0
+  const usedPct = hasBudget ? Math.min((spent / budget.amount) * 100, 100) : 0
+  const preview = categories.slice(0, 4)
+
+  // Ordenado por uso: lo que se ajusta seguido arriba, la cuenta al final
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col items-center gap-1 pt-2 text-center">
-        <span className="mb-2 flex size-16 items-center justify-center rounded-full bg-primary/15 text-title-1 text-primary">
-          {initial}
-        </span>
-        <p className="max-w-full truncate text-headline text-label">{user?.email}</p>
-        <p className="text-subhead text-label-secondary">Cuenta personal · {appCurrency}</p>
-        {!isSupabaseConfigured ? (
-          <p className="mt-1 text-footnote text-destructive">
-            Configura `.env.local` con tus credenciales de Supabase.
-          </p>
-        ) : null}
-      </div>
-
-      <List>
-        <ListSection header="General">
-          <ListRow
-            leading={
-              <SettingsGlyph tint="bg-tint-orange">
-                <Tag className="size-4" strokeWidth={2.25} />
-              </SettingsGlyph>
-            }
-            separatorInset="3.25rem"
-            title="Categorías"
-            trailing={
-              <span className="text-body text-label-secondary">{categories.length}</span>
-            }
-            chevron
-            onPress={() => onPush({ id: 'categorias' })}
-          />
-          <ListRow
-            leading={
-              <SettingsGlyph tint="bg-primary">
-                <Wallet className="size-4" strokeWidth={2.25} />
-              </SettingsGlyph>
-            }
-            separatorInset="3.25rem"
-            title="Presupuesto"
-            subtitle={capitalize(monthLabel)}
-            trailing={
-              <span className="font-ledger text-body text-label-secondary">
-                {budget ? formatCurrency(budget.amount) : 'Sin definir'}
+    <List className="pt-1">
+      <ListSection header={`Presupuesto de ${monthLabel}`}>
+        <ListRow chevron onPress={() => onPush({ id: 'presupuesto' })}>
+          {hasBudget ? (
+            <span className="list-row__body gap-2 py-0.5">
+              <span className="flex items-baseline justify-between gap-3">
+                <span className="font-ledger text-title-3 font-bold text-label">
+                  {formatCurrency(budget.amount)}
+                </span>
+                <span className="shrink-0 font-ledger text-subhead text-label-secondary">
+                  {Math.round(usedPct)}%
+                </span>
               </span>
-            }
-            chevron
-            onPress={() => onPush({ id: 'presupuesto' })}
+              <Progress
+                value={Math.max(usedPct, 2) / 100}
+                tone={spent > budget.amount ? 'destructive' : 'default'}
+                size="sm"
+                label="Presupuesto usado"
+              />
+              <span className="text-subhead text-label-secondary">
+                {formatCurrency(spent)} gastados
+              </span>
+            </span>
+          ) : (
+            <span className="list-row__body">
+              <span className="text-body text-primary">Definir presupuesto</span>
+              <span className="text-subhead text-label-secondary">
+                Para saber cuánto puedes gastar por día
+              </span>
+            </span>
+          )}
+        </ListRow>
+      </ListSection>
+
+      <ListSection header="Organización">
+        <ListRow
+          title="Categorías"
+          trailing={
+            <span className="flex items-center gap-2.5">
+              <span className="flex -space-x-2" aria-hidden>
+                {preview.map((category) => (
+                  <CategoryIcon
+                    key={category.id}
+                    icon={category.icon}
+                    color={category.color}
+                    name={category.name}
+                    size="sm"
+                    className="ring-2 ring-sheet-cell"
+                  />
+                ))}
+              </span>
+              <span className="text-body text-label-secondary">{categories.length}</span>
+            </span>
+          }
+          chevron
+          onPress={() => onPush({ id: 'categorias' })}
+        />
+      </ListSection>
+
+      <ListSection
+        header="Apariencia"
+        footer="Automático sigue el modo claro u oscuro del sistema."
+      >
+        <div className="p-2">
+          <SegmentedControl
+            ariaLabel="Apariencia"
+            value={preference}
+            onValueChange={setPreference}
+            items={themeItems}
           />
-        </ListSection>
+        </div>
+      </ListSection>
 
-        <ListSection
-          header="Apariencia"
-          footer="Automático sigue el modo claro u oscuro del sistema."
-        >
-          <div className="p-2">
-            <SegmentedControl
-              ariaLabel="Apariencia"
-              value={preference}
-              onValueChange={setPreference}
-              items={themeItems}
-            />
-          </div>
-        </ListSection>
-
-        <ListSection header="Datos">
+      <ListSection header="Datos">
+        <ListRow
+          leading={
+            <SettingsGlyph tint="bg-tint-blue">
+              <FileDown className="size-4" strokeWidth={2.25} />
+            </SettingsGlyph>
+          }
+          separatorInset="3.25rem"
+          title={exporting ? 'Exportando…' : 'Exportar gastos (CSV)'}
+          onPress={exporting ? undefined : () => void handleExport()}
+        />
+        {canInstall ? (
           <ListRow
             leading={
-              <SettingsGlyph tint="bg-tint-blue">
-                <FileDown className="size-4" strokeWidth={2.25} />
+              <SettingsGlyph tint="bg-tint-gray">
+                <Download className="size-4" strokeWidth={2.25} />
               </SettingsGlyph>
             }
             separatorInset="3.25rem"
-            title={exporting ? 'Exportando…' : 'Exportar gastos (CSV)'}
-            onPress={exporting ? undefined : () => void handleExport()}
+            title="Instalar app"
+            onPress={() => void install()}
           />
-          {canInstall ? (
-            <ListRow
-              leading={
-                <SettingsGlyph tint="bg-tint-gray">
-                  <Download className="size-4" strokeWidth={2.25} />
-                </SettingsGlyph>
-              }
-              separatorInset="3.25rem"
-              title="Instalar app"
-              onPress={() => void install()}
-            />
-          ) : null}
-        </ListSection>
+        ) : null}
+      </ListSection>
 
-        <ListSection>
-          <button
-            type="button"
-            className="list-row list-row--tappable justify-center"
-            onClick={() => void handleSignOut()}
-          >
-            <span className="text-body text-destructive">Cerrar sesión</span>
-          </button>
-        </ListSection>
-      </List>
-    </div>
+      <ListSection
+        header="Cuenta"
+        footer={
+          isSupabaseConfigured
+            ? undefined
+            : 'Configura `.env.local` con tus credenciales de Supabase.'
+        }
+      >
+        <ListRow title={user?.email ?? 'Sin sesión'} subtitle={`Cuenta personal · ${appCurrency}`} />
+        <button
+          type="button"
+          className="list-row list-row--tappable justify-center"
+          onClick={() => void handleSignOut()}
+        >
+          <span className="text-body text-destructive">Cerrar sesión</span>
+        </button>
+      </ListSection>
+    </List>
   )
 }
 

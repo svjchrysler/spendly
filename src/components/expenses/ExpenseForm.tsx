@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { onlineManager } from '@tanstack/react-query'
 import { useForm, type FieldErrors } from 'react-hook-form'
 import { Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { CategoryIcon } from '@/components/categories/CategoryIcon'
 import { ExpenseAmountInput } from '@/components/expenses/ExpenseAmountInput'
 import { ExpenseCategoryPicker } from '@/components/expenses/ExpenseCategoryPicker'
 import { ExpenseDatePicker } from '@/components/expenses/ExpenseDatePicker'
@@ -15,6 +16,8 @@ import { useExpenseHistory } from '@/hooks/useExpenseHistory'
 import { useCreateExpense, useUpdateExpense } from '@/hooks/useExpenses'
 import { expenseResolver, type ExpenseFormValues } from '@/lib/expense-validation'
 import { defaultExpenseDate } from '@/lib/format'
+import { frequentExpenses, type FrequentExpense } from '@/lib/frequent-expenses'
+import { getExpenseTitle } from '@/lib/expense-display'
 import { successFeedback } from '@/lib/haptics'
 import { useMonth } from '@/contexts/MonthContext'
 import {
@@ -186,6 +189,22 @@ export function ExpenseForm({ expense, onSuccess, formId }: Readonly<ExpenseForm
     requestAnimationFrame(() => setShaking(true))
   }
 
+  // Solo en el alta: al editar, el gasto ya dice qué es
+  const frequents = useMemo(
+    () =>
+      isEditing
+        ? []
+        : frequentExpenses(history, new Set(categories.map((category) => category.id))),
+    [isEditing, history, categories],
+  )
+
+  function applyFrequent(item: FrequentExpense) {
+    setCategoryManual(true)
+    setPrediction(null)
+    setValue('description', item.description, { shouldValidate: false })
+    setValue('category_id', item.categoryId, { shouldValidate: false })
+  }
+
   function handleCategoryChange(id: string) {
     setCategoryManual(true)
     setPrediction(null)
@@ -215,7 +234,7 @@ export function ExpenseForm({ expense, onSuccess, formId }: Readonly<ExpenseForm
       // del browser) y tapa el mensaje y la sacudida del campo. Los `required`
       // se quedan: siguen exponiendo aria-required.
       noValidate
-      // `gap-3.5` y sin rótulo visible en Fecha: con el teclado numérico arriba
+      // `gap-3.5` y la fecha como píldora sobre el monto: con el teclado numérico arriba
       // el form entero tiene que entrar en lo que queda de pantalla
       className="flex w-full min-w-0 max-w-full flex-col gap-3.5 overflow-x-hidden pb-1"
     >
@@ -227,6 +246,12 @@ export function ExpenseForm({ expense, onSuccess, formId }: Readonly<ExpenseForm
           autoFocus={!isEditing}
           aria-invalid={Boolean(errors.amount)}
           required
+          header={
+            <ExpenseDatePicker
+              value={expenseDate}
+              onChange={(date) => setValue('expense_date', date)}
+            />
+          }
           value={amount}
           onChange={(next) =>
             setValue('amount', next ?? Number.NaN, { shouldValidate: false })
@@ -240,7 +265,50 @@ export function ExpenseForm({ expense, onSuccess, formId }: Readonly<ExpenseForm
             {errors.amount.message}
           </p>
         ) : null}
+        {errors.expense_date ? (
+          <p role="alert" className="notice-in text-center text-footnote text-destructive">
+            {errors.expense_date.message}
+          </p>
+        ) : null}
       </div>
+
+      {/* Lo que más cargás, a un toque: completa descripción y categoría y
+          deja el foco en el monto, que es lo único que cambia cada vez */}
+      {frequents.length > 0 ? (
+        <div
+          aria-label="Gastos frecuentes"
+          className="filter-scroll -mx-1 flex w-full min-w-0 flex-nowrap gap-2 overflow-x-auto overscroll-x-contain px-1"
+        >
+          {frequents.map((item) => {
+            const category = categories.find((entry) => entry.id === item.categoryId)
+            const selected = description?.trim() === item.description
+            return (
+              <button
+                key={item.description}
+                type="button"
+                aria-pressed={selected}
+                // Que el toque no le saque el foco al monto (ni cierre el teclado)
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => applyFrequent(item)}
+                className={cn(
+                  'pressable inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-subhead font-medium transition-colors',
+                  selected
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-fill-quaternary text-label',
+                )}
+              >
+                <CategoryIcon
+                  icon={category?.icon}
+                  color={selected ? undefined : category?.color}
+                  name={category?.name}
+                  size="pill"
+                />
+                <span className="max-w-[10rem] truncate">{getExpenseTitle(item.description) || item.description}</span>
+              </button>
+            )
+          })}
+        </div>
+      ) : null}
 
       <div className="min-w-0 space-y-1.5">
         <label htmlFor="description" className="list-section-header block px-4">
@@ -283,19 +351,6 @@ export function ExpenseForm({ expense, onSuccess, formId }: Readonly<ExpenseForm
         {errors.category_id ? (
           <p role="alert" className="notice-in px-4 text-footnote text-destructive">
             {errors.category_id.message}
-          </p>
-        ) : null}
-      </div>
-
-      <div className="min-w-0 space-y-1.5">
-        <p className="sr-only">Fecha</p>
-        <ExpenseDatePicker
-          value={expenseDate}
-          onChange={(date) => setValue('expense_date', date)}
-        />
-        {errors.expense_date ? (
-          <p role="alert" className="notice-in px-4 text-footnote text-destructive">
-            {errors.expense_date.message}
           </p>
         ) : null}
       </div>

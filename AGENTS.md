@@ -144,6 +144,10 @@ La app sigue la guía de iOS 27 en estructura, materiales, motion y controles. L
 - **Tipografía.** Fuentes del sistema, sin descargas: `system-ui` (SF Pro en Apple) para la interfaz y `ui-serif` (New York en Apple) para títulos (`font-display`: `.page-title`, `.section-title`) y montos (`font-ledger`, siempre con cifras tabulares). Texto chico de apoyo (ejes, captions) va en sans. Escala de iOS (`text-large-title` … `text-caption-2`), sin letter-spacing propio: WebKit aplica el tracking óptico de SF. Títulos en bold. Las etiquetas de datos van en caja normal (`.metric-cell-label`). Los headers de grupo (`.list-section-header`) van en caja normal, semibold.
 - **Superficies.** `.list-group` y `.surface-card` son hojas sobre el papel: casi el mismo tono que el lienzo, separadas por un filete (`--separator`) y radio 1.375rem. Las grillas de métricas llevan el mismo filete. Los íconos de categoría son círculos teñidos con el color de la categoría. El `body` es papel plano: sin degradés.
 - **Portada de Resumen.** `SpendingHero`: la cifra sobre el lienzo, una frase que interpreta el mes (`buildInsight`), barras por día (`.day-bars`, CSS puro, sin recharts) y el presupuesto con la marca de ritmo (`.pace-tick`: dónde deberías ir hoy).
+- **Alta de gasto.** Orden fijo: fecha (píldora sobre el monto, `ExpenseDatePicker`) → monto → gastos frecuentes (`frequentExpenses`, del historial que ya se baja) → descripción → categoría. Tiene que entrar entera sobre el teclado numérico: 470px de 486 libres en un iPhone de 430×932. Si se agrega una fila, medirlo.
+- **Gastos.** El listado se agrupa por día o por categoría (`ExpenseList groupBy`), elegido con un segmented que persiste en la sesión.
+- **Análisis.** "Este mes" va de la interpretación al detalle: lecturas en frases (`buildMonthReadings`), ritmo, métricas, cortes. La grilla no repite lo que ya dice una lectura.
+- **Ajustes.** Raíz ordenada por uso: presupuesto con avance, categorías, apariencia, datos y la cuenta al final. Sin encabezado de perfil.
 - **Secciones.** Contenido con header prominente: `ContentSection` (título bold + "Ver todo ›"). Charts y métricas en `.surface-card` / grillas de celdas con hairlines (gap de 1px sobre `bg-separator`): la misma superficie y radio que las listas.
 - **Color semántico.** Labels (`text-label`, `-secondary`, `-tertiary`, `-quaternary`), fills (`bg-fill-*`) y fondos agrupados (`--group-surface`). `--muted-foreground` y `--border` están re-apuntados a la jerarquía nueva: el código viejo migró solo.
 - **Tap targets** de 44pt en táctil (también en ancho regular: el Duo abierto): `size="touch"` / `size="icon-touch"` en `Button`. `default`/`icon` solo bajan a 32px con `md:pointer-fine:`.
@@ -221,6 +225,10 @@ Variables `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, opcionales `VITE_CURREN
 - No `service_role` ni secretos en el front.
 - No `git commit` / `push` / `--no-verify` sin pedido explícito.
 - No documentar en markdown extras (salvo que pidan README/AGENTS/etc.).
+
+## OpenSpec
+
+Los cambios de producto se proponen en `openspec/changes/<id>/` (proposal, specs, design, tasks) antes de implementar: `/opsx:propose`, `/opsx:apply`, `/opsx:archive`, o la CLI `openspec`. Al archivar, las specs pasan a `openspec/specs/`.
 
 ## Skills locales
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { formatAmountDraft, parseAmountDraft, toAmountDraft } from '@/lib/amount-draft'
 import { getCurrencySymbol } from '@/lib/currency-config'
 import { cn } from '@/lib/utils'
@@ -7,6 +7,8 @@ interface ExpenseAmountInputProps {
   id?: string
   /** Rótulo visible sobre la cifra */
   label?: string
+  /** Ocupa el lugar del rótulo (que queda solo para lectores de pantalla) */
+  header?: ReactNode
   value?: number
   onChange: (value: number | undefined) => void
   onBlur?: () => void
@@ -20,6 +22,7 @@ interface ExpenseAmountInputProps {
 export function ExpenseAmountInput({
   id = 'amount',
   label = 'Monto',
+  header,
   value,
   onChange,
   onBlur,
@@ -40,9 +43,13 @@ export function ExpenseAmountInput({
   // Rounded es el campo, igual que en Wallet al mandar dinero
   return (
     <div className="flex w-full min-w-0 flex-col items-center gap-0.5 pb-1">
-      <label htmlFor={id} className="cursor-text text-footnote text-label-secondary">
+      <label
+        htmlFor={id}
+        className={header ? 'sr-only' : 'cursor-text text-footnote text-label-secondary'}
+      >
         {label}
       </label>
+      {header}
       <div className="flex min-w-0 items-baseline justify-center gap-2">
         <span className="shrink-0 font-ledger text-title-2 text-label-secondary">{symbol}</span>
         <input

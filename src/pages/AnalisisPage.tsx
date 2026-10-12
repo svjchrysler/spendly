@@ -15,6 +15,7 @@ import { capitalize, formatCurrency, formatDayLabel } from '@/lib/format'
 import { getExpenseLabel } from '@/lib/expense-display'
 import { topShare } from '@/lib/month-insights'
 import type { HistoryMonth } from '@/lib/month-history'
+import { buildMonthReadings, type MonthReading } from '@/lib/month-readings'
 import { buildMonthReport, type MonthReport } from '@/lib/month-report'
 import { cn } from '@/lib/utils'
 
@@ -149,11 +150,16 @@ function TrendStrip({ history }: Readonly<{ history: HistoryMonth[] }>) {
   )
 }
 
+/*
+  Solo las cifras que las lecturas no dicen: gasto típico, mayor gasto y fin de
+  semana ya van en frases arriba, y repetirlos acá era la pared de números que
+  había que interpretar.
+*/
 function MonthPulse({ report }: Readonly<{ report: MonthReport }>) {
   const overBudget = report.remaining != null && report.remaining < 0
 
   return (
-    <MetricGrid className="@xl/main:grid-cols-3">
+    <MetricGrid className="@xl/main:grid-cols-4">
       <MetricCell
         label="Movimientos"
         value={report.count}
@@ -162,17 +168,7 @@ function MonthPulse({ report }: Readonly<{ report: MonthReport }>) {
       <MetricCell
         label="Ticket medio"
         value={report.ticket > 0 ? formatCurrency(report.ticket) : '—'}
-        note={`mediana ${report.median > 0 ? formatCurrency(report.median) : '—'}`}
-      />
-      <MetricCell
-        label="Mayor gasto"
-        value={report.largest > 0 ? formatCurrency(report.largest) : '—'}
-        note={`menor ${report.smallest > 0 ? formatCurrency(report.smallest) : '—'}`}
-      />
-      <MetricCell
-        label="Fin de semana"
-        value={report.spent > 0 ? `${Math.round(report.weekendPct)}%` : '—'}
-        note={`pico ${report.peakWeekday.total > 0 ? report.peakWeekday.label : '—'}`}
+        note="promedio por gasto"
       />
       <MetricCell
         label="Proyección"
@@ -191,6 +187,30 @@ function MonthPulse({ report }: Readonly<{ report: MonthReport }>) {
         }
       />
     </MetricGrid>
+  )
+}
+
+/**
+ * El mes dicho en frases, antes de cualquier cifra: la pantalla abre
+ * interpretando y deja el detalle para quien quiera seguir bajando.
+ */
+function MonthReadings({ readings }: Readonly<{ readings: MonthReading[] }>) {
+  if (readings.length === 0) return null
+
+  return (
+    <section className="surface-card reveal space-y-3" aria-labelledby="lecturas-titulo">
+      <h2 id="lecturas-titulo" className="font-display text-headline text-label">
+        Lo que dice el mes
+      </h2>
+      <ul className="stagger space-y-2.5">
+        {readings.map((reading) => (
+          <li key={reading.id} className="flex gap-3 text-callout text-pretty text-label">
+            <span className="mt-[0.5rem] size-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
+            {reading.text}
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 
@@ -317,6 +337,11 @@ export function AnalisisPage() {
     [expenses, year, month, budgetAmount],
   )
 
+  const readings = useMemo(
+    () => buildMonthReadings(report, stats?.categoryBreakdown ?? []),
+    [report, stats],
+  )
+
   const weekdayRows = useMemo(
     () =>
       report.byWeekday.map((item) => ({
@@ -386,18 +411,24 @@ export function AnalisisPage() {
               aria-labelledby="tab-ritmo"
               className="swap flex min-w-0 flex-col gap-4"
             >
-              {!expensesLoading ? <MonthPulse report={report} /> : null}
+              {/* De la interpretación al detalle: frases, ritmo, cifras, cortes */}
+              {expensesLoading ? null : <MonthReadings readings={readings} />}
               {report.spent > 0 ? (
                 <Suspense fallback={<ChartSkeleton />}>
                   <DailyPaceChart data={report.dailyPace} budget={report.budget} />
-                  <WeekOfMonthChart data={report.byWeek} />
-                  <WeekdayBarChart data={weekdayRows} />
                 </Suspense>
               ) : (
                 <p className="surface-card text-callout text-label-secondary">
                   Sin movimientos este mes para medir el ritmo.
                 </p>
               )}
+              {expensesLoading ? null : <MonthPulse report={report} />}
+              {report.spent > 0 ? (
+                <Suspense fallback={<ChartSkeleton />}>
+                  <WeekOfMonthChart data={report.byWeek} />
+                  <WeekdayBarChart data={weekdayRows} />
+                </Suspense>
+              ) : null}
             </div>
           )}
         </div>

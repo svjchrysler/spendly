@@ -27,3 +27,7 @@ supabase/.branches/
 *.njsproj
 *.sln
 *.sw?
+
+# Claude Code: estado local de la máquina
+.claude/settings.local.json
+.claude/RESUME.md
