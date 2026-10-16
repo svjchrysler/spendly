@@ -1,5 +1,4 @@
 import { Pencil, Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { ExpenseIcon } from '@/components/expenses/ExpenseIcon'
 import { getExpenseLabel } from '@/lib/expense-display'
 import { formatCurrency, formatDayLabel } from '@/lib/format'
@@ -64,44 +63,6 @@ export function ExpenseActionSheet({
           <span className="flex-1 text-body text-destructive">Eliminar gasto</span>
         </button>
       </div>
-    </div>
-  )
-}
-
-interface ExpenseRowActionsProps {
-  onEdit: () => void
-  onDelete: () => void
-}
-
-export function ExpenseRowActions({ onEdit, onDelete }: Readonly<ExpenseRowActionsProps>) {
-  return (
-    <div className="flex shrink-0 items-center gap-0.5">
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        className="size-9 cursor-pointer text-muted-foreground hover:bg-muted hover:text-foreground"
-        onClick={(e) => {
-          e.stopPropagation()
-          onEdit()
-        }}
-        aria-label="Editar gasto"
-      >
-        <Pencil className="size-4" />
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        className="size-9 cursor-pointer text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-        onClick={(e) => {
-          e.stopPropagation()
-          onDelete()
-        }}
-        aria-label="Eliminar gasto"
-      >
-        <Trash2 className="size-4" />
-      </Button>
     </div>
   )
 }

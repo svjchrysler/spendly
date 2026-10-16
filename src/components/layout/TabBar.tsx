@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react'
 import type { TabIcon } from '@/components/layout/TabIcons'
 import { isPlainClick } from '@/hooks/useRouteTransition'
 import { useTabBarCollapse } from '@/hooks/useTabBarCollapse'
+import { SHORTCUT_KEYS } from '@/lib/keyboard-shortcuts'
 
 export type TabItem = Readonly<{
   to: string
@@ -133,6 +134,7 @@ export function TabBar({ items, onWarm, onSelect, onAdd, onWarmAdd }: TabBarProp
           onPointerDown={onWarmAdd}
           onFocus={onWarmAdd}
           aria-label="Agregar gasto"
+          title={`Nuevo gasto (${SHORTCUT_KEYS.add})`}
         >
           <Plus className="size-6" strokeWidth={2.5} aria-hidden />
         </button>

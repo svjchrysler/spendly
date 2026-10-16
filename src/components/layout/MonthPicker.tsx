@@ -3,6 +3,7 @@ import { NavBar } from '@/components/layout/NavBar'
 import { useMonth } from '@/contexts/MonthContext'
 import { capitalize, formatMonthYear } from '@/lib/format'
 import { tapFeedback } from '@/lib/haptics'
+import { SHORTCUT_KEYS } from '@/lib/keyboard-shortcuts'
 
 /**
  * Large title de la pantalla con el mes como subtítulo de navegación y el
@@ -37,6 +38,7 @@ export function MonthStepper({
           onPrevious()
         }}
         aria-label="Mes anterior"
+        title={`Mes anterior (${SHORTCUT_KEYS['prev-month']})`}
       >
         <ChevronLeft className="size-5" strokeWidth={2.25} />
       </button>
@@ -49,6 +51,7 @@ export function MonthStepper({
           onNext()
         }}
         aria-label="Mes siguiente"
+        title={`Mes siguiente (${SHORTCUT_KEYS['next-month']})`}
       >
         <ChevronRight className="size-5" strokeWidth={2.25} />
       </button>

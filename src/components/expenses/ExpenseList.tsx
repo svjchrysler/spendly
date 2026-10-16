@@ -11,10 +11,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { useAddExpense } from '@/components/expenses/add-expense-context'
-import {
-  ExpenseActionSheet,
-  ExpenseRowActions,
-} from '@/components/expenses/ExpenseActionSheet'
+import { ExpenseActionSheet } from '@/components/expenses/ExpenseActionSheet'
 import { ExpenseIcon } from '@/components/expenses/ExpenseIcon'
 import { CategoryIcon } from '@/components/categories/CategoryIcon'
 import { ExpenseFormSkeleton } from '@/components/layout/skeletons'
@@ -93,6 +90,7 @@ function ExpenseRow({
     onCommit: onDelete,
   })
 
+  const label = getExpenseLabel(expense.description, expense.category?.name)
   const row = (
     <ListRow
       leading={
@@ -104,25 +102,39 @@ function ExpenseRow({
           size="sm"
         />
       }
-      title={getExpenseLabel(expense.description, expense.category?.name)}
+      title={label}
       subtitle={
         pending ? [caption, 'Sin sincronizar'].filter(Boolean).join(' · ') : caption
       }
-      // Con la acción asomada, tocar la fila la cierra — como en Mail
-      onPress={touch ? (swipeOpen ? () => onSwipeOpenChange(false) : onOpenActions) : undefined}
+      // Táctil: action sheet, y con la acción asomada tocar la fila la cierra
+      // (como en Mail). Mouse: la fila entera edita.
+      onPress={touch ? (swipeOpen ? () => onSwipeOpenChange(false) : onOpenActions) : onEdit}
       trailing={
-        <span className="flex items-center gap-0.5 sm:gap-1">
-          <span className="font-ledger text-body font-semibold whitespace-nowrap">
-            {formatCurrency(Number(expense.amount))}
-          </span>
-          {touch ? null : <ExpenseRowActions onEdit={onEdit} onDelete={onDelete} />}
+        <span className="font-ledger text-body font-semibold whitespace-nowrap">
+          {formatCurrency(Number(expense.amount))}
         </span>
       }
-      className={cn(!touch && 'sm:cursor-default', fresh && 'row-landed')}
+      className={cn(fresh && 'row-landed')}
     />
   )
 
-  if (!touch) return row
+  // Eliminar aparece al pasar el mouse o con foco (ver `.expense-row`)
+  if (!touch) {
+    return (
+      <div className="expense-row">
+        {row}
+        <button
+          type="button"
+          className="expense-row__delete"
+          onClick={onDelete}
+          aria-label={`Eliminar ${label}`}
+          title="Eliminar"
+        >
+          <Trash2 className="size-4" aria-hidden />
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div ref={rowRef} className="swipe-row" {...swipeHandlers}>

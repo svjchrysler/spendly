@@ -24,7 +24,7 @@ export function ExpenseCategoryPicker({
   useEffect(() => {
     const scroller = scrollerRef.current
     if (!scroller || !value) return
-    // Desktop: los chips envuelven, no hay riel que alinear
+    // Con mouse los chips envuelven: no hay riel que alinear
     if (scroller.scrollWidth <= scroller.clientWidth) return
 
     const chip = scroller.querySelector<HTMLElement>(
@@ -67,7 +67,9 @@ export function ExpenseCategoryPicker({
             aria-pressed={isSelected}
             onClick={() => onChange(category.id)}
             className={cn(
-              'pressable inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-1.5 text-subhead font-medium transition-colors',
+              // Con mouse el riel envuelve (`.filter-scroll`): densidad de
+              // escritorio para que el diálogo no crezca de más
+              'pressable inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-1.5 text-subhead font-medium transition-colors md:pointer-fine:min-h-9',
               isSelected
                 ? 'bg-primary/15 text-label ring-1 ring-primary/45'
                 : 'bg-sheet-cell text-label-secondary hover:text-label',

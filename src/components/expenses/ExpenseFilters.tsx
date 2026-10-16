@@ -1,6 +1,8 @@
+import type { Ref } from 'react'
 import { Search, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CategoryIcon } from '@/components/categories/CategoryIcon'
+import { SHORTCUT_KEYS } from '@/lib/keyboard-shortcuts'
 import type { Category } from '@/types/database'
 
 interface ExpenseFiltersProps {
@@ -10,6 +12,8 @@ interface ExpenseFiltersProps {
   onCategoryChange: (categoryId?: string) => void
   categories: Category[]
   loading?: boolean
+  /** Para enfocar la búsqueda desde el atajo `/` */
+  searchRef?: Ref<HTMLInputElement>
 }
 
 const chip =
@@ -24,6 +28,7 @@ export function ExpenseFilters({
   onCategoryChange,
   categories,
   loading = false,
+  searchRef,
 }: Readonly<ExpenseFiltersProps>) {
   const hasFilters = Boolean(search.trim() || categoryId)
 
@@ -37,6 +42,7 @@ export function ExpenseFilters({
             aria-hidden
           />
           <input
+            ref={searchRef}
             type="search"
             name="buscar"
             autoComplete="off"
@@ -45,10 +51,20 @@ export function ExpenseFilters({
             placeholder="Buscar"
             disabled={loading}
             aria-label="Buscar gastos"
+            aria-keyshortcuts={SHORTCUT_KEYS.search}
             enterKeyHint="search"
             // 17px: bajo 16px iOS hace zoom al enfocar y descuadra la PWA
-            className="h-11 w-full appearance-none rounded-full bg-fill-quaternary pr-10 pl-10 text-body text-label outline-none transition-colors placeholder:text-label-secondary focus-visible:bg-fill-tertiary focus-visible:ring-2 focus-visible:ring-primary/35 disabled:opacity-50 [&::-webkit-search-cancel-button]:hidden"
+            className="peer h-11 w-full appearance-none rounded-full bg-fill-quaternary pr-10 pl-10 text-body text-label outline-none transition-colors placeholder:text-label-secondary focus-visible:bg-fill-tertiary focus-visible:ring-2 focus-visible:ring-primary/35 disabled:opacity-50 [&::-webkit-search-cancel-button]:hidden"
           />
+          {/* Pista del atajo, solo con teclado a mano (puntero fino) */}
+          {search ? null : (
+            <kbd
+              className="pointer-events-none absolute top-1/2 right-3.5 hidden h-5 min-w-5 -translate-y-1/2 items-center justify-center rounded-[0.3125rem] border border-separator px-1 font-sans text-caption-1 font-semibold text-label-tertiary peer-focus:hidden pointer-fine:inline-flex"
+              aria-hidden
+            >
+              {SHORTCUT_KEYS.search}
+            </kbd>
+          )}
           {search ? (
             <button
               type="button"

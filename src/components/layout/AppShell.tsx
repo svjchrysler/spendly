@@ -1,7 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Outlet, useLocation, useSearchParams } from 'react-router-dom'
-import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AddExpenseProvider } from '@/components/expenses/AddExpenseProvider'
 import { useAddExpense } from '@/components/expenses/add-expense-context'
@@ -20,6 +19,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext'
 import { useMonth } from '@/contexts/MonthContext'
 import { useKeyboardInset } from '@/hooks/useKeyboardInset'
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useRealtimeExpenses } from '@/hooks/useRealtimeExpenses'
 import { useRouteTransition } from '@/hooks/useRouteTransition'
 import { useScrollRestoration } from '@/hooks/useScrollRestoration'
@@ -89,7 +89,7 @@ function AppShellInner() {
   useKeyboardInset()
   useScrollRestoration()
   const { user } = useAuth()
-  const { year, month } = useMonth()
+  const { year, month, goToPreviousMonth, goToNextMonth } = useMonth()
   const { openAdd, warmAdd } = useAddExpense()
   const queryClient = useQueryClient()
   const navTitle = useNavTitle()
@@ -164,12 +164,53 @@ function AppShellInner() {
     openAdd()
   }
 
+  /*
+    Buscar es una pantalla y un foco: va a Gastos con la transición de tab y
+    `ExpensesPage` enfoca el campo al ver `?buscar`. Si ya estás ahí, alcanza
+    con el param — el mismo patrón que `?nuevo=1` y `?ajustes=`.
+  */
+  function openSearch() {
+    const index = navItems.findIndex((item) => item.to === '/gastos')
+    if (index === activeIndex) {
+      setSearchParams(
+        (current) => {
+          const next = new URLSearchParams(current)
+          next.set('buscar', '1')
+          return next
+        },
+        { replace: true },
+      )
+      return
+    }
+    void navigateToRoute(
+      '/gastos?buscar=1',
+      index > activeIndex ? 'next' : 'prev',
+      navItems[index].prefetch,
+    )
+  }
+
+  useKeyboardShortcuts({
+    add: openAdd,
+    search: openSearch,
+    'prev-month': goToPreviousMonth,
+    'next-month': goToNextMonth,
+  })
+
   const initial = user?.email?.charAt(0).toUpperCase() ?? 'S'
 
   return (
     <SettingsContext.Provider value={settingsApi}>
       <div className="min-h-dvh overflow-x-clip bg-background md:grid md:grid-cols-[var(--app-sidebar-w)_minmax(0,1fr)]">
-        <Sidebar items={navItems} onWarm={warmRoute} onSelect={goToTab} />
+        <Sidebar
+          items={navItems}
+          onWarm={warmRoute}
+          onSelect={goToTab}
+          onAdd={handleAdd}
+          onWarmAdd={warmAdd}
+          onOpenSettings={() => openSettings()}
+          onWarmSettings={() => void importSettingsSheet()}
+          account={{ initial, email: user?.email }}
+        />
 
         {/* El sidebar absorbe el safe area izquierdo en landscape; la columna,
             el derecho */}
@@ -192,24 +233,12 @@ function AppShellInner() {
                 </div>
               ) : null}
 
-              {/* En compact el + vive junto al tab bar; en regular, en la barra */}
-              <Button
-                type="button"
-                variant="prominent"
-                size="icon-touch"
-                className="hidden cursor-pointer md:inline-flex"
-                onClick={handleAdd}
-                onPointerEnter={warmAdd}
-                onFocus={warmAdd}
-                aria-label="Agregar gasto"
-              >
-                <Plus className="size-5" strokeWidth={2.5} />
-              </Button>
+              {/* Solo compact: en regular el + y la cuenta viven en el sidebar */}
               <Button
                 type="button"
                 variant="glass"
                 size="icon-touch"
-                className="cursor-pointer text-subhead font-semibold"
+                className="cursor-pointer text-subhead font-semibold md:hidden"
                 onClick={() => openSettings()}
                 onPointerEnter={() => void importSettingsSheet()}
                 aria-label="Abrir ajustes"
