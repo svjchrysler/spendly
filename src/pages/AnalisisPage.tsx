@@ -433,7 +433,9 @@ export function AnalisisPage() {
           )}
         </div>
 
-        <div className="flex min-w-0 flex-col gap-7 @4xl/main:sticky @4xl/main:top-[var(--sticky-top)]">
+        {/* Sin sticky: con el reparto completo es más alta que la ventana, y
+            un sticky así deja "Mayores gastos" fuera de vista hasta el pie */}
+        <div className="flex min-w-0 flex-col gap-7">
           <ContentSection title="Por categoría">
             {statsLoading ? (
               <CategoryAllocationSkeleton />

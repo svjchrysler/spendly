@@ -68,8 +68,8 @@ src/
     charts/            # CategoryAllocation, MonthlyBar
     ui/                # primitives shadcn — editar con cuidado
   contexts/            # Auth, Month, Theme
-  hooks/               # useExpenses, useCategories, useMonthlyStats, useRealtimeExpenses, useKeyboardInset, useMediaQuery, useLatchedWhile
-  lib/                 # supabase, format, query-client, theme, predict-category, register-pwa
+  hooks/               # useExpenses, useCategories, useMonthlyStats, useRealtimeExpenses, useKeyboardInset, useKeyboardShortcuts, useMediaQuery, useLatchedWhile
+  lib/                 # supabase, format, query-client, theme, predict-category, keyboard-shortcuts, register-pwa
   types/database.ts    # tipos DB
 supabase/migrations/   # fuente de verdad del schema
 ```
@@ -86,8 +86,9 @@ supabase/migrations/   # fuente de verdad del schema
 
 Nav: 3 tabs (Resumen · Gastos · Análisis) + una acción global, **Agregar gasto**.
 - Compact (<768px: iPhone, iPhone Duo cerrado, Split View) = tab bar flotante con el `+` como círculo de vidrio teñido suelto a su derecha (patrón de iOS 26/27, como Buscar en las apps de Apple).
-- Regular (≥768px: Duo abierto, iPhone en landscape, iPad, desktop) = `Sidebar` de borde a borde y el `+` en la barra.
-- El avatar de la barra abre **Ajustes** (sheet con stack propio). `?ajustes=root|categorias|presupuesto` lo abre directo; `?nuevo=1` abre el alta (atajo del manifest).
+- Regular (≥768px: Duo abierto, iPhone en landscape, iPad, desktop) = `Sidebar` de borde a borde, que concentra las acciones: **Nuevo gasto** arriba y la cuenta al pie. La barra no lleva botones; solo el título inline al scrollear.
+- **Ajustes** (sheet con stack propio) se abre con el avatar de la barra en compact y con la cuenta del sidebar en regular. `?ajustes=root|categorias|presupuesto` lo abre directo; `?nuevo=1` abre el alta (atajo del manifest); `?buscar=1` enfoca la búsqueda de Gastos.
+- **Teclado** (`lib/keyboard-shortcuts.ts` + `useKeyboardShortcuts` en `AppShell`): `N` nuevo gasto, `/` buscar, `←`/`→` mes. Se ignoran en campos editables, con un modal abierto, con ⌘/Ctrl/Alt, en `repeat` y, las flechas, sobre controles que ya las usan (`radiogroup`, `tablist`, `application` de recharts). Se anuncian con `title` y `kbd` (este último solo con `pointer-fine:`).
 
 ### Datos
 
@@ -118,8 +119,9 @@ Nav: 3 tabs (Resumen · Gastos · Análisis) + una acción global, **Agregar gas
 6. **Ancho vs puntero — son dos señales distintas.** El iPhone Duo abierto es ancho *y* táctil.
    - `useIsDesktop` (`min-width: 768px`) decide layout y presentación. Forms add/edit van en `FormSheet` (`@/components/ui/form-sheet`): bottom sheet en compact, `Dialog` en regular.
    - `useIsTouch` (`pointer: coarse`) decide gestos y densidad: swipe, tap en fila → action sheet, 44pt. Los botones inline chicos son solo para mouse (`md:pointer-fine:`).
+   - Con mouse la fila de gasto entera edita y "Eliminar" es un botón hermano que aparece con hover o foco (`.expense-row`). Los rieles `.filter-scroll` envuelven con `pointer: fine`, porque la rueda no scrollea en horizontal.
    - La presentación se congela mientras el modal está abierto (`FormSheet` ya usa `useLatchedWhile(open, isDesktop)`). Si no, plegar/desplegar o entrar en Split View remonta el form y se pierde lo tipeado.
-7. **Agregar gasto es global:** `useAddExpense().openAdd()` desde cualquier lado (botón del dock, `+` de la barra, estados vacíos). No hay FAB: nada `fixed` flota sobre el contenido. Igual, `PageEnter` sigue opacity only.
+7. **Agregar gasto es global:** `useAddExpense().openAdd()` desde cualquier lado (botón del dock, "Nuevo gasto" del sidebar, atajo `N`, estados vacíos). No hay FAB: nada `fixed` flota sobre el contenido. Igual, `PageEnter` sigue opacity only.
 8. **Skeletons:** al tocar loading de una page, actualizar el skeleton hermano en `skeletons.tsx`.
 9. **Comments:** solo si explican un tradeoff no obvio; prefijo `// ponytail:` para atajos deliberados.
 10. **No** agregar deps si stdlib / lo instalado alcanza.
@@ -135,7 +137,9 @@ La app sigue la guía de iOS 27 en estructura, materiales, motion y controles. L
   - Menos transparencia que en iOS 26: `--glass-tint` más denso y `--glass-specular` más brillante.
   - Borde oscurecido `--glass-edge` alrededor del vidrio.
   - `prefers-reduced-transparency` apaga el blur en todo el vidrio.
-- **Sidebar (regular).** Va de borde a borde, no flotante. Usa el tint del vidrio ya compuesto sobre el fondo, sin blur: nada scrollea por debajo, y el blur solo dejaba artefactos. Solo el ítem activo lleva el icono en color. Tiene `view-transition-name` propio y retrocede con el modal depth hacia el mismo punto de fuga que el contenido.
+- **Sidebar (regular).** Va de borde a borde, no flotante. Usa el tint del vidrio ya compuesto sobre el fondo, sin blur: nada scrollea por debajo, y el blur solo dejaba artefactos. Solo el ítem activo lleva el icono en color. Lleva "Nuevo gasto" relleno (no vidrio: el sidebar ya es la capa de vidrio) y la cuenta al pie.
+- **Profundidad de modal solo en compact.** Con un sheet abierto la pantalla retrocede en Z como la tarjeta de iOS (`lib/modal-depth.ts` + `html[data-modal]`). En regular el form sheet centrado solo atenúa el fondo, como en iPadOS: achicar la ventana entera despegaba el sidebar de los bordes.
+- **`view-transition-name` del chrome solo durante el cambio de tab** (`:root[data-vt-dir]`). En Chromium un elemento con nombre es *backdrop root*, y el vidrio de adentro deja de desenfocar.
 - **Listas `insetGrouped`.** Usar `List` / `ListSection` / `ListRow` de `@/components/ui/list`. Separador indentado al borde del label vía `--row-inset` — no reemplazar por `divide-y`, que no puede indentar.
 - **Nav bar.** `NavBar` de `@/components/layout/NavBar`. El large title es el nombre de la pantalla, el mes va como subtítulo de navegación (iOS 26) y el cambio de mes es una cápsula de vidrio (`MonthStepper`). Al colapsar, el header muestra título + subtítulo inline. **No hay barra**: es el "scroll edge effect" de iOS 26/27, un degradé difuminado que aparece recién al scrollear (`.nav-bar::before`). En reposo no pinta nada, así que no hay costura con la status bar `default`.
 - **Controles de vidrio.** Los botones de barra son cápsulas sueltas: `Button variant="glass"` (cerrar, volver, avatar) y `variant="prominent"` (vidrio teñido: confirmar, agregar). `size="icon-touch"`.
@@ -158,8 +162,10 @@ La app sigue la guía de iOS 27 en estructura, materiales, motion y controles. L
 
 - Mobile-first; el ancho extra se aprovecha según lo que **tiene el contenido**, no la ventana. `main` es `@container/main`, y los grids de página pasan a 2 columnas con `@4xl/main:` (56rem de contenido), no con `lg:`. Resultado:
   - Duo abierto: sidebar + 1 columna.
-  - Desktop ancho: sidebar + 2 columnas.
+  - Desktop ancho: sidebar + 2 columnas. En Resumen, la portada va sola a la izquierda y Por categoría + Recientes se apilan a la derecha, ubicadas por grid: el DOM sigue en el orden de una columna.
   - Duo cerrado / Split View: tab bar.
+
+  Nada sticky más alto que la ventana: su final queda inalcanzable hasta el pie de la página. Por eso la columna derecha de Análisis no es sticky y el riel de Gastos sí.
 
   Los paddings del shell siguen por viewport.
 - iPhone Duo: no hay Viewport Segments en WebKit y el pliegue es suave, así que no se esquiva. Plegar/desplegar cambia el viewport sin recargar (≈466 ↔ 890px de ancho; Split View ≈445). Por eso el layout se hace con media/container queries y no se ramifica por dispositivo.
@@ -196,6 +202,8 @@ La app sigue la guía de iOS 27 en estructura, materiales, motion y controles. L
 | Form vacío al plegar/desplegar el Duo o entrar en Split View | Al cruzar 768px con el modal abierto, Sheet ↔ Dialog remontaba el form. La presentación va con `useLatchedWhile(open, isDesktop)` |
 | Duo abierto sin swipe ni tap en filas, con botones de 32px | Se usaba `useIsDesktop` para gestos. Los gestos van con `useIsTouch` y la densidad con `md:pointer-fine:` |
 | Algo `fixed` dentro de `main` que deja de ser fixed | `main` es `@container`, y `container-type` implica layout containment: `main` es containing block. Todo lo `fixed` va por portal |
+| Vidrio que no desenfoca en Chrome (el contenido se ve nítido bajo la tab bar o la barra) | `view-transition-name` vuelve *backdrop root* al elemento, igual que `filter`, `opacity < 1`, `mask` o `clip-path`: el `backdrop-filter` de un descendiente no ve la página. Ningún ancestro de vidrio lleva esas propiedades de forma permanente; los nombres del chrome van bajo `:root[data-vt-dir]` |
+| Categorías inalcanzables con mouse (riel que no scrollea) | Riel horizontal con la barra oculta: la rueda scrollea en vertical. `.filter-scroll` envuelve con `pointer: fine` |
 
 ## Schema (alto nivel)
 

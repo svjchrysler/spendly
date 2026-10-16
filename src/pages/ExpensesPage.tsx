@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { SearchX } from 'lucide-react'
 import { MonthMasthead } from '@/components/layout/MonthPicker'
 import { AnimatedAmount } from '@/components/ui/animated-amount'
@@ -41,6 +42,24 @@ export function ExpensesPage() {
     categoriesLoading || categories.some((category) => category.id === storedCategoryId)
       ? storedCategoryId
       : undefined
+
+  // Atajo `/` (ver AppShell): enfoca la búsqueda y limpia el param para que
+  // un back no la vuelva a enfocar. Espera a que el input exista.
+  const searchRef = useRef<HTMLInputElement>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const focusSearch = searchParams.has('buscar')
+  useEffect(() => {
+    if (!focusSearch || categoriesLoading) return
+    searchRef.current?.focus()
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current)
+        next.delete('buscar')
+        return next
+      },
+      { replace: true },
+    )
+  }, [focusSearch, categoriesLoading, setSearchParams])
 
   const expenses = useMemo(() => {
     const q = foldForSearch(search.trim())
@@ -103,6 +122,7 @@ export function ExpensesPage() {
       categoryId={categoryId}
       onCategoryChange={setCategoryId}
       categories={categories}
+      searchRef={searchRef}
     />
   )
 

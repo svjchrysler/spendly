@@ -657,7 +657,8 @@
     separadores (era el caso).
   */
   .list-row + .list-row::before,
-  .swipe-row + .swipe-row .list-row::before {
+  .swipe-row + .swipe-row .list-row::before,
+  .expense-row + .expense-row .list-row::before {
     content: '';
     position: absolute;
     inset-block-start: 0;
@@ -672,9 +673,65 @@
   }
 
   @media (hover: hover) {
-    .list-row--tappable:hover {
+    .list-row--tappable:hover,
+    .expense-row:hover > .list-row--tappable {
       background-color: color-mix(in oklab, var(--foreground) 4%, transparent);
     }
+  }
+
+  /* Outline interior: `.list-group` recorta con `overflow: hidden` */
+  .list-row--tappable:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: -2px;
+  }
+
+  /*
+    Fila de gasto con puntero fino: la fila es el botón de editar y "Eliminar"
+    un hermano que aparece al pasar el mouse o con foco. Hermano y no hijo: un
+    botón dentro de otro es HTML inválido. La fila le reserva el lugar, así la
+    columna de montos no se mueve cuando aparece.
+  */
+  .expense-row {
+    position: relative;
+  }
+
+  .expense-row > .list-row {
+    padding-inline-end: 3.25rem;
+  }
+
+  .expense-row__delete {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-end: 0.5rem;
+    display: flex;
+    width: 2.25rem;
+    height: 2.25rem;
+    margin-block: auto;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    color: var(--label-secondary);
+    opacity: 0;
+    transition:
+      opacity var(--dur-1) ease,
+      background-color var(--dur-1) ease,
+      color var(--dur-1) ease;
+  }
+
+  .expense-row:hover .expense-row__delete,
+  .expense-row:focus-within .expense-row__delete {
+    opacity: 1;
+  }
+
+  .expense-row__delete:hover {
+    background-color: color-mix(in oklab, var(--destructive) 12%, transparent);
+    color: var(--destructive);
+  }
+
+  .expense-row__delete:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: -2px;
   }
 
   .list-row__leading {
@@ -941,6 +998,22 @@
   /* En el riel de dos columnas los chips envuelven; sin scroll no hace falta
      el fade */
   @container main (width >= 56rem) {
+    .filter-scroll {
+      mask-image: none;
+      flex-wrap: wrap;
+      overflow-x: visible;
+      touch-action: auto;
+    }
+  }
+
+  /*
+    Con mouse el riel no se puede recorrer: la rueda scrollea en vertical y la
+    barra está oculta, así que las categorías del final quedaban inalcanzables
+    (el alta en un diálogo mostraba tres). Envuelve en vez de scrollear. Va por
+    puntero y no por ancho: un iPad con trackpad sigue con `pointer: coarse` y
+    su riel.
+  */
+  @media (pointer: fine) {
     .filter-scroll {
       mask-image: none;
       flex-wrap: wrap;
@@ -1709,54 +1782,39 @@
     El atributo lo maneja `lib/modal-depth.ts` con refcount. Mientras existe,
     los tres declaran su transform de reposo; al borrarse vuelven a
     `transform: none` y dejan de ser containing block de nada.
+
+    Solo en compact, donde es la tarjeta de iOS. En ancho regular un form
+    sheet centrado atenúa el fondo sin moverlo (iPadOS), y en escritorio
+    achicar la ventana entera despegaba el sidebar de los bordes.
   */
-  html[data-modal] :is(.nav-bar, main, .tab-dock, .app-sidebar) {
-    transform: perspective(1200px) translate3d(0, 0, 0);
-    transition: transform var(--dur-2) var(--ease-sheet);
-  }
+  @media (max-width: 767.98px) {
+    html[data-modal] :is(.nav-bar, main, .tab-dock) {
+      transform: perspective(1200px) translate3d(0, 0, 0);
+      transition: transform var(--dur-2) var(--ease-sheet);
+    }
 
-  /*
-    Punto de fuga compartido: los tres apuntan al centro del viewport (50dvh),
-    cada uno expresado contra su propia caja. `main` es el único que depende
-    del scroll, y `modal-depth.ts` lo congela en `--modal-scroll` al abrir —
-    con el modal abierto la página de atrás no scrollea, así que alcanza con
-    leerlo una vez.
-  */
-  html[data-modal] .nav-bar {
-    transform-origin: 50% 50dvh;
-  }
-
-  html[data-modal] main {
-    transform-origin: 50% calc(50dvh + var(--modal-scroll, 0px) - var(--sticky-top));
-  }
-
-  html[data-modal] .tab-dock {
-    transform-origin: 50% calc(var(--app-tabbar-space) - 50dvh);
-  }
-
-  /*
-    Con sidebar el centro del viewport ya no es el centro de la columna: la
-    columna arranca en `--app-sidebar-w`, así que el 50vw queda medio sidebar
-    a la izquierda de su 50%. Sin esto sidebar y contenido se achican hacia
-    puntos distintos y se abre una grieta entre los dos.
-  */
-  @media (min-width: 768px) {
+    /*
+      Punto de fuga compartido: los tres apuntan al centro del viewport
+      (50dvh), cada uno expresado contra su propia caja. `main` es el único
+      que depende del scroll, y `modal-depth.ts` lo congela en
+      `--modal-scroll` al abrir — con el modal abierto la página de atrás no
+      scrollea, así que alcanza con leerlo una vez.
+    */
     html[data-modal] .nav-bar {
-      transform-origin: calc(50% - var(--app-sidebar-w) / 2) 50dvh;
+      transform-origin: 50% 50dvh;
     }
 
     html[data-modal] main {
-      transform-origin: calc(50% - var(--app-sidebar-w) / 2)
-        calc(50dvh + var(--modal-scroll, 0px) - var(--sticky-top));
+      transform-origin: 50% calc(50dvh + var(--modal-scroll, 0px) - var(--sticky-top));
     }
 
-    html[data-modal] .app-sidebar {
-      transform-origin: 50vw 50dvh;
+    html[data-modal] .tab-dock {
+      transform-origin: 50% calc(var(--app-tabbar-space) - 50dvh);
     }
-  }
 
-  html[data-modal='1'] :is(.nav-bar, main, .tab-dock, .app-sidebar) {
-    transform: perspective(1200px) translate3d(0, 0, -64px);
+    html[data-modal='1'] :is(.nav-bar, main, .tab-dock) {
+      transform: perspective(1200px) translate3d(0, 0, -64px);
+    }
   }
 
   /*
@@ -1768,16 +1826,21 @@
     propio, así que quedan fuera del snapshot de `root` y se quedan quietos
     mientras el contenido cambia por debajo — que es lo que hace iOS y lo que
     un cross-fade de página entera rompe.
+
+    Solo mientras dura el cambio de tab. En Chromium un elemento con nombre es
+    *backdrop root*: el `backdrop-filter` de adentro deja de ver la página, y
+    la tab bar, los botones de vidrio y el degradé de la barra mostraban el
+    contenido nítido en vez de desenfocado.
   */
-  .nav-bar {
+  :root[data-vt-dir] .nav-bar {
     view-transition-name: nav-bar;
   }
 
-  .tab-dock {
+  :root[data-vt-dir] .tab-dock {
     view-transition-name: tab-dock;
   }
 
-  .app-sidebar {
+  :root[data-vt-dir] .app-sidebar {
     view-transition-name: sidebar;
   }
 

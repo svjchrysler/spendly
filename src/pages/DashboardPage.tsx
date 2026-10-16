@@ -31,10 +31,17 @@ export function DashboardPage() {
     <div className="flex flex-col gap-6 pb-2">
       <MonthMasthead title="Resumen" />
 
-      {/* Empaquetado arriba en las dos columnas: estirar para llenar el alto
-          dejaba huecos (ver pitfalls en AGENTS.md) */}
-      <div className="grid gap-7 @4xl/main:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] @4xl/main:items-start @4xl/main:gap-8">
-        <div className="flex min-w-0 flex-col gap-7">
+      {/*
+        Empaquetado arriba en las dos columnas: estirar para llenar el alto
+        dejaba huecos (ver pitfalls en AGENTS.md). En una columna el orden es
+        el del DOM (portada, Recientes, Por categoría); en dos, la portada va
+        sola a la izquierda y las dos listas se apilan a la derecha. Antes
+        Recientes quedaba bajo la portada, debajo del pliegue, con media
+        pantalla vacía al lado. `1fr` en la segunda fila: el sobrante del alto
+        de la portada cae bajo Recientes y no entre las dos listas.
+      */}
+      <div className="grid gap-7 @4xl/main:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] @4xl/main:grid-rows-[auto_1fr] @4xl/main:items-start @4xl/main:gap-8">
+        <div className="min-w-0 @4xl/main:row-span-2">
           {statsLoading ? (
             <SpendingHeroSkeleton />
           ) : (
@@ -44,28 +51,33 @@ export function DashboardPage() {
               budget={budgetAmount}
             />
           )}
-
-          <ContentSection title="Recientes" action={{ label: 'Ver todo', to: '/gastos' }}>
-            {expensesLoading ? (
-              <div className="list-group" aria-hidden>
-                {Array.from({ length: 4 }, (_, i) => (
-                  <ExpenseRowSkeleton key={i} />
-                ))}
-              </div>
-            ) : (
-              // Tocables: mismo action sheet / editar / eliminar que Gastos
-              <ExpenseList
-                expenses={expenses.slice(0, 5)}
-                compact
-                emptyCta="Agregar tu primer gasto"
-              />
-            )}
-          </ContentSection>
         </div>
+
+        <ContentSection
+          title="Recientes"
+          action={{ label: 'Ver todo', to: '/gastos' }}
+          className="@4xl/main:col-start-2 @4xl/main:row-start-2"
+        >
+          {expensesLoading ? (
+            <div className="list-group" aria-hidden>
+              {Array.from({ length: 4 }, (_, i) => (
+                <ExpenseRowSkeleton key={i} />
+              ))}
+            </div>
+          ) : (
+            // Tocables: mismo action sheet / editar / eliminar que Gastos
+            <ExpenseList
+              expenses={expenses.slice(0, 5)}
+              compact
+              emptyCta="Agregar tu primer gasto"
+            />
+          )}
+        </ContentSection>
 
         <ContentSection
           title="Por categoría"
           action={{ label: 'Análisis', to: '/analisis' }}
+          className="@4xl/main:col-start-2 @4xl/main:row-start-1"
         >
           {statsLoading ? (
             <CategoryAllocationSkeleton />

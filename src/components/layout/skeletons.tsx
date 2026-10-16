@@ -126,19 +126,20 @@ export function DashboardSkeleton() {
   return (
     <div className="flex flex-col gap-6 pb-2" aria-busy="true" aria-label="Cargando resumen">
       <MastheadSkeleton />
-      <div className="grid gap-7 @4xl/main:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] @4xl/main:items-start @4xl/main:gap-8">
-        <div className="flex min-w-0 flex-col gap-7">
+      {/* Misma grilla que DashboardPage: portada sola a la izquierda */}
+      <div className="grid gap-7 @4xl/main:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] @4xl/main:grid-rows-[auto_1fr] @4xl/main:items-start @4xl/main:gap-8">
+        <div className="min-w-0 @4xl/main:row-span-2">
           <SpendingHeroSkeleton />
-          <div className="space-y-2.5">
-            <Bone className="mx-1 h-5 w-28" />
-            <div className="list-group">
-              {Array.from({ length: 4 }, (_, i) => (
-                <ExpenseRowSkeleton key={i} />
-              ))}
-            </div>
+        </div>
+        <div className="space-y-2.5 @4xl/main:col-start-2 @4xl/main:row-start-2">
+          <Bone className="mx-1 h-5 w-28" />
+          <div className="list-group">
+            {Array.from({ length: 4 }, (_, i) => (
+              <ExpenseRowSkeleton key={i} />
+            ))}
           </div>
         </div>
-        <div className="space-y-2.5">
+        <div className="space-y-2.5 @4xl/main:col-start-2 @4xl/main:row-start-1">
           <Bone className="mx-1 h-5 w-32" />
           <CategoryAllocationSkeleton />
         </div>
